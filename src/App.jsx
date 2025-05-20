@@ -5,6 +5,12 @@ import LoginForm from "./LoginForm";
 import { FaHeart, FaRegHeart, FaStar, FaStopwatch } from "react-icons/fa";
 import Leaderboard from "./Leaderboard";
 import axios from "axios";
+const path = require('path');
+const dotenv = require('dotenv');
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+console.log("API_URL:", process.env.REACT_APP_API_URL);
 
 export default function App() {
   const [cards, setCards] = useState([]);
@@ -56,7 +62,7 @@ export default function App() {
     setTimerRunning(false);
 
     try {
-      const res = await axios.get("http://localhost:3001/api/random-cards");
+      const res = await axios.get(API_URL+"/api/random-cards");
       const transformedCards = res.data.map(card => ({
         id: card.id,
         name: card.name,
@@ -76,7 +82,7 @@ export default function App() {
 
   const resetHighscores = async () => {
     try {
-      const res = await axios.post("http://localhost:3001/auth/reset-highscores", {}, {
+      const res = await axios.post(API_URL+"/auth/reset-highscores", {}, {
         withCredentials: true
       });
       alert(res.data.message);
@@ -103,7 +109,7 @@ export default function App() {
       if (newScore > user.highscore) {
         try {
           axios.post(
-            "http://localhost:3001/api/score",
+            API_URL+"/api/score",
             { score: newScore },
             { withCredentials: true }
           );
