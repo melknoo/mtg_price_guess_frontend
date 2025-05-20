@@ -7,10 +7,12 @@ export default function LoginForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState("");
   const { login, register } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
       if (isLogin) {
@@ -27,6 +29,8 @@ export default function LoginForm() {
       } else {
         setError("❌ Ein unbekannter Fehler ist aufgetreten.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,9 +63,16 @@ export default function LoginForm() {
 
       <button
         type="submit"
-        className="bg-blue-600 text-white p-2 rounded w-full hover:bg-blue-700 transition"
+        className={`bg-blue-600 text-white p-2 rounded w-full hover:bg-blue-700 transition ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+        disabled={loading}
       >
-        {isLogin ? "Einloggen" : "Registrieren"}
+        {loading
+          ? isLogin
+            ? "Einloggen..."
+            : "Registrieren..."
+          : isLogin
+            ? "Einloggen"
+            : "Registrieren"}
       </button>
 
       <p
