@@ -109,6 +109,15 @@ export default function App() {
     setMessage("");
     setCachedCards([]);
   };
+  const handleDBMagic = async () => {
+    console.log("DB MAGIC");
+    try {
+      await axios.delete(API_URL + "/api/empty-db", {}, { withCredentials: true });
+      console.log("db geleert");
+    } catch (error) {
+      console.error("Fehler beim Zurücksetzen der DB:", error);
+    }
+  };
 
   const handleChoice = (chosenIndex) => {
     const price1 = parseFloat(currentPair[0].prices.eur);
@@ -188,6 +197,15 @@ export default function App() {
             >
               Logout
             </button>
+            {user.username === "melle" && (
+              <button
+                onClick={handleDBMagic}
+                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded"
+              >
+                DB MAGIC
+              </button>
+            )}
+
           </div>
           <div className="text-center space-y-4">
 
@@ -221,8 +239,8 @@ export default function App() {
         <>
           <h1 className="md:text-3xl hidden md:block md:mt-0 mt-6 font-bold mb-4">🧙‍♂️ Magic Card Preis-Duell</h1>
           <div className="flex md:text-center w-full flex-col">
-          <p className="mb-2 text-lg">Dein Highscore: {user.highscore}</p>
-          <p className="mb-6 font-bold text-2xl">Punkte: {score}</p>
+            <p className="mb-2 text-lg">Dein Highscore: {user.highscore}</p>
+            <p className="mb-6 font-bold text-2xl">Punkte: {score}</p>
           </div>
           <div className="w-full max-w-xl flex justify-between items-center mb-2 px-1">
             <div className="flex items-center gap-2 text-white font-semibold">
