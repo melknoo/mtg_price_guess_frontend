@@ -22,6 +22,7 @@ export default function App() {
   const [timeLeft, setTimeLeft] = useState(10);
   const [timerRunning, setTimerRunning] = useState(false);
   const [correctIndex, setCorrectIndex] = useState(null);
+  const [imagesLoaded, setImagesLoaded] = useState([false, false]); // neu
   const { user, logout } = useAuth();
 
   useEffect(() => {
@@ -29,6 +30,20 @@ export default function App() {
       preloadCards();
     }
   }, [user]);
+
+  // Reset imagesLoaded und Timer wenn currentPair sich ändert
+  useEffect(() => {
+    setImagesLoaded([false, false]);
+    setTimerRunning(false);
+    setTimeLeft(10);
+  }, [currentPair]);
+
+  // Timer starten, wenn beide Bilder geladen sind
+  useEffect(() => {
+    if (imagesLoaded.every(Boolean)) {
+      setTimerRunning(true);
+    }
+  }, [imagesLoaded]);
 
   useEffect(() => {
     if (!timerRunning || showPrices || selectedCard !== null) return;
@@ -275,6 +290,13 @@ export default function App() {
                         src={card.image_uris.normal}
                         alt={card.name}
                         className="w-full h-auto sm:max-h-[500px] object-contain"
+                        onLoad={() => {
+                          setImagesLoaded(prev => {
+                            const newLoaded = [...prev];
+                            newLoaded[index] = true;
+                            return newLoaded;
+                          });
+                        }}
                       />
                     </div>
                   </div>
