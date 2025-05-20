@@ -6,8 +6,7 @@ import { FaHeart, FaRegHeart, FaStar, FaStopwatch } from "react-icons/fa";
 import Leaderboard from "./Leaderboard";
 import axios from "axios";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost";
-const PORT = process.env.REACT_APP_API_PORT || 3001;
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 console.log("API_URL:", process.env.REACT_APP_API_URL);
 
 export default function App() {
@@ -60,7 +59,7 @@ export default function App() {
     setTimerRunning(false);
 
     try {
-      const res = await axios.get(API_URL+":"+PORT+"/api/random-cards");
+      const res = await axios.get(API_URL+"/api/random-cards");
       const transformedCards = res.data.map(card => ({
         id: card.id,
         name: card.name,
@@ -80,7 +79,7 @@ export default function App() {
 
   const resetHighscores = async () => {
     try {
-      const res = await axios.post(API_URL+":"+PORT+"/auth/reset-highscores", {}, {
+      const res = await axios.post(API_URL+"/auth/reset-highscores", {}, {
         withCredentials: true
       });
       alert(res.data.message);
@@ -107,7 +106,7 @@ export default function App() {
       if (newScore > user.highscore) {
         try {
           axios.post(
-            API_URL+":"+PORT+"/api/score",
+            API_URL+"/api/score",
             { score: newScore },
             { withCredentials: true }
           );
