@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
 
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost";
+const PORT = process.env.REACT_APP_API_PORT || 3001;
+console.log("API_URL:", process.env.REACT_APP_API_URL);
+
 export default function Leaderboard({ onBack }) {
   const [players, setPlayers] = useState([]);
   const { token } = useAuth();
@@ -9,7 +14,7 @@ export default function Leaderboard({ onBack }) {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/api/leaderboard", {
+        const res = await axios.get(API_URL+":"+PORT+"/api/leaderboard", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPlayers(res.data);
