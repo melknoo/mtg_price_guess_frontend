@@ -177,6 +177,7 @@ export default function App() {
           <div className="text-center space-y-4">
 
             <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Preis-Duell</h1>
+            <h2 className="text-2xl font-bold mb-4">Hallo {user.username}</h2>
             <div className="space-x-4">
               <button
                 onClick={() => {
