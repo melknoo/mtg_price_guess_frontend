@@ -120,7 +120,7 @@ export default function App() {
       setShowPrices(true);
 
       const losingCard = currentPair[correct];
-      setMessage(`❌ Falsch! ${losingCard.name} war teurer: €${losingCard.prices.eur}`);
+      setMessage(`❌ Falsch! ${losingCard.name} war teurer: €${losingCard.prices.eur.toFixed(2)}`);
 
       if (remaining <= 0) {
         setGameOver(true);
@@ -162,44 +162,52 @@ export default function App() {
             Zurück zum Menü
           </button>
         )}
-        <button
-          onClick={handleLogout}
-          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded"
-        >
-          Logout
-        </button>
       </div>
 
       {screen === "menu" && (
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Preis-Duell</h1>
-          <div className="space-x-4">
+        <div>
+          <div className="absolute top-4 right-4 flex gap-2">
             <button
-              onClick={() => {
-                handleRestart();
-                setScreen("game");
-              }}
-              className="bg-green-600 px-6 py-3 rounded text-white text-lg hover:bg-green-700 transition"
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded"
             >
-              Neues Spiel
-            </button>
-            <button
-              onClick={() => setScreen("leaderboard")}
-              className="bg-purple-600 px-6 py-3 rounded text-white text-lg hover:bg-purple-700 transition"
-            >
-              Rangliste
+              Logout
             </button>
           </div>
+          <div className="text-center space-y-4">
+
+            <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Preis-Duell</h1>
+            <div className="space-x-4">
+              <button
+                onClick={() => {
+                  handleRestart();
+                  setScreen("game");
+                }}
+                className="bg-green-600 px-6 py-3 rounded text-white text-lg hover:bg-green-700 transition"
+              >
+                Neues Spiel
+              </button>
+              <button
+                onClick={() => setScreen("leaderboard")}
+                className="bg-purple-600 px-6 py-3 rounded text-white text-lg hover:bg-purple-700 transition"
+              >
+                Rangliste
+              </button>
+            </div>
+          </div>
         </div>
+
       )}
 
       {screen === "leaderboard" && <Leaderboard onBack={() => setScreen("menu")} />}
 
       {screen === "game" && (
         <>
-          <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Card Preis-Duell</h1>
+          <h1 className="md:text-3xl hidden md:block md:mt-0 mt-6 font-bold mb-4">🧙‍♂️ Magic Card Preis-Duell</h1>
+          <div className="flex md:text-center w-full flex-col">
           <p className="mb-2 text-lg">Dein Highscore: {user.highscore}</p>
           <p className="mb-6 font-bold text-2xl">Punkte: {score}</p>
+          </div>
           <div className="w-full max-w-xl flex justify-between items-center mb-2 px-1">
             <div className="flex items-center gap-2 text-white font-semibold">
               <FaStopwatch />
@@ -237,7 +245,7 @@ export default function App() {
           {loading ? (
             <p>Lade Karten...</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl w-full">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-xs sm:max-w-4xl w-full">
               {currentPair.map((card, index) => (
                 <motion.div
                   key={card.id}
@@ -257,7 +265,7 @@ export default function App() {
                     <div className="p-0">
                       <div className="text-center font-semibold text-lg">
                         {showPrices && (
-                          <div className="text-2xl p-2 text-gray-700">
+                          <div className="md:text-2xl text-base p-2 text-gray-700">
                             💵 €{card.prices.eur.toFixed(2)}
                           </div>
                         )}
@@ -265,7 +273,7 @@ export default function App() {
                       <img
                         src={card.image_uris.normal}
                         alt={card.name}
-                        className="w-full"
+                        className="w-full h-auto sm:max-h-[500px] object-contain"
                       />
                     </div>
                   </div>
@@ -273,17 +281,19 @@ export default function App() {
               ))}
             </div>
           )}
+          <div className="mt-6 flex text-lg min-h-[80px]">
+            {selectedCard !== null && !gameOver && (
+              <button
+                onClick={() => {
+                  setNextPair();
+                }}
+                className=" bg-blue-500 text-2xl font-semibold hover:bg-blue-600 text-white px-6 py-6 rounded transition"
+              >
+                Weiter
+              </button>
+            )}
+          </div>
 
-          {selectedCard !== null && !gameOver && (
-            <button
-              onClick={() => {
-                setNextPair();
-              }}
-              className="mt-6 bg-blue-500 text-2xl font-semibold hover:bg-blue-600 text-white px-6 py-6 rounded transition"
-            >
-              Weiter
-            </button>
-          )}
 
           {gameOver && (
             <div className="absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center z-10">
