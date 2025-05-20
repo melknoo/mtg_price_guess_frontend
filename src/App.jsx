@@ -7,10 +7,10 @@ import Leaderboard from "./Leaderboard";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
-console.log("API_URL:", process.env.REACT_APP_API_URL);
 
 export default function App() {
-  const [cards, setCards] = useState([]);
+  const [cachedCards, setCachedCards] = useState([]);
+  const [currentPair, setCurrentPair] = useState([]);
   const [score, setScore] = useState(0);
   const [message, setMessage] = useState("");
   const [screen, setScreen] = useState("menu");
@@ -19,126 +19,119 @@ export default function App() {
   const [showPrices, setShowPrices] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(10);      // Sekunden
+  const [timeLeft, setTimeLeft] = useState(10);
   const [timerRunning, setTimerRunning] = useState(false);
   const [correctIndex, setCorrectIndex] = useState(null);
-  const { user, logout, refreshUser } = useAuth();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     if (user) {
-      fetchCards();
+      preloadCards();
     }
   }, [user]);
+
   useEffect(() => {
     if (!timerRunning || showPrices || selectedCard !== null) return;
-
     if (timeLeft <= 0) {
       setTimerRunning(false);
-      handleChoice(-1); // Timeout als falsche Antwort
+      handleChoice(-1);
       return;
     }
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => Math.max(prev - 0.1, 0)); // alle 100ms
+      setTimeLeft((prev) => Math.max(prev - 0.1, 0));
     }, 100);
 
     return () => clearInterval(interval);
   }, [timerRunning, timeLeft, showPrices, selectedCard]);
 
-  const handleLogout = () => {
-    logout();
-    setScore(0);
-    setMessage("");
-    setCards([]);
-  };
-
-  const fetchCards = async () => {
+  const preloadCards = async () => {
     setLoading(true);
     setMessage("");
     setTimeLeft(10);
     setTimerRunning(false);
 
     try {
-      const res = await axios.get(API_URL+"/api/random-cards");
-      const transformedCards = res.data.map(card => ({
+      const res = await axios.get(API_URL + "/api/random-cards?count=20");
+      const transformed = res.data.map(card => ({
         id: card.id,
         name: card.name,
         prices: { eur: card.price },
         image_uris: { normal: card.image }
       }));
 
-      setCards(transformedCards);
-      setTimerRunning(true); // Starte Timer sobald Karten da sind
+      setCachedCards(transformed);
+      setNextPair(transformed);
     } catch (error) {
-      console.error("❌ Fehler beim Laden der Karten aus der DB:", error);
+      console.error("❌ Fehler beim Laden der Karten:", error);
       setMessage("Fehler beim Laden der Karten.");
     }
 
     setLoading(false);
   };
 
-  const resetHighscores = async () => {
-    try {
-      const res = await axios.post(API_URL+"/auth/reset-highscores", {}, {
-        withCredentials: true
-      });
-      alert(res.data.message);
-    } catch (error) {
-      console.error("Fehler beim Zurücksetzen der Highscores:", error);
-      alert("Fehler beim Zurücksetzen der Highscores");
+  const setNextPair = (cardPool = cachedCards) => {
+    if (cardPool.length < 2) {
+      preloadCards();
+      return;
     }
+
+    const next = cardPool.slice(0, 2);
+    const remaining = cardPool.slice(2);
+
+    setCurrentPair(next);
+    setCachedCards(remaining);
+    setSelectedCard(null);
+    setCorrectIndex(null);
+    setShowPrices(false);
+    setTimeLeft(10);
+    setTimerRunning(true);
   };
 
+  const handleLogout = () => {
+    logout();
+    setScore(0);
+    setMessage("");
+    setCachedCards([]);
+  };
 
   const handleChoice = (chosenIndex) => {
-    const price1 = parseFloat(cards[0].prices.eur);
-    const price2 = parseFloat(cards[1].prices.eur);
-    const correctIndex = price1 >= price2 ? 0 : 1;
+    const price1 = parseFloat(currentPair[0].prices.eur);
+    const price2 = parseFloat(currentPair[1].prices.eur);
+    const correct = price1 >= price2 ? 0 : 1;
 
-    setCorrectIndex(correctIndex);
+    setCorrectIndex(correct);
     setSelectedCard(chosenIndex);
 
-    if (chosenIndex === correctIndex) {
-      const bonus = Math.ceil(timeLeft); // 1-10 Punkte Bonus
+    if (chosenIndex === correct) {
+      const bonus = Math.ceil(timeLeft);
       const newScore = score + bonus;
 
       setScore(newScore);
+      setMessage(`✅ Richtig! +${bonus} Punkte!`);
       if (newScore > user.highscore) {
-        try {
-          axios.post(
-            API_URL+"/api/score",
-            { score: newScore },
-            { withCredentials: true }
-          );
-        } catch (error) {
-          console.error("Fehler beim Aktualisieren des Highscores", error);
-        }
+        axios.post(API_URL + "/api/score", { score: newScore }, { withCredentials: true }).catch(e => {
+          console.error("Fehler beim Highscore-Update", e);
+        });
       }
-    }
-    else {
-      // Falsche Antwort: Ein Leben abziehen
+    } else {
       const remaining = lives - 1;
       setLives(remaining);
-      setShowPrices(true)
+      setShowPrices(true);
+
+      const losingCard = currentPair[correct];
+      setMessage(`❌ Falsch! ${losingCard.name} war teurer: €${losingCard.prices.eur}`);
 
       if (remaining <= 0) {
         setGameOver(true);
-        setMessage(`❌ Falsch! ${cards[correctIndex].name} war teurer: €${cards[correctIndex].prices.eur}`);
-        return; // Spiel beenden
+        return;
       }
-
-      setMessage(`❌ Falsch! ${cards[correctIndex].name} war teurer: €${cards[correctIndex].prices.eur}`);
     }
 
     setShowPrices(true);
     setTimerRunning(false);
-    // setTimeout(() => {
-    //   fetchCards();
-    //   setShowPrices(false);
-    //   setSelectedCard(null);
-    //   setCorrectIndex(null);
-    // }, 1000);
   };
+
   const handleRestart = () => {
     setScore(0);
     setMessage("");
@@ -147,7 +140,7 @@ export default function App() {
     setCorrectIndex(null);
     setShowPrices(false);
     setLives(3);
-    fetchCards();
+    preloadCards();
   };
 
   if (!user) {
@@ -181,16 +174,10 @@ export default function App() {
         <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Preis-Duell</h1>
           <div className="space-x-4">
-            {/* <button
-              onClick={resetHighscores}
-              className="bg-red-600 px-6 py-3 rounded text-white text-lg hover:bg-red-700 transition mt-4"
-            >
-              Alle Highscores zurücksetzen
-            </button> */}
             <button
               onClick={() => {
-                handleRestart();        // setzt Spielzustand zurück
-                setScreen("game");      // wechselt zur Spielansicht
+                handleRestart();
+                setScreen("game");
               }}
               className="bg-green-600 px-6 py-3 rounded text-white text-lg hover:bg-green-700 transition"
             >
@@ -203,15 +190,10 @@ export default function App() {
               Rangliste
             </button>
           </div>
-
         </div>
       )}
 
-
-
-      {screen === "leaderboard" && (
-        <Leaderboard onBack={() => setScreen("menu")} />
-      )}
+      {screen === "leaderboard" && <Leaderboard onBack={() => setScreen("menu")} />}
 
       {screen === "game" && (
         <>
@@ -220,17 +202,17 @@ export default function App() {
           <p className="mb-6 font-bold text-2xl">Punkte: {score}</p>
           <div className="w-full max-w-xl flex justify-between items-center mb-2 px-1">
             <div className="flex items-center gap-2 text-white font-semibold">
-              <span><FaStopwatch className="text-white" /></span>
+              <FaStopwatch />
               <span>{timeLeft.toFixed(1)} Sek</span>
             </div>
             <motion.div
-              key={Math.ceil(timeLeft)} // animiert bei jedem Punktewechsel
+              key={Math.ceil(timeLeft)}
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
               className="flex items-center gap-1 text-green-300 font-semibold"
             >
-              <span><FaStar className="text-yellow-400" /></span>
+              <FaStar className="text-yellow-400" />
               <span>+{Math.ceil(timeLeft)} Punkte möglich</span>
             </motion.div>
           </div>
@@ -241,6 +223,7 @@ export default function App() {
               style={{ width: `${(timeLeft / 10) * 100}%` }}
             />
           </div>
+
           <div className="flex items-center gap-2 mb-4">
             {[...Array(3)].map((_, i) =>
               i < lives ? (
@@ -250,11 +233,12 @@ export default function App() {
               )
             )}
           </div>
+
           {loading ? (
             <p>Lade Karten...</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl w-full">
-              {cards.map((card, index) => (
+              {currentPair.map((card, index) => (
                 <motion.div
                   key={card.id}
                   whileHover={{ scale: selectedCard === null ? 1.05 : 1 }}
@@ -289,14 +273,11 @@ export default function App() {
               ))}
             </div>
           )}
+
           {selectedCard !== null && !gameOver && (
             <button
               onClick={() => {
-                fetchCards();
-                setShowPrices(false);
-                setSelectedCard(null);
-                refreshUser(); // User neu laden, Highscore wird aktualisiert
-                setCorrectIndex(null);
+                setNextPair();
               }}
               className="mt-6 bg-blue-500 text-2xl font-semibold hover:bg-blue-600 text-white px-6 py-6 rounded transition"
             >
@@ -304,7 +285,6 @@ export default function App() {
             </button>
           )}
 
-          {/* Game Over Overlay */}
           {gameOver && (
             <div className="absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center z-10">
               <h2 className="text-2xl mb-4 font-bold">❌ Falsch geraten!</h2>
@@ -331,5 +311,4 @@ export default function App() {
       )}
     </div>
   );
-
 }
