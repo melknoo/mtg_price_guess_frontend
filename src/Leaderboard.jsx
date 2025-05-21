@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useAuth } from "./AuthContext";
+// The leaderboard data is fetched using the session cookie, so we don't
+// need to send an explicit auth token from the client.
 
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
@@ -8,14 +9,11 @@ console.log("API_URL:", process.env.REACT_APP_API_URL);
 
 export default function Leaderboard({ onBack }) {
   const [players, setPlayers] = useState([]);
-  const { token } = useAuth();
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const res = await axios.get(API_URL+"/api/leaderboard", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(API_URL+"/api/leaderboard");
         setPlayers(res.data);
       } catch (err) {
         console.error("Fehler beim Laden der Rangliste:", err);
@@ -23,7 +21,7 @@ export default function Leaderboard({ onBack }) {
     };
 
     fetchLeaderboard();
-  }, [token]);
+  }, []);
 
   return (
     <div className="text-white text-center max-w-md mx-auto">
