@@ -112,7 +112,7 @@ export default function App() {
   const handleDBMagic = async () => {
     console.log("DB MAGIC");
     try {
-      await axios.delete(API_URL + "/api/empty-db", {}, { withCredentials: true });
+      await axios.delete(API_URL + "/api/empty-db");
       console.log("db geleert");
     } catch (error) {
       console.error("Fehler beim Zurücksetzen der DB:", error);
@@ -134,7 +134,7 @@ export default function App() {
       setScore(newScore);
       setMessage(`✅ Richtig! +${bonus} Punkte!`);
       if (newScore > user.highscore) {
-        axios.post(API_URL + "/api/score", { score: newScore }, { withCredentials: true }).catch(e => {
+        axios.post(API_URL + "/api/score", { score: newScore }).catch(e => {
           console.error("Fehler beim Highscore-Update", e);
         });
       }
