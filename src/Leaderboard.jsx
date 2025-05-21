@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-// The leaderboard data is fetched using the session cookie, so we don't
-// need to send an explicit auth token from the client.
+// The leaderboard data requires authentication. The AuthContext sets the
+// Authorization header globally so we don't send the token manually here.
 
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";

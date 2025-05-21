@@ -1,6 +1,8 @@
 import { createContext, useState, useContext, useEffect } from "react";
 import axios from "axios";
-axios.defaults.withCredentials = true;
+
+// We'll store the JWT token on the client and send it via the Authorization
+// header with every request.
 
 const AuthContext = createContext();
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
@@ -8,18 +10,27 @@ console.log("API_URL:", process.env.REACT_APP_API_URL);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
 
-  // Beim Laden prüfen, ob ein eingeloggter User vorhanden ist (Token im Cookie)
+  // Whenever the token changes configure axios and fetch the current user
   useEffect(() => {
-    axios.get(API_URL+"/auth/me")
-      .then((res) => setUser(res.data))
-      .catch((err) => {
-        if (err.response?.status !== 401) {
-          console.error("Fehler bei /auth/me:", err);
-        }
-        setUser(null);
-      });
-  }, []);
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      axios
+        .get(API_URL + "/auth/me")
+        .then((res) => setUser(res.data))
+        .catch((err) => {
+          if (err.response?.status !== 401) {
+            console.error("Fehler bei /auth/me:", err);
+          }
+          setUser(null);
+        });
+    } else {
+      delete axios.defaults.headers.common["Authorization"];
+      setUser(null);
+    }
+  }, [token]);
+
 
   const refreshUser = async () => {
     try {
@@ -31,35 +42,42 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login-Funktion ruft den Login-Endpoint auf
+  // Login-Funktion ruft den Login-Endpoint auf und speichert das JWT
   const login = async (username, password) => {
     try {
-      await axios.post(API_URL+"/auth/login", { username, password });
-      // Token ist im HttpOnly-Cookie gespeichert, jetzt User abrufen
-      const res = await axios.get(API_URL+"/auth/me");
-      setUser(res.data);
+      const res = await axios.post(API_URL + "/auth/login", { username, password });
+      const newToken = res.data.token;
+      setToken(newToken);
+      localStorage.setItem("token", newToken);
     } catch (err) {
-      setUser(null);
+      setToken(null);
+      localStorage.removeItem("token");
       throw err; // Fehler ggf. an UI weiterreichen
     }
   };
 
   const register = async (username, password) => {
     try {
-      await axios.post(API_URL+"/auth/register", { username, password });
-      // Nach erfolgreicher Registrierung automatisch einloggen
-      const res = await axios.get(API_URL+"/auth/me");
-      setUser(res.data);
+      const res = await axios.post(API_URL + "/auth/register", { username, password });
+      const newToken = res.data.token;
+      setToken(newToken);
+      localStorage.setItem("token", newToken);
     } catch (err) {
-      setUser(null);
+      setToken(null);
+      localStorage.removeItem("token");
       throw err;
     }
   };
 
-  // Logout-Funktion löscht das Cookie serverseitig
+  // Logout-Funktion entfernt das gespeicherte Token
   const logout = async () => {
-    await axios.post(API_URL+"/auth/logout");
-    setUser(null);
+    try {
+      await axios.post(API_URL + "/auth/logout");
+    } catch (_) {
+      // ignore errors during logout
+    }
+    setToken(null);
+    localStorage.removeItem("token");
   };
 
   return (
