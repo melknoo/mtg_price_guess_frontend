@@ -47,12 +47,16 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await axios.post(API_URL + "/auth/login", { username, password });
       const newToken = res.data.token;
+  
+      // ✅ Immediately set axios header so next requests (like /auth/me) include it
+      axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+  
       setToken(newToken);
       localStorage.setItem("token", newToken);
     } catch (err) {
       setToken(null);
       localStorage.removeItem("token");
-      throw err; // Fehler ggf. an UI weiterreichen
+      throw err;
     }
   };
 
@@ -60,6 +64,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await axios.post(API_URL + "/auth/register", { username, password });
       const newToken = res.data.token;
+  
+      // ✅ Set the header here too
+      axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+  
       setToken(newToken);
       localStorage.setItem("token", newToken);
     } catch (err) {
