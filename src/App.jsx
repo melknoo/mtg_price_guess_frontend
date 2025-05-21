@@ -23,7 +23,7 @@ export default function App() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [correctIndex, setCorrectIndex] = useState(null);
   const [imagesLoaded, setImagesLoaded] = useState([false, false]); // neu
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -104,7 +104,11 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    logout();
+    if (user?.guest) {
+      setUser(null);
+    } else {
+      logout();
+    }
     setScore(0);
     setMessage("");
     setCachedCards([]);
@@ -134,9 +138,13 @@ export default function App() {
       setScore(newScore);
       setMessage(`✅ Richtig! +${bonus} Punkte!`);
       if (newScore > user.highscore) {
-        axios.post(API_URL + "/api/score", { score: newScore }).catch(e => {
-          console.error("Fehler beim Highscore-Update", e);
-        });
+        if (user.guest) {
+          setUser({ ...user, highscore: newScore });
+        } else {
+          axios.post(API_URL + "/api/score", { score: newScore }).catch(e => {
+            console.error("Fehler beim Highscore-Update", e);
+          });
+        }
       }
     } else {
       const remaining = lives - 1;

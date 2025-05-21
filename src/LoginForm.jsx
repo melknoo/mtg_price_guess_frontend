@@ -6,8 +6,12 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState("");
-  const { login, register } = useAuth();
+  const { login, register, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  const handleGuest = () => {
+    setUser({ username: "Gast", highscore: 0, guest: true });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -84,6 +88,14 @@ export default function LoginForm() {
       >
         {isLogin ? "Noch kein Account? Registrieren" : "Schon registriert? Login"}
       </p>
+
+      <button
+        type="button"
+        onClick={handleGuest}
+        className="text-sm text-blue-600 hover:underline cursor-pointer w-full"
+      >
+        Als Gast spielen
+      </button>
     </form>
   );
 }
