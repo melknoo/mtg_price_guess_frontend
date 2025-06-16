@@ -33,14 +33,13 @@ export const AuthProvider = ({ children }) => {
 
 
   const refreshUser = async () => {
-    try {
-      const res = await axios.get(API_URL+"/auth/me");
-      setUser(res.data);
-    } catch (err) {
-      console.error("Fehler beim Aktualisieren des Users:", err);
-      setUser(null);
-    }
-  };
+  try {
+    const res = await axios.get(`${API_URL}/auth/me`, { withCredentials: true });
+    setUser(res.data); // das updatet das `user` state
+  } catch (error) {
+    console.error("Fehler beim Aktualisieren des Benutzers:", error);
+  }
+};
 
   // Login-Funktion ruft den Login-Endpoint auf und speichert das JWT
   const login = async (username, password) => {
@@ -89,7 +88,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, setUser }}>
+    <AuthContext.Provider value={{ user, login, logout, register, setUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

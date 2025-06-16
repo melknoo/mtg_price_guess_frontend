@@ -23,7 +23,7 @@ export default function App() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [correctIndex, setCorrectIndex] = useState(null);
   const [imagesLoaded, setImagesLoaded] = useState([false, false]); // neu
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -134,7 +134,9 @@ export default function App() {
       setScore(newScore);
       setMessage(`✅ Richtig! +${bonus} Punkte!`);
       if (newScore > user.highscore) {
-        axios.post(API_URL + "/api/score", { score: newScore }).catch(e => {
+        axios.post(API_URL + "/api/score", { score: newScore })
+        .then(() => refreshUser()) // <- Nutzer aktualisieren
+        .catch(e => {
           console.error("Fehler beim Highscore-Update", e);
         });
       }
