@@ -26,7 +26,7 @@ export default function App() {
   const { user, logout, refreshUser, setUser } = useAuth();
 
   useEffect(() => {
-    if (user) {
+    if (user || user?.guest) {
       preloadCards();
     }
   }, [user]);
@@ -60,6 +60,12 @@ export default function App() {
     return () => clearInterval(interval);
   }, [timerRunning, timeLeft, showPrices, selectedCard]);
 
+  useEffect(() => {
+    if (screen === "game" && cachedCards.length >= 2 && currentPair.length === 0) {
+      setNextPair();
+    }
+  }, [screen, cachedCards]);
+
   const preloadCards = async () => {
     setLoading(true);
     setMessage("");
@@ -76,7 +82,7 @@ export default function App() {
       }));
 
       setCachedCards(transformed);
-      setNextPair(transformed);
+      //setNextPair(transformed);
     } catch (error) {
       console.error("❌ Fehler beim Laden der Karten:", error);
       setMessage("Fehler beim Laden der Karten.");
@@ -87,6 +93,7 @@ export default function App() {
 
   const setNextPair = (cardPool = cachedCards) => {
     if (cardPool.length < 2) {
+      //setMessage("Neue Karten werden geladen...")
       preloadCards();
       return;
     }
@@ -127,9 +134,10 @@ export default function App() {
     const price1 = parseFloat(currentPair[0].prices.eur);
     const price2 = parseFloat(currentPair[1].prices.eur);
     const correct = price1 >= price2 ? 0 : 1;
-
+    console.log("in handleChoice");
     setCorrectIndex(correct);
     setSelectedCard(chosenIndex);
+    console.log("selectedCard:", selectedCard);
 
     if (chosenIndex === correct) {
       const bonus = Math.ceil(timeLeft);
