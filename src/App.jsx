@@ -4,6 +4,7 @@ import { useAuth } from "./AuthContext";
 import LoginForm from "./LoginForm";
 import { FaHeart, FaRegHeart, FaStar, FaStopwatch } from "react-icons/fa";
 import Leaderboard from "./Leaderboard";
+import GuestRegister from "./GuestRegister";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
@@ -266,6 +267,11 @@ export default function App() {
               </button>
             </div>
           </div>
+          {user.guest && (
+            <div className="mt-8">
+              <GuestRegister onSuccess={() => setScreen("menu")} />
+            </div>
+          )}
         </div>
 
       )}
