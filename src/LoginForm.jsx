@@ -1,17 +1,36 @@
 import { useState } from "react";
 import { useAuth } from "./AuthContext";
+import axios from "axios";
 
 export default function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState("");
-  const { login, register, setUser } = useAuth();
+  const { login, register, setUser, setGuestSessionId } = useAuth();
   const [loading, setLoading] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
-  const handleGuest = () => {
-    setUser({ username: "Gast", highscore: 0, guest: true });
+  const handleGuest = async () => {
+    console.log("Gast-Session starten...");
+    try {
+      const res = await axios.post(`${API_URL}/guest/start`, {
+        userAgent: navigator.userAgent,
+      });
+
+      const sessionId = res.data.sessionId;
+
+      localStorage.setItem("guestSessionId", sessionId); // persistieren
+      setGuestSessionId(sessionId);                      // global speichern
+
+      setUser({ username: "Gast", highscore: 0, guest: true });
+    } catch (err) {
+      console.error("❌ Fehler beim Starten der Gast-Session:", err);
+    }
   };
+  // const handleGuest = () => {
+  //   setUser({ username: "Gast", highscore: 0, guest: true });
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();

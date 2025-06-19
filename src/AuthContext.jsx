@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useEffect } from "react";
 import axios from "axios";
 
+
 // We'll store the JWT token on the client and send it via the Authorization
 // header with every request.
 
@@ -10,6 +11,7 @@ console.log("API_URL:", process.env.REACT_APP_API_URL);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [guestSessionId, setGuestSessionId] = useState(() => localStorage.getItem("guestSessionId"));
   const [token, setToken] = useState(() => localStorage.getItem("token"));
 
   // Whenever the token changes configure axios and fetch the current user
@@ -33,23 +35,23 @@ export const AuthProvider = ({ children }) => {
 
 
   const refreshUser = async () => {
-  try {
-    const res = await axios.get(`${API_URL}/auth/me`, { withCredentials: true });
-    setUser(res.data); // das updatet das `user` state
-  } catch (error) {
-    console.error("Fehler beim Aktualisieren des Benutzers:", error);
-  }
-};
+    try {
+      const res = await axios.get(`${API_URL}/auth/me`, { withCredentials: true });
+      setUser(res.data); // das updatet das `user` state
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren des Benutzers:", error);
+    }
+  };
 
   // Login-Funktion ruft den Login-Endpoint auf und speichert das JWT
   const login = async (username, password) => {
     try {
       const res = await axios.post(API_URL + "/auth/login", { username, password });
       const newToken = res.data.token;
-  
+
       // ✅ Immediately set axios header so next requests (like /auth/me) include it
       axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-  
+
       setToken(newToken);
       localStorage.setItem("token", newToken);
     } catch (err) {
@@ -63,10 +65,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await axios.post(API_URL + "/auth/register", { username, password });
       const newToken = res.data.token;
-  
+
       // ✅ Set the header here too
       axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-  
+
       setToken(newToken);
       localStorage.setItem("token", newToken);
     } catch (err) {
@@ -88,7 +90,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, setUser, refreshUser }}>
+    <AuthContext.Provider value={{ user, login, logout, register, setUser, refreshUser, guestSessionId, setGuestSessionId }}>
       {children}
     </AuthContext.Provider>
   );

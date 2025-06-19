@@ -26,7 +26,8 @@ export default function App() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [correctIndex, setCorrectIndex] = useState(null);
   const [imagesLoaded, setImagesLoaded] = useState([false, false]); // neu
-  const { user, logout, refreshUser, setUser } = useAuth();
+  const { user, logout, refreshUser, setUser, guestSessionId } = useAuth();
+
 
   useEffect(() => {
     if ((user || user?.guest) && !hasPreloaded) {
@@ -175,6 +176,13 @@ export default function App() {
       setMessage(`❌ Falsch! ${losingCard.name} war teurer: €${losingCard.prices.eur.toFixed(2)}`);
 
       if (remaining <= 0) {
+        if (user?.guest && guestSessionId) {
+          console.log("Gast-Session beenden");
+          axios.post(`${API_URL}/guest/end`, {
+            sessionId: guestSessionId,
+            score,
+          });
+        }
         setGameOver(true);
         return;
       }
@@ -262,34 +270,35 @@ export default function App() {
               <button
                 onClick={() => {
                   setShowRegister(false);
-                  setScreen("leaderboard")}}
+                  setScreen("leaderboard")
+                }}
                 className="bg-purple-600 px-6 py-3 rounded text-white text-lg hover:bg-purple-700 transition"
               >
                 Rangliste
               </button>
             </div>
             {user?.guest && !showRegister && (
-                <button
-                  onClick={() => setShowRegister(true)}
-                  className="mt-4 bg-blue-400 px-6 py-3 rounded text-white text-lg hover:bg-blue-600 transition"
-                >
-                  Registrieren & Score speichern
-                </button>
-              )}
+              <button
+                onClick={() => setShowRegister(true)}
+                className="mt-4 bg-blue-400 px-6 py-3 rounded text-white text-lg hover:bg-blue-600 transition"
+              >
+                Registrieren & Score speichern
+              </button>
+            )}
 
-              {user?.guest && showRegister && (
-                <RegisterWithScore
-                  score={user?.highscore ?? score}
-                  className="mt-4"
-                  onSuccess={(newUser) => {
-                    setUser(newUser);
-                    refreshUser();
-                    setShowRegister(false);
-                  }}
-                />
-              )}
+            {user?.guest && showRegister && (
+              <RegisterWithScore
+                score={user?.highscore ?? score}
+                className="mt-4"
+                onSuccess={(newUser) => {
+                  setUser(newUser);
+                  refreshUser();
+                  setShowRegister(false);
+                }}
+              />
+            )}
           </div>
-          
+
         </div>
 
       )}
