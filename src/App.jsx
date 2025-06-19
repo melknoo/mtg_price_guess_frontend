@@ -17,6 +17,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [lives, setLives] = useState(3);
   const [showPrices, setShowPrices] = useState(false);
+  const [hasPreloaded, setHasPreloaded] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [timeLeft, setTimeLeft] = useState(10);
@@ -26,10 +27,11 @@ export default function App() {
   const { user, logout, refreshUser, setUser } = useAuth();
 
   useEffect(() => {
-    if (user || user?.guest) {
+    if ((user || user?.guest) && !hasPreloaded) {
+      setHasPreloaded(true);
       preloadCards();
     }
-  }, [user]);
+  }, [user, hasPreloaded]);
 
   // Reset imagesLoaded und Timer wenn currentPair sich ändert
   useEffect(() => {
@@ -82,24 +84,32 @@ export default function App() {
       }));
 
       setCachedCards(transformed);
-      //setNextPair(transformed);
+      return transformed; // <== HINZUGEFÜGT
     } catch (error) {
       console.error("❌ Fehler beim Laden der Karten:", error);
       setMessage("Fehler beim Laden der Karten.");
+      return []; // <== fallback
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  const setNextPair = (cardPool = cachedCards) => {
-    if (cardPool.length < 2) {
-      //setMessage("Neue Karten werden geladen...")
-      preloadCards();
+  const setNextPair = async () => {
+    let updatedCache = [...cachedCards];
+
+    // Wenn weniger als 2 Karten übrig, neue dazuladen (nicht ersetzen!)
+    if (updatedCache.length < 2) {
+      const newCards = await preloadCards();
+      updatedCache = [...updatedCache, ...newCards];
+    }
+
+    if (updatedCache.length < 2) {
+      setMessage("Nicht genügend Karten verfügbar.");
       return;
     }
 
-    const next = cardPool.slice(0, 2);
-    const remaining = cardPool.slice(2);
+    const next = updatedCache.slice(0, 2);
+    const remaining = updatedCache.slice(2);
 
     setCurrentPair(next);
     setCachedCards(remaining);
@@ -137,7 +147,7 @@ export default function App() {
     console.log("in handleChoice");
     setCorrectIndex(correct);
     setSelectedCard(chosenIndex);
-    console.log("selectedCard:", selectedCard);
+    console.log("chosenIndex:", chosenIndex);
 
     if (chosenIndex === correct) {
       const bonus = Math.ceil(timeLeft);
@@ -146,14 +156,14 @@ export default function App() {
       setScore(newScore);
       setMessage(`✅ Richtig! +${bonus} Punkte!`);
       if (newScore > user.highscore) {
-        if (user.guest) {
+        if (user?.guest) {
           setUser({ ...user, highscore: newScore });
         } else {
           axios.post(API_URL + "/api/score", { score: newScore })
-          .then(() => refreshUser()) // <- Nutzer aktualisieren
-          .catch(e => {
-          console.error("Fehler beim Highscore-Update", e);
-        });
+            .then(() => refreshUser()) // <- Nutzer aktualisieren
+            .catch(e => {
+              console.error("Fehler beim Highscore-Update", e);
+            });
         }
       }
     } else {
@@ -174,7 +184,7 @@ export default function App() {
     setTimerRunning(false);
   };
 
-  const handleRestart = () => {
+  const handleRestart = async () => {
     setScore(0);
     setMessage("");
     setGameOver(false);
@@ -182,7 +192,16 @@ export default function App() {
     setCorrectIndex(null);
     setShowPrices(false);
     setLives(3);
-    preloadCards();
+
+    const newCards = await preloadCards();
+    if (newCards.length >= 2) {
+      const next = newCards.slice(0, 2);
+      const remaining = newCards.slice(2);
+      setCurrentPair(next);
+      setCachedCards(remaining);
+    } else {
+      setMessage("Nicht genügend Karten geladen.");
+    }
   };
 
   if (!user) {
