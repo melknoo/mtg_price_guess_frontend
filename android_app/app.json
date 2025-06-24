@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "android_app",
-    "slug": "android_app",
+    "name": "MTG Price Guess",
+    "slug": "mtg-price-guess",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/mtg_logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/mtg_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,19 +17,20 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/mtg_logo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.melknoo.android_app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/mtg_logo.png"
     },
     "extra": {
       "eas": {
-        "projectId": "97e53104-d67f-4c1a-b197-7a4632951a15"
+        "projectId": "2c2ed932-15c0-4ae8-8ea5-b1246d946d17"
       }
-    }
+    },
+    "owner": "melknoo"
   }
 }
