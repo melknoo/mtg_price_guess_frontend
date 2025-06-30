@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "MTG Price Guess",
+    "slug": "mtg-price-guess",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/mtg_logo.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/mtg_logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/mtg_logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.melknoo.android_app"
+    },
+    "web": {
+      "favicon": "./assets/mtg_logo.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2c2ed932-15c0-4ae8-8ea5-b1246d946d17"
+      }
+    },
+    "owner": "melknoo"
+  }
+}
