@@ -74,9 +74,10 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
       const transformed = res.data.map(card => ({
         id: card.id,
         name: card.name,
-        prices: { eur: card.price },
+        prices: { eur: parseFloat(card.price) },
         image_uris: { normal: card.image }
       }));
+      console.log(transformed);
 
       setCachedCards(transformed);
       return transformed;
