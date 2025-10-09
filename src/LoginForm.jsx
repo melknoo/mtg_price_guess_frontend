@@ -4,6 +4,7 @@ import { useAuth } from "./AuthContext";
 export default function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState("");
   const { login, register, setUser } = useAuth();
@@ -22,7 +23,7 @@ export default function LoginForm() {
       if (isLogin) {
         await login(username, password);
       } else {
-        await register(username, password);
+        await register(username, email, password);
       }
     } catch (err) {
       console.error(err);
@@ -57,6 +58,15 @@ export default function LoginForm() {
         value={username}
         onChange={(e) => setUsername(e.target.value)}
       />
+      {!isLogin && (
+        <input
+          placeholder="Email"
+          className="w-full p-2 border rounded"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      )}
+      
       <input
         type="password"
         placeholder="Passwort"

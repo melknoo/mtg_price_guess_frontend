@@ -15,20 +15,35 @@ export const AuthProvider = ({ children }) => {
   // Whenever the token changes configure axios and fetch the current user
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      axios
-        .get(API_URL + "/auth/me")
-        .then((res) => setUser(res.data))
-        .catch((err) => {
-          if (err.response?.status !== 401) {
-            console.error("Fehler bei /auth/me:", err);
-          }
-          setUser(null);
-        });
-    } else {
-      delete axios.defaults.headers.common["Authorization"];
+    console.log("Setting axios auth header with token:", token);
+    
+    // Setze den Header explizit
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    
+    // Test: Sende Request mit explizitem Header
+    axios.get(API_URL + "/auth/me", {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then((res) => {
+      console.log("✅ /auth/me success:", res.data);
+      setUser(res.data);
+    })
+    .catch((err) => {
+      console.error("❌ /auth/me error:", err.response || err);
+      if (err.response?.status !== 401) {
+        console.error("Fehler bei /auth/me:", err);
+      }
       setUser(null);
-    }
+    });
+  } else {
+    console.log("No token, clearing user");
+    delete axios.defaults.headers.common["Authorization"];
+    setUser(null);
+  }
   }, [token]);
 
 
@@ -52,6 +67,7 @@ export const AuthProvider = ({ children }) => {
   
       setToken(newToken);
       localStorage.setItem("token", newToken);
+      console.log(newToken);
     } catch (err) {
       setToken(null);
       localStorage.removeItem("token");
@@ -59,9 +75,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, password) => {
+  const register = async (username, email, password) => {
     try {
-      const res = await axios.post(API_URL + "/auth/register", { username, password });
+      console.log(API_URL + "/auth/register");
+      const res = await axios.post(API_URL + "/auth/register", { username, email, password });
       const newToken = res.data.token;
   
       // ✅ Set the header here too

@@ -13,8 +13,15 @@ export default function Leaderboard({ onBack }) {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const res = await axios.get(API_URL+"/api/leaderboard");
-        setPlayers(res.data);
+        const res = await axios.get(API_URL + "/api/leaderboard");
+
+        // Option 1: Wenn du das erweiterte Format nutzt
+        if (res.data.data) {
+          setPlayers(res.data.data);
+        } else {
+          // Option 2: Wenn du direkt das Array zurückgibst
+          setPlayers(res.data);
+        }
       } catch (err) {
         console.error("Fehler beim Laden der Rangliste:", err);
       }
@@ -27,14 +34,18 @@ export default function Leaderboard({ onBack }) {
     <div className="text-white text-center max-w-md mx-auto">
       <h2 className="text-3xl font-bold mb-6">🏆 Rangliste</h2>
 
-      <ol className="bg-white text-black rounded-lg shadow-lg p-4">
-        {players.map((player, index) => (
-          <li key={index} className="py-1 border-b last:border-none">
-            <span className="font-bold">{index + 1}.</span> {player.username} –{" "}
-            <span className="text-green-600 font-semibold">{player.highscore}</span>
-          </li>
-        ))}
-      </ol>
+      {players.length === 0 ? (
+        <p className="text-gray-400 py-4">Noch keine Highscores vorhanden. Sei der Erste!</p>
+      ) : (
+        <ol className="bg-white text-black rounded-lg shadow-lg p-4">
+          {players.map((player, index) => (
+            <li key={index} className="py-1 border-b last:border-none">
+              <span className="font-bold">{index + 1}.</span> {player.username} –{" "}
+              <span className="text-green-600 font-semibold">{player.highscore}</span>
+            </li>
+          ))}
+        </ol>
+      )}
 
       <button
         onClick={onBack}
