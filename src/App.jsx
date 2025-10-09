@@ -23,13 +23,6 @@ export default function App() {
     setGameKey((k) => k + 1);
   };
 
-  const handleDBMagic = async () => {
-    try {
-      await axios.delete(API_URL + "/api/empty-db");
-    } catch (error) {
-      console.error("Fehler beim Zurücksetzen der DB:", error);
-    }
-  };
 
   if (!user) {
     return (
@@ -61,14 +54,6 @@ export default function App() {
             >
               Logout
             </button>
-            {user.username === "melle" && (
-              <button
-                onClick={handleDBMagic}
-                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded"
-              >
-                DB MAGIC
-              </button>
-            )}
           </div>
           <div className="text-center space-y-4">
             <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Preis-Duell</h1>

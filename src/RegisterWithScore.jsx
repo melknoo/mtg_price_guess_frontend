@@ -4,6 +4,7 @@ import axios from "axios";
 
 export default function RegisterWithScoreForm({ score, onSuccess }) {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,6 +20,7 @@ export default function RegisterWithScoreForm({ score, onSuccess }) {
     try {
       const res = await axios.post(`${API_URL}/auth/register-with-score`, {
         username,
+        email,
         password,
         score,
       });
@@ -60,6 +62,13 @@ export default function RegisterWithScoreForm({ score, onSuccess }) {
         className="w-full p-2 border rounded"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
+        required
+      />
+      <input
+        placeholder="Email"
+        className="w-full p-2 border rounded"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
         required
       />
       <input

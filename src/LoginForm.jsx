@@ -52,21 +52,36 @@ export default function LoginForm() {
         </div>
       )}
 
-      <input
-        placeholder="Benutzername"
-        className="w-full p-2 border rounded"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
-      {!isLogin && (
+      {isLogin && (
         <input
-          placeholder="Email"
+          placeholder="Benutzername oder Email"
           className="w-full p-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
         />
       )}
-      
+
+      {!isLogin && (
+        <>
+          <input
+            placeholder="Email"
+            type="email"
+            className="w-full p-2 border rounded"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <input
+            placeholder="Username"
+            type="text"
+            className="w-full p-2 border rounded"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </>
+
+      )}
+
       <input
         type="password"
         placeholder="Passwort"
