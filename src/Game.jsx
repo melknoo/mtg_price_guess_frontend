@@ -28,6 +28,7 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
       setHasPreloaded(true);
       preloadCards();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, hasPreloaded]);
 
   useEffect(() => {
@@ -55,12 +56,14 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
     }, 100);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timerRunning, timeLeft, showPrices, selectedCard]);
 
   useEffect(() => {
     if (cachedCards.length >= 2 && currentPair.length === 0) {
       setNextPair();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cachedCards]);
 
   const preloadCards = async () => {

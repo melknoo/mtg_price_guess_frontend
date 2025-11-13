@@ -7,7 +7,6 @@ import ForgotPassword from "./ForgotPassword";
 import ResetPassword from "./ResetPassword";
 import Game from "./Game";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
 export default function App() {
   const { user, logout, refreshUser, setUser } = useAuth();
@@ -18,7 +17,7 @@ export default function App() {
   const [resetToken, setResetToken] = useState(null);
   const [resetSuccess, setResetSuccess] = useState("");
 
-  // Check for reset token in URL on mount
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
@@ -40,6 +39,7 @@ export default function App() {
         setUser(null);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogout = () => {
