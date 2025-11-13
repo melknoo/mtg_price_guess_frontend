@@ -42,18 +42,25 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (user && (screen === "login" || screen === "reset-password" || screen === "forgot-password")) {
+      setScreen("menu");
+    }
+  }, [user, screen]);
+
   const handleLogout = () => {
     logout();
     setUser(null);
     setShowRegister(false);
     setScore(0);
     setGameKey((k) => k + 1);
+    setScreen("menu"); // ✅ Setze screen auf menu beim Logout
   };
 
   const handleResetSuccess = (message) => {
     setResetSuccess(message);
     setResetToken(null);
-    setScreen("login");
+    setScreen("login"); // Dies wird dann durch den useEffect oben zu "menu" wenn user existiert
     // Clear URL parameter
     window.history.replaceState({}, document.title, window.location.pathname);
   };
