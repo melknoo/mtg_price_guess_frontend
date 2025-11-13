@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import LoginForm from "./LoginForm";
 import Leaderboard from "./Leaderboard";
 import RegisterWithScore from "./RegisterWithScore";
+import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
 import Game from "./Game";
-import axios from "axios";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
@@ -14,6 +15,32 @@ export default function App() {
   const [showRegister, setShowRegister] = useState(false);
   const [score, setScore] = useState(0);
   const [gameKey, setGameKey] = useState(0);
+  const [resetToken, setResetToken] = useState(null);
+  const [resetSuccess, setResetSuccess] = useState("");
+
+  // Check for reset token in URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    console.log("Checking for reset token:", token);
+    console.log("Current URL:", window.location.search);
+    console.log("Current user:", user);
+    
+    if (token) {
+      // Token kommt bereits URL-safe vom Backend (mit - und _ statt + und /)
+      // Keine weitere Dekodierung nötig!
+      console.log("Reset token found (URL-safe):", token);
+      console.log("Setting screen to reset-password");
+      setResetToken(token);
+      setScreen("reset-password");
+      // Wenn ein User eingeloggt ist, logge ihn aus
+      if (user) {
+        console.log("Logging out current user for password reset");
+        logout();
+        setUser(null);
+      }
+    }
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -23,11 +50,49 @@ export default function App() {
     setGameKey((k) => k + 1);
   };
 
+  const handleResetSuccess = (message) => {
+    setResetSuccess(message);
+    setResetToken(null);
+    setScreen("login");
+    // Clear URL parameter
+    window.history.replaceState({}, document.title, window.location.pathname);
+  };
+
+  if (!user && screen === "forgot-password") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex items-center justify-center p-4">
+        <ForgotPassword onBack={() => setScreen("login")} />
+      </div>
+    );
+  }
+
+  if (!user && screen === "reset-password" && resetToken) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex items-center justify-center p-4">
+        <ResetPassword
+          token={resetToken}
+          onSuccess={handleResetSuccess}
+          onBack={() => {
+            setResetToken(null);
+            setScreen("login");
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }}
+        />
+      </div>
+    );
+  }
 
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex items-center justify-center p-4">
-        <LoginForm />
+        <div className="space-y-4">
+          {resetSuccess && (
+            <div className="bg-green-100 text-green-700 p-3 rounded-lg text-center max-w-sm mx-auto">
+              ✅ {resetSuccess}
+            </div>
+          )}
+          <LoginForm onForgotPassword={() => setScreen("forgot-password")} />
+        </div>
       </div>
     );
   }

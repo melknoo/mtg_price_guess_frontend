@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "./AuthContext";
 
-export default function LoginForm() {
+export default function LoginForm({ onForgotPassword }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
@@ -79,7 +79,6 @@ export default function LoginForm() {
             onChange={(e) => setUsername(e.target.value)}
           />
         </>
-
       )}
 
       <input
@@ -89,6 +88,18 @@ export default function LoginForm() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
+
+      {isLogin && onForgotPassword && (
+        <div className="text-right">
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Passwort vergessen?
+          </button>
+        </div>
+      )}
 
       <button
         type="submit"
