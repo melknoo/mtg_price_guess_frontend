@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FaHeart, FaRegHeart, FaStar, FaStopwatch } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaStar, FaStopwatch, FaFire } from "react-icons/fa";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
 import RegisterWithScore from "./RegisterWithScore";
@@ -21,6 +21,9 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
   const [timerRunning, setTimerRunning] = useState(false);
   const [correctIndex, setCorrectIndex] = useState(null);
   const [imagesLoaded, setImagesLoaded] = useState([false, false]);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [showStreakBonus, setShowStreakBonus] = useState(false);
   const { user, refreshUser, setUser } = useAuth();
 
   useEffect(() => {
@@ -116,6 +119,7 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
     setShowPrices(false);
     setTimeLeft(10);
     setTimerRunning(true);
+    setShowStreakBonus(false);
   };
 
   const handleChoice = (chosenIndex) => {
@@ -127,9 +131,31 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
 
     if (chosenIndex === correct) {
       const bonus = Math.ceil(timeLeft);
-      const newScore = score + bonus;
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      
+      // Update best streak
+      if (newStreak > bestStreak) {
+        setBestStreak(newStreak);
+      }
+
+      // Calculate streak bonus
+      let streakBonus = 0;
+      if (newStreak >= 5) {
+        streakBonus = Math.floor(newStreak / 5) * 5;
+        setShowStreakBonus(true);
+      }
+
+      const totalPoints = bonus + streakBonus;
+      const newScore = score + totalPoints;
       setScore(newScore);
-      setMessage(`✅ Richtig! +${bonus} Punkte!`);
+
+      let msg = `✅ Richtig! +${bonus} Punkte!`;
+      if (streakBonus > 0) {
+        msg += ` 🔥 Streak Bonus: +${streakBonus}`;
+      }
+      setMessage(msg);
+
       if (newScore > user.highscore) {
         if (user?.guest) {
           setUser({ ...user, highscore: newScore });
@@ -142,6 +168,8 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
         }
       }
     } else {
+      // Reset streak on wrong answer
+      setStreak(0);
       const remainingLives = lives - 1;
       setLives(remainingLives);
       setShowPrices(true);
@@ -167,6 +195,9 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
     setCorrectIndex(null);
     setShowPrices(false);
     setLives(3);
+    setStreak(0);
+    setBestStreak(0);
+    setShowStreakBonus(false);
 
     const newCards = await preloadCards();
     if (newCards.length >= 2) {
@@ -179,13 +210,36 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
     }
   };
 
+  const getStreakColor = () => {
+    if (streak >= 10) return "text-purple-400";
+    if (streak >= 5) return "text-orange-400";
+    if (streak >= 3) return "text-yellow-400";
+    return "text-white";
+  };
+
   return (
     <>
       <h1 className="md:text-3xl hidden md:block md:mt-0 mt-6 font-bold mb-4">🧙‍♂️ Magic Card Preis-Duell</h1>
       <div className="flex md:text-center w-full flex-col">
         <p className="mb-2 text-lg">Dein Highscore: {user.highscore}</p>
-        <p className="mb-6 font-bold text-2xl">Punkte: {score}</p>
+        <p className="mb-2 font-bold text-2xl">Punkte: {score}</p>
+        
+        {/* Streak Display */}
+        <div className={`flex items-center justify-center gap-2 mb-4 ${getStreakColor()} font-bold text-xl`}>
+          <motion.div
+            key={streak}
+            initial={{ scale: 1 }}
+            animate={{ scale: streak > 0 ? [1, 1.2, 1] : 1 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center gap-2"
+          >
+            <FaFire className={streak >= 5 ? "animate-pulse" : ""} />
+            <span>Streak: {streak}</span>
+          </motion.div>
+          {bestStreak > 0 && <span className="text-sm text-gray-300 ml-2">(Beste: {bestStreak})</span>}
+        </div>
       </div>
+
       <div className="w-full max-w-xl flex justify-between items-center mb-2 px-1">
         <div className="flex items-center gap-2 text-white font-semibold">
           <FaStopwatch />
@@ -202,6 +256,21 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
           <span>+{Math.ceil(timeLeft)} Punkte möglich</span>
         </motion.div>
       </div>
+
+      {/* Streak Bonus Indicator */}
+      {streak >= 5 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-xl mb-2 px-1"
+        >
+          <div className="bg-orange-500 bg-opacity-20 border-2 border-orange-400 rounded-lg p-2 text-center">
+            <span className="text-orange-300 font-bold">
+              🔥 Streak Bonus aktiv: +{Math.floor(streak / 5) * 5} Punkte beim nächsten Treffer!
+            </span>
+          </div>
+        </motion.div>
+      )}
 
       <div className="w-full max-w-xl h-4 bg-gray-700 rounded mb-6 overflow-hidden">
         <div
@@ -282,7 +351,12 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
       {gameOver && (
         <div className="absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center z-10">
           <h2 className="text-2xl mb-4 font-bold">❌ Falsch geraten!</h2>
-          <p className="mb-6 text-lg">{message}</p>
+          <p className="mb-2 text-lg">{message}</p>
+          {bestStreak > 0 && (
+            <p className="mb-6 text-xl text-orange-400 font-bold">
+              🔥 Beste Streak: {bestStreak}
+            </p>
+          )}
           <button
             onClick={handleRestart}
             className="bg-green-600 px-6 py-3 rounded text-white text-lg hover:bg-green-700 transition"
