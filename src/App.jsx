@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "./AuthContext";
-import LoginForm from "./LoginForm";
-import Leaderboard from "./Leaderboard";
-import RegisterWithScore from "./RegisterWithScore";
-import ForgotPassword from "./ForgotPassword";
-import ResetPassword from "./ResetPassword";
-import Game from "./Game";
+import { useAuth } from "./features/auth/context/AuthContext";
+import LoginForm from "./features/auth/components/LoginForm";
+import Leaderboard from "./features/leaderboard/components/Leaderboard";
+import RegisterWithScore from "./features/auth/components/RegisterWithScore"; 
+import ForgotPassword from "./features/auth/components/ForgotPassword"; 
+import ResetPassword from "./features/auth/components/ResetPassword"; 
+import Game from "./features/game/components/Game";
+import Button from "./shared/components/Button";
+
 
 
 export default function App() {
@@ -108,12 +110,12 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col items-center justify-center p-4 relative">
       <div className="absolute top-4 right-4 flex gap-2">
         {screen === "game" && (
-          <button
+          <Button
             onClick={() => setScreen("menu")}
-            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+            className="bg-blue-600 jaay hover:bg-blue-700 px-4 py-2 rounded"
           >
             Zurück zum Menü
-          </button>
+          </Button>
         )}
       </div>
 

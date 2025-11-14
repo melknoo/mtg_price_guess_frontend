@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../context/AuthContext";
+import Button from "../../../shared/components/Button";
 
 export default function LoginForm({ onForgotPassword }) {
   const [username, setUsername] = useState("");
@@ -58,6 +59,7 @@ export default function LoginForm({ onForgotPassword }) {
           className="w-full p-2 border rounded"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          required
         />
       )}
 
@@ -69,6 +71,7 @@ export default function LoginForm({ onForgotPassword }) {
             className="w-full p-2 border rounded"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
 
           <input
@@ -77,6 +80,7 @@ export default function LoginForm({ onForgotPassword }) {
             className="w-full p-2 border rounded"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            required
           />
         </>
       )}
@@ -87,6 +91,7 @@ export default function LoginForm({ onForgotPassword }) {
         className="w-full p-2 border rounded"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        required
       />
 
       {isLogin && onForgotPassword && (
@@ -101,19 +106,15 @@ export default function LoginForm({ onForgotPassword }) {
         </div>
       )}
 
-      <button
+      <Button
         type="submit"
-        className={`bg-blue-600 text-white p-2 rounded w-full hover:bg-blue-700 transition ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-        disabled={loading}
+        variant="primary"
+        size="md"
+        loading={loading}
+        className="w-full"
       >
-        {loading
-          ? isLogin
-            ? "Einloggen..."
-            : "Registrieren..."
-          : isLogin
-            ? "Einloggen"
-            : "Registrieren"}
-      </button>
+        {isLogin ? "Einloggen" : "Registrieren"}
+      </Button>
 
       <p
         className="text-sm text-blue-600 hover:underline cursor-pointer text-center"

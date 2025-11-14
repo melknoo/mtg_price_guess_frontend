@@ -1,73 +1,49 @@
 import { createContext, useState, useContext, useEffect } from "react";
 import axios from "axios";
 
-// We'll store the JWT token on the client and send it via the Authorization
-// header with every request.
-
 const AuthContext = createContext();
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
-console.log("API_URL:", process.env.REACT_APP_API_URL);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem("token"));
 
-  // Whenever the token changes configure axios and fetch the current user
   useEffect(() => {
     if (token) {
-    console.log("Setting axios auth header with token:", token);
-    
-    // Setze den Header explizit
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    
-    // Test: Sende Request mit explizitem Header
-    axios.get(API_URL + "/auth/me", {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    })
-    .then((res) => {
-      console.log("✅ /auth/me success:", res.data);
-      setUser(res.data);
-    })
-    .catch((err) => {
-      console.error("❌ /auth/me error:", err.response || err);
-      if (err.response?.status !== 401) {
-        console.error("Fehler bei /auth/me:", err);
-      }
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      
+      axios.get(API_URL + "/auth/me")
+        .then((res) => {
+          setUser(res.data);
+        })
+        .catch((err) => {
+          console.error("Auth initialization failed:", err);
+          localStorage.removeItem("token");
+          setToken(null);
+          setUser(null);
+        });
+    } else {
+      delete axios.defaults.headers.common["Authorization"];
       setUser(null);
-    });
-  } else {
-    console.log("No token, clearing user");
-    delete axios.defaults.headers.common["Authorization"];
-    setUser(null);
-  }
+    }
   }, [token]);
 
-
   const refreshUser = async () => {
-  try {
-    const res = await axios.get(`${API_URL}/auth/me`, { withCredentials: true });
-    setUser(res.data); // das updatet das `user` state
-  } catch (error) {
-    console.error("Fehler beim Aktualisieren des Benutzers:", error);
-  }
-};
+    try {
+      const res = await axios.get(`${API_URL}/auth/me`);
+      setUser(res.data);
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren des Benutzers:", error);
+    }
+  };
 
-  // Login-Funktion ruft den Login-Endpoint auf und speichert das JWT
   const login = async (username, password) => {
     try {
       const res = await axios.post(API_URL + "/auth/login", { username, password });
       const newToken = res.data.token;
-  
-      // ✅ Immediately set axios header so next requests (like /auth/me) include it
       axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-  
       setToken(newToken);
       localStorage.setItem("token", newToken);
-      console.log(newToken);
     } catch (err) {
       setToken(null);
       localStorage.removeItem("token");
@@ -77,13 +53,9 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (username, email, password) => {
     try {
-      console.log(API_URL + "/auth/register");
       const res = await axios.post(API_URL + "/auth/register", { username, email, password });
       const newToken = res.data.token;
-  
-      // ✅ Set the header here too
       axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-  
       setToken(newToken);
       localStorage.setItem("token", newToken);
     } catch (err) {
@@ -93,7 +65,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout-Funktion entfernt das gespeicherte Token
   const logout = async () => {
     try {
       await axios.post(API_URL + "/auth/logout");

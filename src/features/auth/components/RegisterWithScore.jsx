@@ -1,16 +1,13 @@
 import { useState } from "react";
-import { useAuth } from "./AuthContext";
-import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 
-export default function RegisterWithScoreForm({ score, onSuccess }) {
+export default function RegisterWithScore({ score, onSuccess }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { setUser } = useAuth();
-
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+  const { registerWithScore } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,20 +15,8 @@ export default function RegisterWithScoreForm({ score, onSuccess }) {
     setLoading(true);
 
     try {
-      const res = await axios.post(`${API_URL}/auth/register-with-score`, {
-        username,
-        email,
-        password,
-        score,
-      });
-
-      const token = res.data.token;
-
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      localStorage.setItem("token", token);
-
-      setUser(res.data.user); // optional: user-Objekt übernehmen
-      if (onSuccess) onSuccess(res.data.user);
+      const newUser = await registerWithScore(username, email, password, score);
+      if (onSuccess) onSuccess(newUser);
     } catch (err) {
       console.error(err);
       if (err.response?.data?.message) {
@@ -64,13 +49,16 @@ export default function RegisterWithScoreForm({ score, onSuccess }) {
         onChange={(e) => setUsername(e.target.value)}
         required
       />
+      
       <input
+        type="email"
         placeholder="Email"
         className="w-full p-2 border rounded"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
       />
+      
       <input
         type="password"
         placeholder="Passwort"
@@ -82,7 +70,9 @@ export default function RegisterWithScoreForm({ score, onSuccess }) {
 
       <button
         type="submit"
-        className={`bg-blue-600 text-white p-2 rounded w-full hover:bg-blue-700 transition ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`bg-blue-600 text-white p-2 rounded w-full hover:bg-blue-700 transition ${
+          loading ? "opacity-50 cursor-not-allowed" : ""
+        }`}
         disabled={loading}
       >
         {loading ? "Registrieren..." : "Registrieren & Score speichern"}

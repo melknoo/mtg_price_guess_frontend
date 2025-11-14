@@ -1,7 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
-
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+import { resetPassword } from "../api/authApi";
 
 export default function ResetPassword({ token, onSuccess, onBack }) {
   const [password, setPassword] = useState("");
@@ -26,13 +24,10 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
     setLoading(true);
 
     try {
-      const res = await axios.post(`${API_URL}/auth/reset-password`, {
-        token,
-        password,
-      });
+      const res = await resetPassword(token, password);
 
       if (onSuccess) {
-        onSuccess(res.data.message || "Passwort erfolgreich zurückgesetzt!");
+        onSuccess(res.message || "Passwort erfolgreich zurückgesetzt!");
       }
     } catch (err) {
       console.error(err);
