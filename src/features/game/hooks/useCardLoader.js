@@ -25,20 +25,21 @@ export const useCardLoader = () => {
   }, []);
 
   const setNextPair = useCallback(async () => {
-    let updatedCache = [...cachedCards];
+    let cardsToUse = [...cachedCards];
 
-    if (updatedCache.length < GAME_CONFIG.MIN_CARDS_NEEDED) {
+    // Nur neue Karten laden wenn weniger als 2 Karten im Cache
+    if (cardsToUse.length < GAME_CONFIG.MIN_CARDS_NEEDED) {
       const newCards = await preloadCards();
-      updatedCache = [...updatedCache, ...newCards];
+      cardsToUse = newCards;
     }
 
-    if (updatedCache.length < GAME_CONFIG.MIN_CARDS_NEEDED) {
+    if (cardsToUse.length < GAME_CONFIG.MIN_CARDS_NEEDED) {
       setError('Nicht genügend Karten verfügbar');
       return false;
     }
 
-    const nextPair = updatedCache.slice(0, 2);
-    const remaining = updatedCache.slice(2);
+    const nextPair = cardsToUse.slice(0, 2);
+    const remaining = cardsToUse.slice(2);
 
     setCurrentPair(nextPair);
     setCachedCards(remaining);

@@ -41,21 +41,13 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
     enabled: !showPrices && selectedCard === null,
   });
 
-  // Initial Load
+  // Initial Load - NUR beim ersten Mount
   useEffect(() => {
     if (user || user?.guest) {
       initGame();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Wenn Karten geladen sind, setze nächstes Paar
-  useEffect(() => {
-    if (!cardLoader.hasCards && !cardLoader.loading && !gameOver) {
-      cardLoader.setNextPair();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardLoader.hasCards, cardLoader.loading, gameOver]);
 
   // Starte Timer wenn beide Bilder geladen sind
   useEffect(() => {
@@ -76,7 +68,10 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
   }, [cardLoader.currentPair]);
 
   const initGame = async () => {
-    await cardLoader.preloadCards();
+    const cards = await cardLoader.preloadCards();
+    if (cards && cards.length >= 2) {
+      await cardLoader.setNextPair();
+    }
   };
 
   const handleChoice = useCallback(async (chosenIndex) => {
@@ -160,6 +155,7 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
     cardLoader.reset();
     
     await cardLoader.preloadCards();
+    await cardLoader.setNextPair();
   };
 
   const handleImageLoad = (index) => {
