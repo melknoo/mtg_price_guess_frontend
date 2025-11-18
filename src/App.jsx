@@ -2,15 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "./features/auth/context/AuthContext";
 import LoginForm from "./features/auth/components/LoginForm";
 import Leaderboard from "./features/leaderboard/components/Leaderboard";
-import RegisterWithScore from "./features/auth/components/RegisterWithScore";
-import ForgotPassword from "./features/auth/components/ForgotPassword";
-import ResetPassword from "./features/auth/components/ResetPassword";
+import RegisterWithScore from "./features/auth/components/RegisterWithScore"; 
+import ForgotPassword from "./features/auth/components/ForgotPassword"; 
+import ResetPassword from "./features/auth/components/ResetPassword"; 
 import Game from "./features/game/components/Game";
 import Footer from "./shared/components/Footer";
 import CookieConsent from "./features/legal/components/CookieConsent";
 import PrivacyPolicy from "./features/legal/components/PrivacyPolicy";
 import Impressum from "./features/legal/components/Impressum";
 import Terms from "./features/legal/components/Terms";
+import AccountSettings from "./features/account/components/AccountSettings";
 
 
 export default function App() {
@@ -26,7 +27,7 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
-
+    
     if (token) {
       console.log("Reset token found (URL-safe):", token);
       setResetToken(token);
@@ -180,68 +181,76 @@ export default function App() {
               Zurück zum Menü
             </button>
           )}
-        </div>
-
-        {screen === "menu" && (
-          <div>
-            <div className="absolute top-4 right-4 flex gap-2">
+          {screen === "menu" && (
+            <>
+              <button
+                onClick={() => setScreen("settings")}
+                className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded transition"
+              >
+                ⚙️ Einstellungen
+              </button>
               <button
                 onClick={handleLogout}
                 className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded"
               >
                 Logout
               </button>
-            </div>
-            <div className="text-center space-y-4">
-              <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Preis-Duell</h1>
-              <h2 className="text-2xl font-bold mb-4">Hallo {user.username}</h2>
-              <div className="space-x-4">
-                <button
-                  onClick={() => {
-                    setShowRegister(false);
-                    setScore(0);
-                    setGameKey((k) => k + 1);
-                    setScreen("game");
-                  }}
-                  className="bg-green-600 px-6 py-3 rounded text-white text-lg hover:bg-green-700 transition"
-                >
-                  Neues Spiel
-                </button>
-                <button
-                  onClick={() => {
-                    setShowRegister(false);
-                    setScreen("leaderboard");
-                  }}
-                  className="bg-purple-600 px-6 py-3 rounded text-white text-lg hover:bg-purple-700 transition"
-                >
-                  Rangliste
-                </button>
-              </div>
-              {user?.guest && !showRegister && (
-                <button
-                  onClick={() => setShowRegister(true)}
-                  className="mt-4 bg-blue-400 px-6 py-3 rounded text-white text-lg hover:bg-blue-600 transition"
-                >
-                  Registrieren & Score speichern
-                </button>
-              )}
+            </>
+          )}
+        </div>
 
-              {user?.guest && showRegister && (
-                <RegisterWithScore
-                  score={user?.highscore ?? score}
-                  className="mt-4"
-                  onSuccess={(newUser) => {
-                    setUser(newUser);
-                    refreshUser();
-                    setShowRegister(false);
-                  }}
-                />
-              )}
+        {screen === "menu" && (
+          <div className="text-center space-y-4">
+            <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Preis-Duell</h1>
+            <h2 className="text-2xl font-bold mb-4">Hallo {user.username}</h2>
+            <div className="space-x-4">
+              <button
+                onClick={() => {
+                  setShowRegister(false);
+                  setScore(0);
+                  setGameKey((k) => k + 1);
+                  setScreen("game");
+                }}
+                className="bg-green-600 px-6 py-3 rounded text-white text-lg hover:bg-green-700 transition"
+              >
+                Neues Spiel
+              </button>
+              <button
+                onClick={() => {
+                  setShowRegister(false);
+                  setScreen("leaderboard");
+                }}
+                className="bg-purple-600 px-6 py-3 rounded text-white text-lg hover:bg-purple-700 transition"
+              >
+                Rangliste
+              </button>
             </div>
+            {user?.guest && !showRegister && (
+              <button
+                onClick={() => setShowRegister(true)}
+                className="mt-4 bg-blue-400 px-6 py-3 rounded text-white text-lg hover:bg-blue-600 transition"
+              >
+                Registrieren & Score speichern
+              </button>
+            )}
+
+            {user?.guest && showRegister && (
+              <RegisterWithScore
+                score={user?.highscore ?? score}
+                className="mt-4"
+                onSuccess={(newUser) => {
+                  setUser(newUser);
+                  refreshUser();
+                  setShowRegister(false);
+                }}
+              />
+            )}
           </div>
         )}
 
         {screen === "leaderboard" && <Leaderboard onBack={() => setScreen("menu")} />}
+
+        {screen === "settings" && <AccountSettings onBack={() => setScreen("menu")} />}
 
         {screen === "game" && (
           <Game
@@ -254,7 +263,7 @@ export default function App() {
           />
         )}
       </div>
-
+      
       <Footer onNavigate={handleFooterNavigation} />
       <CookieConsent />
     </div>
