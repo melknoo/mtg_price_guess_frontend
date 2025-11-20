@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import Button from "../../../shared/components/Button";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -12,7 +12,18 @@ export default function LoginForm({ onForgotPassword }) {
   const { login, register, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const recaptchaRef = useRef(null);
-  console.log("ReCAPTCHA ref:", process.env.REACT_APP_RECAPTCHA_SITE_KEY);
+  
+  // Tracking fehlgeschlagener Login-Versuche
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [showCaptchaOnLogin, setShowCaptchaOnLogin] = useState(false);
+
+  // Prüfe beim Laden, ob bereits fehlgeschlagene Versuche gespeichert sind
+  useEffect(() => {
+    const attempts = parseInt(localStorage.getItem('login_attempts') || '0');
+    setFailedAttempts(attempts);
+    setShowCaptchaOnLogin(attempts >= 3);
+  }, []);
+
   const handleGuest = () => {
     setUser({ username: "Gast", highscore: 0, guest: true });
   };
@@ -20,32 +31,40 @@ export default function LoginForm({ onForgotPassword }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    
+    // Für Registrierung: immer reCAPTCHA
+    // Für Login: nur nach 3 fehlgeschlagenen Versuchen
+    const needsCaptcha = !isLogin || showCaptchaOnLogin;
+    
+    if (needsCaptcha) {
+      if (!recaptchaRef.current) {
+        setError("❌ reCAPTCHA konnte nicht geladen werden.");
+        return;
+      }
+      
+      const recaptchaToken = recaptchaRef.current.getValue();
+      
+      if (!recaptchaToken) {
+        setError("❌ Bitte bestätige, dass du kein Roboter bist.");
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
-      // Für Registrierung: reCAPTCHA Token holen
-      let recaptchaToken = null;
-      if (!isLogin) {
-        if (!recaptchaRef.current) {
-          setError("❌ reCAPTCHA konnte nicht geladen werden.");
-          setLoading(false);
-          return;
-        }
-        
-        recaptchaToken = recaptchaRef.current.getValue();
-        
-        if (!recaptchaToken) {
-          setError("❌ Bitte bestätige, dass du kein Roboter bist.");
-          setLoading(false);
-          return;
-        }
-      }
+      const recaptchaToken = needsCaptcha ? recaptchaRef.current.getValue() : null;
 
       if (isLogin) {
-        await login(username, password);
+        await login(username, password, recaptchaToken);
+        
+        // Erfolgreicher Login -> Reset der fehlgeschlagenen Versuche
+        localStorage.removeItem('login_attempts');
+        setFailedAttempts(0);
+        setShowCaptchaOnLogin(false);
+        
       } else {
         await register(username, email, password, recaptchaToken);
-        // Reset reCAPTCHA nach erfolgreicher Registrierung
         if (recaptchaRef.current) {
           recaptchaRef.current.reset();
         }
@@ -54,12 +73,26 @@ export default function LoginForm({ onForgotPassword }) {
       console.error(err);
       
       // Reset reCAPTCHA bei Fehler
-      if (!isLogin && recaptchaRef.current) {
+      if (needsCaptcha && recaptchaRef.current) {
         recaptchaRef.current.reset();
       }
       
       if (err.response?.status === 401) {
-        setError("❌ Benutzername oder Passwort ist falsch.");
+        // Fehlgeschlagener Login-Versuch
+        if (isLogin) {
+          const newAttempts = failedAttempts + 1;
+          setFailedAttempts(newAttempts);
+          localStorage.setItem('login_attempts', newAttempts.toString());
+          
+          if (newAttempts >= 3) {
+            setShowCaptchaOnLogin(true);
+            setError("❌ Zu viele fehlgeschlagene Versuche. Bitte bestätige, dass du kein Roboter bist.");
+          } else {
+            setError(`❌ Benutzername oder Passwort ist falsch. (Versuch ${newAttempts}/3)`);
+          }
+        } else {
+          setError("❌ Benutzername oder Passwort ist falsch.");
+        }
       } else if (err.response?.data?.message) {
         setError(`❌ ${err.response.data.message}`);
       } else {
@@ -79,6 +112,9 @@ export default function LoginForm({ onForgotPassword }) {
     }
   };
 
+  // Show warning wenn nah an Captcha-Schwelle
+  const showWarning = isLogin && failedAttempts > 0 && failedAttempts < 3;
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -89,6 +125,12 @@ export default function LoginForm({ onForgotPassword }) {
       {error && (
         <div className="bg-red-100 text-red-700 p-2 rounded mb-2 text-sm">
           {error}
+        </div>
+      )}
+
+      {showWarning && (
+        <div className="bg-yellow-100 text-yellow-700 p-2 rounded mb-2 text-sm">
+          ⚠️ Noch {3 - failedAttempts} Versuch(e) bis zur Captcha-Verifizierung
         </div>
       )}
 
@@ -133,8 +175,8 @@ export default function LoginForm({ onForgotPassword }) {
         required
       />
 
-      {/* reCAPTCHA nur bei Registrierung anzeigen */}
-      {!isLogin && (
+      {/* reCAPTCHA: Immer bei Registrierung, bei Login nur nach 3 Fehlversuchen */}
+      {(!isLogin || showCaptchaOnLogin) && (
         <div className="flex justify-center">
           <ReCAPTCHA
             ref={recaptchaRef}
