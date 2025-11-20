@@ -10,9 +10,9 @@ export default function Footer({ onNavigate }) {
   };
 
   return (
-    <footer className="w-full bg-black/30 backdrop-blur-sm border-t border-white/10 py-4 mt-auto">
+    <footer className="w-full bg-black/30 backdrop-blur-sm border-t border-white/10 py-1 sm:py-4 mt-auto">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-4">
           {/* Copyright */}
           <div className="text-gray-400 text-sm">
             © {currentYear} Magic Preis-Duell. Alle Rechte vorbehalten.

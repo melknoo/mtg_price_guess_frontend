@@ -264,7 +264,7 @@ export default function App() {
         )}
       </div>
       
-      <Footer onNavigate={handleFooterNavigation} />
+      {screen !== "game" && <Footer onNavigate={handleFooterNavigation} />}
       <CookieConsent />
     </div>
   );
