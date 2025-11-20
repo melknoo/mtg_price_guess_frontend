@@ -17,7 +17,6 @@ export default function LoginForm({ onForgotPassword }) {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [showCaptchaOnLogin, setShowCaptchaOnLogin] = useState(false);
 
-  console.log(process.env.REACT_APP_RECAPTCHA_SITE_KEY);
 
   // Prüfe beim Laden, ob bereits fehlgeschlagene Versuche gespeichert sind
   useEffect(() => {

@@ -182,9 +182,6 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
 
   return (
     <>
-      <h1 className="md:text-3xl hidden md:block md:mt-0 mt-6 font-bold mb-4">
-        🧙‍♂️ Magic Card Preis-Duell
-      </h1>
 
       {/* Score Display */}
       <div className="flex md:text-center w-full flex-col">
@@ -225,11 +222,11 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
       )}
 
       {/* Next Button */}
-      <div className="mt-6 flex text-lg min-h-[80px]">
+      <div className="sm:mt-6 mt-auto flex text-lg min-h-[80px]">
         {selectedCard !== null && !gameOver && (
           <button
             onClick={handleNextPair}
-            className="bg-blue-500 text-2xl font-semibold hover:bg-blue-600 text-white px-6 py-6 rounded transition"
+            className="bg-blue-500 text-2xl min-w-[250px] font-semibold hover:bg-blue-600 text-white px-6 py-6 rounded transition"
           >
             Weiter
           </button>
