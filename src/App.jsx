@@ -171,8 +171,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-4 relative">
-        <div className="absolute top-4 right-4 flex gap-2">
+      <div className="flex-1 flex flex-col items-center justify-center sm:p-4 py-12 px-4 relative">
+        <div className="absolute top-12 sm:top-4 right-4 flex gap-2">
           {screen === "game" && (
             <button
               onClick={() => setScreen("menu")}
