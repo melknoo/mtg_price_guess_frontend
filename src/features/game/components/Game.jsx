@@ -308,7 +308,7 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
     <>
       {/* Score Display mit Rundenzähler */}
       <div className="flex md:text-center w-full flex-col">
-        <div className="flex items-center justify-center gap-4 mb-2">
+        <div className="flex items-center justify-start sm:justify-center gap-4 mb-2">
           <div className="bg-white/10 backdrop-blur-lg rounded-lg px-4 py-2 border border-white/20">
             <span className="text-purple-300 text-sm font-semibold">
               🎯 Runde {currentRound}
