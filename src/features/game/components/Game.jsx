@@ -222,8 +222,15 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
   const handleSkipCard = () => {
     if (perkSystem.hasPerk('skip_card')) {
       perkSystem.consumePerk('skip_card');
-      cardLoader.setNextPair();
+      
+      // Reset current round state
+      setSelectedCard(null);
+      setCorrectIndex(null);
+      setShowPrices(false);
       setMessage("⏭️ Karte übersprungen!");
+      
+      // Load new cards
+      cardLoader.setNextPair();
       timer.reset();
     }
   };
@@ -356,22 +363,25 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
       )}
 
       {/* Action Buttons */}
-      <div className="sm:mt-6 mt-auto flex gap-4 text-lg min-h-[80px]">
+      <div className="sm:mt-6 mt-auto flex gap-4 text-lg min-h-[80px] items-center">
+        {/* Skip Button - nur wenn keine Karte ausgewählt und nicht Game Over */}
+        {perkSystem.hasPerk('skip_card') && selectedCard === null && !gameOver && !showPrices && (
+          <button
+            onClick={handleSkipCard}
+            className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 text-white px-6 py-4 rounded transition shadow-lg hover:shadow-xl"
+            title="Überspringe dieses Kartenpaar ohne Strafe"
+          >
+            ⏭️ Überspringen
+          </button>
+        )}
+        
+        {/* Next Button */}
         {selectedCard !== null && !gameOver && (
           <button
             onClick={handleNextPair}
             className="bg-blue-500 text-2xl min-w-[250px] font-semibold hover:bg-blue-600 text-white px-6 py-6 rounded transition"
           >
             Weiter
-          </button>
-        )}
-        
-        {perkSystem.hasPerk('skip_card') && selectedCard === null && !gameOver && (
-          <button
-            onClick={handleSkipCard}
-            className="bg-yellow-500 text-xl font-semibold hover:bg-yellow-600 text-white px-4 py-4 rounded transition"
-          >
-            ⏭️ Überspringen
           </button>
         )}
       </div>

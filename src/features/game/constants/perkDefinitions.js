@@ -136,13 +136,14 @@ export const PERKS = {
   SKIP_CARD: {
     id: 'skip_card',
     name: 'Karte Überspringen',
-    description: 'Überspringe das aktuelle Kartenpaar ohne Strafe',
+    description: 'Überspringe ein Kartenpaar ohne Strafe (manuell aktivierbar)',
     icon: '⏭️',
     type: PERK_TYPES.UTILITY,
     rarity: PERK_RARITY.COMMON,
     effect: 'skip',
     value: 1,
-    duration: 1, // Einmalig nutzbar
+    duration: -1, 
+    manual: true, 
   },
 };
 
