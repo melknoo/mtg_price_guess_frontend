@@ -144,6 +144,6 @@ export const RARITY_WEIGHTS = {
 
 // Config
 export const PERK_CONFIG = {
-    ROUNDS_BETWEEN_PERKS: 2, // Alle 5 Runden gibt es Perks
+    ROUNDS_BETWEEN_PERKS: 5, // Alle 5 Runden gibt es Perks
     PERKS_TO_CHOOSE: 3, // Anzahl der zur Auswahl stehenden Perks
 };
