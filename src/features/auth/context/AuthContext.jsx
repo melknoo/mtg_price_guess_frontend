@@ -51,13 +51,40 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, email, password) => {
+  const register = async (username, email, password, recaptchaToken) => {
     try {
-      const res = await axios.post(API_URL + "/auth/register", { username, email, password });
+      const res = await axios.post(API_URL + "/auth/register", { 
+        username, 
+        email, 
+        password,
+        recaptchaToken 
+      });
       const newToken = res.data.token;
       axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
       setToken(newToken);
       localStorage.setItem("token", newToken);
+    } catch (err) {
+      setToken(null);
+      localStorage.removeItem("token");
+      throw err;
+    }
+  };
+
+  const registerWithScore = async (username, email, password, score, recaptchaToken) => {
+    try {
+      const res = await axios.post(API_URL + "/auth/register-with-score", { 
+        username, 
+        email, 
+        password, 
+        score,
+        recaptchaToken 
+      });
+      const newToken = res.data.token;
+      axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+      setToken(newToken);
+      localStorage.setItem("token", newToken);
+      setUser(res.data.user);
+      return res.data.user;
     } catch (err) {
       setToken(null);
       localStorage.removeItem("token");
@@ -76,7 +103,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, setUser, refreshUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      register, 
+      registerWithScore,
+      setUser, 
+      refreshUser 
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import Button from "../../../shared/components/Button";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function LoginForm({ onForgotPassword }) {
   const [username, setUsername] = useState("");
@@ -10,7 +11,8 @@ export default function LoginForm({ onForgotPassword }) {
   const [error, setError] = useState("");
   const { login, register, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
-
+  const recaptchaRef = useRef(null);
+  console.log("ReCAPTCHA ref:", process.env.REACT_APP_RECAPTCHA_SITE_KEY);
   const handleGuest = () => {
     setUser({ username: "Gast", highscore: 0, guest: true });
   };
@@ -21,13 +23,41 @@ export default function LoginForm({ onForgotPassword }) {
     setLoading(true);
 
     try {
+      // Für Registrierung: reCAPTCHA Token holen
+      let recaptchaToken = null;
+      if (!isLogin) {
+        if (!recaptchaRef.current) {
+          setError("❌ reCAPTCHA konnte nicht geladen werden.");
+          setLoading(false);
+          return;
+        }
+        
+        recaptchaToken = recaptchaRef.current.getValue();
+        
+        if (!recaptchaToken) {
+          setError("❌ Bitte bestätige, dass du kein Roboter bist.");
+          setLoading(false);
+          return;
+        }
+      }
+
       if (isLogin) {
         await login(username, password);
       } else {
-        await register(username, email, password);
+        await register(username, email, password, recaptchaToken);
+        // Reset reCAPTCHA nach erfolgreicher Registrierung
+        if (recaptchaRef.current) {
+          recaptchaRef.current.reset();
+        }
       }
     } catch (err) {
       console.error(err);
+      
+      // Reset reCAPTCHA bei Fehler
+      if (!isLogin && recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+      
       if (err.response?.status === 401) {
         setError("❌ Benutzername oder Passwort ist falsch.");
       } else if (err.response?.data?.message) {
@@ -37,6 +67,15 @@ export default function LoginForm({ onForgotPassword }) {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleModeSwitch = () => {
+    setIsLogin(!isLogin);
+    setError("");
+    // Reset reCAPTCHA beim Umschalten
+    if (recaptchaRef.current) {
+      recaptchaRef.current.reset();
     }
   };
 
@@ -94,6 +133,17 @@ export default function LoginForm({ onForgotPassword }) {
         required
       />
 
+      {/* reCAPTCHA nur bei Registrierung anzeigen */}
+      {!isLogin && (
+        <div className="flex justify-center">
+          <ReCAPTCHA
+            ref={recaptchaRef}
+            sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
+            theme="light"
+          />
+        </div>
+      )}
+
       {isLogin && onForgotPassword && (
         <div className="text-right">
           <button
@@ -118,10 +168,7 @@ export default function LoginForm({ onForgotPassword }) {
 
       <p
         className="text-sm text-blue-600 hover:underline cursor-pointer text-center"
-        onClick={() => {
-          setIsLogin(!isLogin);
-          setError("");
-        }}
+        onClick={handleModeSwitch}
       >
         {isLogin ? "Noch kein Account? Registrieren" : "Schon registriert? Login"}
       </p>

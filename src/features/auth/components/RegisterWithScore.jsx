@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function RegisterWithScore({ score, onSuccess }) {
   const [username, setUsername] = useState("");
@@ -8,17 +9,38 @@ export default function RegisterWithScore({ score, onSuccess }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { registerWithScore } = useAuth();
+  const recaptchaRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    
+    // reCAPTCHA Token holen
+    if (!recaptchaRef.current) {
+      setError("❌ reCAPTCHA konnte nicht geladen werden.");
+      return;
+    }
+    
+    const recaptchaToken = recaptchaRef.current.getValue();
+    
+    if (!recaptchaToken) {
+      setError("❌ Bitte bestätige, dass du kein Roboter bist.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const newUser = await registerWithScore(username, email, password, score);
+      const newUser = await registerWithScore(username, email, password, score, recaptchaToken);
       if (onSuccess) onSuccess(newUser);
     } catch (err) {
       console.error(err);
+      
+      // Reset reCAPTCHA bei Fehler
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+      
       if (err.response?.data?.message) {
         setError(`❌ ${err.response.data.message}`);
       } else {
@@ -32,9 +54,13 @@ export default function RegisterWithScore({ score, onSuccess }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 max-w-sm mx-auto bg-white p-6 rounded-xl shadow text-black"
+      className="space-y-4 max-w-sm mx-auto bg-white p-6 rounded-xl shadow text-black mt-6"
     >
       <h2 className="text-xl font-bold mb-2">Registrieren & Score speichern</h2>
+      
+      <div className="bg-green-100 text-green-700 p-3 rounded text-center font-semibold">
+        🎯 Dein Score: {score} Punkte
+      </div>
 
       {error && (
         <div className="bg-red-100 text-red-700 p-2 rounded mb-2 text-sm">
@@ -61,12 +87,22 @@ export default function RegisterWithScore({ score, onSuccess }) {
       
       <input
         type="password"
-        placeholder="Passwort"
+        placeholder="Passwort (mind. 6 Zeichen)"
         className="w-full p-2 border rounded"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
+        minLength={6}
       />
+
+      {/* reCAPTCHA */}
+      <div className="flex justify-center">
+        <ReCAPTCHA
+          ref={recaptchaRef}
+          sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
+          theme="light"
+        />
+      </div>
 
       <button
         type="submit"
