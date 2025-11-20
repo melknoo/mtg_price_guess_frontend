@@ -37,9 +37,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (username, password) => {
+  const login = async (username, password, recaptchaToken = null) => {
     try {
-      const res = await axios.post(API_URL + "/auth/login", { username, password });
+      const payload = { username, password };
+      
+      // Nur recaptchaToken hinzufügen wenn vorhanden
+      if (recaptchaToken) {
+        payload.recaptchaToken = recaptchaToken;
+      }
+      
+      const res = await axios.post(API_URL + "/auth/login", payload);
       const newToken = res.data.token;
       axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
       setToken(newToken);
