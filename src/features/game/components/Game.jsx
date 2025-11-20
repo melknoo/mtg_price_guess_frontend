@@ -1,5 +1,3 @@
-// src/features/game/components/Game.jsx
-
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../auth/context/AuthContext";
 import { useGameTimer } from "../hooks/useGameTimer";
@@ -38,6 +36,8 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
   const [showPrices, setShowPrices] = useState(false);
   const [message, setMessage] = useState("");
   const [imagesLoaded, setImagesLoaded] = useState([false, false]);
+  const [currentRound, setCurrentRound] = useState(1); // NEU: Rundenzähler
+  const [perkJustSelected, setPerkJustSelected] = useState(false); // NEU: Flag ob Perk gerade ausgewählt wurde
 
   // Custom Hooks
   const cardLoader = useCardLoader();
@@ -200,6 +200,9 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
         }
       }
     }
+
+    // NEU: Perk Durations NACH der Runde reduzieren
+    perkSystem.decrementPerkDurations();
   }, [
     cardLoader.currentPair, 
     timer, 
@@ -214,9 +217,10 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
   ]);
 
   const handleNextPair = () => {
-    perkSystem.decrementPerkDurations();
+    // Perk Durations werden jetzt in handleChoice reduziert
     cardLoader.setNextPair();
     setMessage("");
+    setCurrentRound(prev => prev + 1); // NEU: Erhöhe Rundenzähler
   };
 
   const handleSkipCard = () => {
@@ -227,11 +231,12 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
       setSelectedCard(null);
       setCorrectIndex(null);
       setShowPrices(false);
-      setMessage("⏭️ Karte übersprungen!");
+      setMessage("⭐️ Karte übersprungen!");
       
       // Load new cards
       cardLoader.setNextPair();
       timer.reset();
+      setCurrentRound(prev => prev + 1); // NEU: Erhöhe auch beim Überspringen
     }
   };
 
@@ -243,6 +248,7 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
     setCorrectIndex(null);
     setShowPrices(false);
     setLives(GAME_CONFIG.INITIAL_LIVES);
+    setCurrentRound(1); // NEU: Reset Rundenzähler
     
     streak.reset();
     timer.reset();
@@ -300,8 +306,15 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
 
   return (
     <>
-      {/* Score Display */}
+      {/* Score Display mit Rundenzähler */}
       <div className="flex md:text-center w-full flex-col">
+        <div className="flex items-center justify-center gap-4 mb-2">
+          <div className="bg-white/10 backdrop-blur-lg rounded-lg px-4 py-2 border border-white/20">
+            <span className="text-purple-300 text-sm font-semibold">
+              🎯 Runde {currentRound}
+            </span>
+          </div>
+        </div>
         <p className="mb-2 text-lg">Dein Highscore: {user.highscore}</p>
         <p className="mb-2 font-bold text-2xl">Punkte: {score}</p>
       </div>
@@ -371,7 +384,7 @@ export default function Game({ score, setScore, onBack, showRegister, setShowReg
             className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 text-white px-6 py-4 rounded transition shadow-lg hover:shadow-xl"
             title="Überspringe dieses Kartenpaar ohne Strafe"
           >
-            ⏭️ Überspringen
+            ⭐️ Überspringen
           </button>
         )}
         
