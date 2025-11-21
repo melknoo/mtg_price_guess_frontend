@@ -83,7 +83,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                     className={`
                     relative
                     bg-gradient-to-br ${getRarityColor(perk.rarity)}
-                    border-4 rounded-2xl p-6
+                    border-4 rounded-2xl p-2 sm:p-6
                     shadow-2xl
                     transition-all duration-200
                     hover:scale-105 hover:shadow-3xl
@@ -107,7 +107,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
 
                                     {/* Icon */}
                                     <div className="text-center mb-4">
-                                        <div className="text-7xl inline-block transition-transform duration-200 hover:scale-110">
+                                        <div className="sm:text-7xl text-2xl inline-block transition-transform duration-200 hover:scale-110">
                                             {perk.icon}
                                         </div>
                                     </div>

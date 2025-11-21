@@ -7,22 +7,6 @@ export const usePerkSystem = () => {
   const [showPerkSelection, setShowPerkSelection] = useState(false);
   const [availablePerks, setAvailablePerks] = useState([]);
 
-  // Erhöhe Rundenzähler
-  const incrementRound = useCallback(() => {
-    setRoundsPlayed(prev => {
-      const newRound = prev + 1;
-      
-      // Prüfe ob Perk-Auswahl angezeigt werden soll
-      if (newRound > 0 && newRound % PERK_CONFIG.ROUNDS_BETWEEN_PERKS === 0) {
-        const perks = generateRandomPerks();
-        setAvailablePerks(perks);
-        setShowPerkSelection(true);
-      }
-      
-      return newRound;
-    });
-  }, []);
-
   // Generiere zufällige Perks basierend auf Rarity
   const generateRandomPerks = useCallback(() => {
     const allPerks = Object.values(PERKS);
@@ -61,6 +45,13 @@ export const usePerkSystem = () => {
 
     return availablePerks[0];
   };
+
+  // NEU: Trigger Perk Selection (wird von Game.jsx aufgerufen)
+  const triggerPerkSelection = useCallback(() => {
+    const perks = generateRandomPerks();
+    setAvailablePerks(perks);
+    setShowPerkSelection(true);
+  }, [generateRandomPerks]);
 
   // Wähle einen Perk aus
   const selectPerk = useCallback((perk) => {
@@ -145,7 +136,7 @@ export const usePerkSystem = () => {
     availablePerks,
 
     // Actions
-    incrementRound,
+    triggerPerkSelection, // NEU: Exportiere diese Funktion
     selectPerk,
     decrementPerkDurations,
     consumePerk,
