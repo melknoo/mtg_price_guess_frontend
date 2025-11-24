@@ -61,7 +61,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     onClick={() => setIsMinimized((prev) => !prev)}
-                    className="fixed bottom-4 right-4 z-[60] bg-black/80 text-white px-4 py-2 rounded-full border border-white/20 shadow-2xl backdrop-blur hover:bg-black/70 transition"
+                    className="fixed bottom-12 right-4 z-[60] bg-black/80 text-white text-sm sm:text-2xl px-4 py-2 rounded-full border border-white/20 shadow-2xl backdrop-blur hover:bg-black/70 transition"
                 >
                     {isMinimized ? 'Show Perks' : 'Hide Perks'}
                 </motion.button>
@@ -83,18 +83,18 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                         >
                             <button
                                 onClick={() => setIsMinimized(true)}
-                                className="absolute -top-4 right-0 bg-black/70 text-white px-3 py-1 rounded-full border border-white/20 shadow-lg hover:bg-black/60 transition"
+                                className="absolute -top-7 left-0 bg-black/70 text-white px-3 py-1 text-sm sm:text-2xl rounded-full border border-white/20 shadow-lg hover:bg-black/60 transition"
                             >
                                 Minimize
                             </button>
 
                             {/* Header */}
-                            <div className="text-center mb-8">
+                            <div className="text-center mb-2 sm:mb-8">
                                 <motion.h2
                                     initial={{ y: -20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                     transition={{ delay: 0.1 }}
-                                    className="text-4xl font-bold text-white mb-2"
+                                    className="sm:text-4xl text-2xl font-bold text-white mb-2"
                                 >
                                     ✨ Choose Your Bonus!
                                 </motion.h2>
@@ -139,20 +139,23 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                         </div>
 
                                         {/* Icon */}
-                                        <div className="text-center mb-4">
-                                            <motion.div
-                                                whileHover={{ rotate: 360, scale: 1.2 }}
-                                                transition={{ duration: 0.5 }}
-                                                className="text-7xl inline-block"
-                                            >
-                                                {perk.icon}
-                                            </motion.div>
+                                        <div className="flex justify-center sm:flex-col mb-1 sm:mb-4">
+                                            <div className="text-center sm:mb-4">
+                                                <motion.div
+                                                    whileHover={{ rotate: 360, scale: 1.2 }}
+                                                    transition={{ duration: 0.5 }}
+                                                    className="sm:text-7xl text-2xl inline-block"
+                                                >
+                                                    {perk.icon}
+                                                </motion.div>
+                                            </div>
+
+                                            {/* Name */}
+                                            <h3 className="text-2xl font-bold text-white text-center sm:mb-3">
+                                                {perk.name}
+                                            </h3>
                                         </div>
 
-                                        {/* Name */}
-                                        <h3 className="text-2xl font-bold text-white text-center mb-3">
-                                            {perk.name}
-                                        </h3>
 
                                         {/* Description */}
                                         <p className="text-gray-200 text-center text-sm leading-relaxed mb-4">
@@ -189,7 +192,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.5 }}
-                                className="text-center text-gray-400 text-sm mt-8"
+                                className="text-center text-gray-400 text-sm mt-2 sm:mt-8"
                             >
                                 💡 Tip: Choose wisely! Some perks can be stacked.
                             </motion.p>
