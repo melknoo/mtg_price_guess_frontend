@@ -20,5 +20,6 @@ export const getMoreExpensiveCardIndex = (card1, card2) => {
   };
   
   export const createErrorMessage = (correctCard) => {
-    return `❌ Falsch! ${correctCard.name} war teurer: ${formatPrice(correctCard.prices.eur)}`;
+    console.log(correctCard);
+    return `❌ Falsch! ${correctCard.name} (${correctCard.set}) war teurer: ${formatPrice(correctCard.prices.eur)}`;
   };

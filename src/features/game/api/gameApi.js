@@ -13,6 +13,7 @@ export const fetchRandomCards = async (count = 20) => {
     return response.data.map(card => ({
       id: card.id,
       name: card.name,
+      set: card.set,
       prices: { 
         eur: parseFloat(card.price) 
       },
