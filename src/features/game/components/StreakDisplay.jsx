@@ -23,7 +23,7 @@ export default function StreakDisplay({ streak, bestStreak, color, streakBonus }
         </motion.div>
         {bestStreak > 0 && (
           <span className="text-sm sm:block hidden text-gray-300 ml-2">
-            (Beste: {bestStreak})
+            (Best: {bestStreak})
           </span>
         )}
       </div>
@@ -37,7 +37,7 @@ export default function StreakDisplay({ streak, bestStreak, color, streakBonus }
         >
           <div className="bg-orange-500 bg-opacity-20 border-2 border-orange-400 rounded-lg p-2 text-center">
             <span className="text-orange-300 font-bold">
-              🔥 Streak Bonus aktiv: +{streakBonus} Punkte!
+              🔥 Streak Bonus active: +{streakBonus} Points!
             </span>
           </div>
         </motion.div>

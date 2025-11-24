@@ -5,7 +5,7 @@ export default function CookieConsent() {
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    // Prüfe ob User bereits zugestimmt hat
+    // Check if user has already consented
     const consent = localStorage.getItem("cookie_consent");
     if (!consent) {
       setShowBanner(true);
@@ -20,7 +20,7 @@ export default function CookieConsent() {
   const handleDecline = () => {
     localStorage.setItem("cookie_consent", "declined");
     setShowBanner(false);
-    // Optional: Logout wenn User ablehnt, da Auth-Token technisch notwendig ist
+    // Optional: Logout if user declines, as auth token is technically necessary
     // logout();
   };
 
@@ -37,12 +37,12 @@ export default function CookieConsent() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex-1">
                 <h3 className="text-white font-semibold text-lg mb-2">
-                  🍪 Hinweis zu Cookies und Local Storage
+                  🍪 Note on Cookies and Local Storage
                 </h3>
                 <p className="text-gray-300 text-sm leading-relaxed">
-                  Wir verwenden Local Storage, um deinen Login-Status zu speichern (technisch notwendig). 
-                  Ohne diese Funktionalität kannst du das Spiel nicht nutzen. 
-                  Weitere Informationen findest du in unserer{" "}
+                  We use Local Storage to save your login status (technically necessary). 
+                  Without this functionality, you cannot use the game. 
+                  More information can be found in our{" "}
                   <a 
                     href="#/privacy" 
                     className="text-purple-400 hover:text-purple-300 underline"
@@ -51,7 +51,7 @@ export default function CookieConsent() {
                       window.location.hash = "/privacy";
                     }}
                   >
-                    Datenschutzerklärung
+                    Privacy Policy
                   </a>.
                 </p>
               </div>
@@ -61,13 +61,13 @@ export default function CookieConsent() {
                   onClick={handleDecline}
                   className="flex-1 sm:flex-none px-6 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition font-medium"
                 >
-                  Ablehnen
+                  Decline
                 </button>
                 <button
                   onClick={handleAccept}
                   className="flex-1 sm:flex-none px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition font-medium"
                 >
-                  Akzeptieren
+                  Accept
                 </button>
               </div>
             </div>

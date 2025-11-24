@@ -39,7 +39,7 @@ export default function App() {
       }
     }
 
-    // Hash-basierte Navigation für Legal Pages
+    // Hash-based navigation for legal pages
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
       if (hash === "/privacy") setScreen("privacy");
@@ -81,7 +81,7 @@ export default function App() {
     window.location.hash = `/${route}`;
   };
 
-  // Legal Pages (immer verfügbar, auch ohne Login)
+  // Legal Pages (always available, even without login)
   if (screen === "privacy") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 flex flex-col">
@@ -178,7 +178,7 @@ export default function App() {
               onClick={() => setScreen("menu")}
               className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded transition"
             >
-              Zurück zum Menü
+              Back to Menu
             </button>
           )}
           {screen === "menu" && (
@@ -187,7 +187,7 @@ export default function App() {
                 onClick={() => setScreen("settings")}
                 className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded transition"
               >
-                ⚙️ Einstellungen
+                ⚙️ Settings
               </button>
               <button
                 onClick={handleLogout}
@@ -201,8 +201,8 @@ export default function App() {
 
         {screen === "menu" && screen !== "game" && (
           <div className="text-center space-y-4">
-            <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Preis-Duell</h1>
-            <h2 className="text-2xl font-bold mb-4">Hallo {user.username}</h2>
+            <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Price Duel</h1>
+            <h2 className="text-2xl font-bold mb-4">Hello {user.username}</h2>
             <div className="space-x-4">
               <button
                 onClick={() => {
@@ -213,7 +213,7 @@ export default function App() {
                 }}
                 className="bg-green-600 px-6 py-3 rounded text-white text-lg hover:bg-green-700 transition"
               >
-                Neues Spiel
+                New Game
               </button>
               <button
                 onClick={() => {
@@ -222,7 +222,7 @@ export default function App() {
                 }}
                 className="bg-purple-600 px-6 py-3 rounded text-white text-lg hover:bg-purple-700 transition"
               >
-                Rangliste
+                Leaderboard
               </button>
             </div>
             {user?.guest && !showRegister && (
@@ -230,7 +230,7 @@ export default function App() {
                 onClick={() => setShowRegister(true)}
                 className="mt-4 bg-blue-400 px-6 py-3 rounded text-white text-lg hover:bg-blue-600 transition"
               >
-                Registrieren & Score speichern
+                Register & Save Score
               </button>
             )}
 

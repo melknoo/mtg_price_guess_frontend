@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
       const res = await axios.get(`${API_URL}/auth/me`);
       setUser(res.data);
     } catch (error) {
-      console.error("Fehler beim Aktualisieren des Benutzers:", error);
+      console.error("Error while updating User:", error);
     }
   };
 

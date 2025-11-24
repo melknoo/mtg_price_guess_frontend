@@ -15,7 +15,7 @@ export default function Footer({ onNavigate }) {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-4">
           {/* Copyright */}
           <div className="text-gray-400 text-sm">
-            © {currentYear} Magic Preis-Duell. Alle Rechte vorbehalten.
+            © {currentYear} Magic Price Duel. All rights reserved.
           </div>
 
           {/* Links */}
@@ -24,31 +24,31 @@ export default function Footer({ onNavigate }) {
               onClick={() => handleNavigation("impressum")}
               className="text-gray-300 hover:text-white transition"
             >
-              Impressum
+              Legal Notice
             </button>
             <button
               onClick={() => handleNavigation("privacy")}
               className="text-gray-300 hover:text-white transition"
             >
-              Datenschutz
+              Privacy Policy
             </button>
             <button
               onClick={() => handleNavigation("terms")}
               className="text-gray-300 hover:text-white transition"
             >
-              AGB
+              Terms of Service
             </button>
           </div>
 
           {/* Disclaimer */}
           <div className="text-gray-500 text-xs text-center sm:text-right max-w-xs">
-            Nicht offiziell mit Wizards of the Coast verbunden
+            Not officially affiliated with Wizards of the Coast
           </div>
         </div>
 
         {/* Attribution */}
         <div className="text-center text-gray-500 text-xs mt-4">
-          Kartendaten von{" "}
+          Card data from{" "}
           <a
             href="https://scryfall.com"
             target="_blank"

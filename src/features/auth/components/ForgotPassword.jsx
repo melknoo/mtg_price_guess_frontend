@@ -15,14 +15,14 @@ export default function ForgotPassword({ onBack }) {
 
     try {
       const res = await requestPasswordReset(email);
-      setMessage("✅ " + (res.message || "Eine E-Mail mit einem Reset-Link wurde gesendet."));
+      setMessage("✅ " + (res.message || "An email with a reset link has been sent."));
       setEmail("");
     } catch (err) {
       console.error(err);
       if (err.response?.data?.message) {
         setError(`❌ ${err.response.data.message}`);
       } else {
-        setError("❌ Ein Fehler ist aufgetreten. Bitte versuche es später erneut.");
+        setError("❌ An unknown error occurred. Please try again later.");
       }
     } finally {
       setLoading(false);
@@ -31,9 +31,9 @@ export default function ForgotPassword({ onBack }) {
 
   return (
     <div className="space-y-4 max-w-sm mx-auto bg-white p-6 rounded-xl shadow text-black">
-      <h2 className="text-xl font-bold mb-2">Passwort vergessen</h2>
+      <h2 className="text-xl font-bold mb-2">Forgot Password</h2>
       <p className="text-sm text-gray-600 mb-4">
-        Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum Zurücksetzen deines Passworts.
+        Enter your email address and we'll send you a reset link.
       </p>
 
       {error && (
@@ -65,7 +65,7 @@ export default function ForgotPassword({ onBack }) {
           }`}
           disabled={loading}
         >
-          {loading ? "Wird gesendet..." : "Reset-Link senden"}
+          {loading ? "Sending..." : "Send Reset Link"}
         </button>
       </form>
 
@@ -74,7 +74,7 @@ export default function ForgotPassword({ onBack }) {
         onClick={onBack}
         className="text-sm text-blue-600 hover:underline cursor-pointer w-full text-center"
       >
-        ← Zurück zum Login
+        ← Back to Login
       </button>
     </div>
   );

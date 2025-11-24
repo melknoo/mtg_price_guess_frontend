@@ -16,17 +16,17 @@ export default function ChangePassword({ onBack, onSuccess }) {
 
     // Validierung
     if (newPassword.length < 6) {
-      setError("⚠️ Das neue Passwort muss mindestens 6 Zeichen lang sein.");
+      setError("⚠️ The new password must be at least 6 characters long.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("⚠️ Die neuen Passwörter stimmen nicht überein.");
+      setError("⚠️ The new passwords do not match.");
       return;
     }
 
     if (currentPassword === newPassword) {
-      setError("⚠️ Das neue Passwort muss sich vom alten unterscheiden.");
+      setError("⚠️ The new password must be different from the old one.");
       return;
     }
 
@@ -49,10 +49,10 @@ export default function ChangePassword({ onBack, onSuccess }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Fehler beim Ändern des Passworts");
+        throw new Error(data.message || "Error while changing password.");
       }
 
-      setSuccess("✅ Passwort erfolgreich geändert!");
+      setSuccess("✅ Password changed successfully!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -74,7 +74,7 @@ export default function ChangePassword({ onBack, onSuccess }) {
       animate={{ opacity: 1, y: 0 }}
       className="max-w-md mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl"
     >
-      <h2 className="text-2xl font-bold mb-6">Passwort ändern</h2>
+      <h2 className="text-2xl font-bold mb-6">Change Password</h2>
 
       {error && (
         <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">
@@ -91,11 +91,11 @@ export default function ChangePassword({ onBack, onSuccess }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-2">
-            Aktuelles Passwort
+            Current Password
           </label>
           <input
             type="password"
-            placeholder="Aktuelles Passwort"
+            placeholder="Current Password"
             className="w-full p-3 border border-gray-600 rounded-lg bg-gray-800 text-white focus:border-purple-500 focus:outline-none"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
@@ -105,11 +105,11 @@ export default function ChangePassword({ onBack, onSuccess }) {
 
         <div>
           <label className="block text-sm font-medium mb-2">
-            Neues Passwort
+            New Password
           </label>
           <input
             type="password"
-            placeholder="Neues Passwort (min. 6 Zeichen)"
+            placeholder="New Password (at least 6 characters)"
             className="w-full p-3 border border-gray-600 rounded-lg bg-gray-800 text-white focus:border-purple-500 focus:outline-none"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
@@ -133,8 +133,7 @@ export default function ChangePassword({ onBack, onSuccess }) {
 
         <div className="bg-blue-500/20 border border-blue-500 rounded-lg p-3 text-sm">
           <p className="text-blue-200">
-            💡 <strong>Tipp:</strong> Verwende ein sicheres Passwort mit mindestens
-            8 Zeichen, Groß- und Kleinbuchstaben sowie Zahlen.
+            💡 <strong>Tipp:</strong> Tip: Use a strong password with at least 8 characters, upper and lowercase letters, and numbers.
           </p>
         </div>
 
@@ -144,7 +143,7 @@ export default function ChangePassword({ onBack, onSuccess }) {
             onClick={onBack}
             className="flex-1 bg-gray-600 hover:bg-gray-700 px-4 py-3 rounded-lg transition font-medium"
           >
-            Abbrechen
+            Cancel
           </button>
           <button
             type="submit"
@@ -153,7 +152,7 @@ export default function ChangePassword({ onBack, onSuccess }) {
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            {loading ? "Wird geändert..." : "Passwort ändern"}
+            {loading ? "Changing..." : "Change Password"}
           </button>
         </div>
       </form>

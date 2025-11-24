@@ -16,7 +16,7 @@ export const calculateTotalScore = (timeLeft, streak) => {
 };
 
 export const formatScoreMessage = (timeBonus, streakBonus) => {
-  let message = `✅ Richtig! +${timeBonus} Punkte!`;
+  let message = `✅ Correct! +${timeBonus} Points!`;
   
   if (streakBonus > 0) {
     message += ` 🔥 Streak Bonus: +${streakBonus}`;

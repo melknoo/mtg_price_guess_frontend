@@ -13,7 +13,7 @@ export default function Leaderboard({ onBack }) {
         const data = await fetchLeaderboard();
         setPlayers(data);
       } catch (err) {
-        setError('Fehler beim Laden der Rangliste');
+        setError('Error while loading leaderboard.');
         console.error(err);
       } finally {
         setLoading(false);
@@ -26,7 +26,7 @@ export default function Leaderboard({ onBack }) {
   if (loading) {
     return (
       <div className="text-white text-center">
-        <p>Lade Rangliste...</p>
+        <p>Loading leaderboard...</p>
       </div>
     );
   }
@@ -39,7 +39,7 @@ export default function Leaderboard({ onBack }) {
           onClick={onBack}
           className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
         >
-          Zurück
+          Back
         </button>
       </div>
     );
@@ -47,11 +47,11 @@ export default function Leaderboard({ onBack }) {
 
   return (
     <div className="text-white text-center max-w-md mx-auto">
-      <h2 className="text-3xl font-bold mb-6">🏆 Rangliste</h2>
+      <h2 className="text-3xl font-bold mb-6">🏆 Leaderboard</h2>
 
       {players.length === 0 ? (
         <p className="text-gray-400 py-4">
-          Noch keine Highscores vorhanden. Sei der Erste!
+          No highscores yet. Be the first!
         </p>
       ) : (
         <ol className="bg-white text-black rounded-lg shadow-lg p-4">
@@ -68,7 +68,7 @@ export default function Leaderboard({ onBack }) {
         onClick={onBack}
         className="mt-6 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
       >
-        Zurück
+        Back
       </button>
     </div>
   );

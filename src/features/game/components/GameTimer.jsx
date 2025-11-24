@@ -9,7 +9,7 @@ export default function GameTimer({ timeLeft, possiblePoints, progress }) {
       <div className="w-full max-w-xl flex justify-between items-center mb-2 px-1">
         <div className="flex items-center gap-2 text-white font-semibold">
           <FaStopwatch />
-          <span>{timeLeft.toFixed(1)} Sek</span>
+          <span>{timeLeft.toFixed(1)} sec</span>
         </div>
         
         <motion.div
@@ -20,7 +20,7 @@ export default function GameTimer({ timeLeft, possiblePoints, progress }) {
           className="flex items-center gap-1 text-green-300 font-semibold"
         >
           <FaStar className="text-yellow-400" />
-          <span>+{possiblePoints} Punkte möglich</span>
+          <span>+{possiblePoints} Points possible</span>
         </motion.div>
       </div>
 

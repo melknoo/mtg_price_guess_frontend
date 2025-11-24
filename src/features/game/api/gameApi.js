@@ -23,7 +23,7 @@ export const fetchRandomCards = async (count = 20) => {
     }));
   } catch (error) {
     console.error('Error fetching cards:', error);
-    throw new Error('Fehler beim Laden der Karten');
+    throw new Error('Error loading cards');
   }
 };
 
@@ -36,6 +36,6 @@ export const updateHighscore = async (score) => {
     return response.data;
   } catch (error) {
     console.error('Error updating highscore:', error);
-    throw new Error('Fehler beim Speichern des Highscores');
+    throw new Error('Error saving highscore');
   }
 };

@@ -16,13 +16,13 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
     e.preventDefault();
     setError("");
 
-    if (confirmText !== "LÖSCHEN") {
-      setError("⚠️ Bitte tippe 'LÖSCHEN' ein, um zu bestätigen.");
+    if (confirmText !== "DELETE") {
+      setError("⚠️ Please type 'DELETE' to confirm.");
       return;
     }
 
     if (!password) {
-      setError("⚠️ Bitte gib dein Passwort ein.");
+      setError("⚠️ Please enter your password.");
       return;
     }
 
@@ -40,10 +40,10 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Fehler beim Löschen");
+        throw new Error(data.message || "Error deleting account");
       }
 
-      // Account erfolgreich gelöscht
+      // Account successfully deleted
       if (onDeleteSuccess) {
         onDeleteSuccess();
       }
@@ -62,29 +62,28 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
         animate={{ opacity: 1, y: 0 }}
         className="max-w-2xl mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl"
       >
-        <h2 className="text-3xl font-bold mb-6 text-red-400">Account löschen</h2>
+        <h2 className="text-3xl font-bold mb-6 text-red-400">Delete Account</h2>
 
         <div className="space-y-4 text-gray-200">
           <div className="bg-red-500/20 border-2 border-red-500 rounded-lg p-4">
-            <h3 className="font-bold text-red-300 mb-2">⚠️ Warnung</h3>
+            <h3 className="font-bold text-red-300 mb-2">⚠️ Warning</h3>
             <p className="text-sm">
-              Das Löschen deines Accounts ist <strong>unwiderruflich</strong> und hat folgende Konsequenzen:
+              Deleting your account is <strong>irreversible</strong> and has the following consequences:
             </p>
           </div>
 
           <ul className="list-disc list-inside space-y-2 ml-4">
-            <li>Alle deine persönlichen Daten werden gelöscht</li>
-            <li>Dein Benutzername wird aus der Datenbank entfernt</li>
-            <li>Deine E-Mail-Adresse wird gelöscht</li>
-            <li>Dein Highscore wird gelöscht</li>
-            <li>Diese Aktion kann nicht rückgängig gemacht werden</li>
+            <li>All your personal data will be deleted</li>
+            <li>Your username will be removed from the database</li>
+            <li>Your email address will be deleted</li>
+            <li>Your highscore will be deleted</li>
+            <li>This action cannot be undone</li>
           </ul>
 
           <div className="bg-blue-500/20 border border-blue-500 rounded-lg p-4 mt-6">
             <p className="text-sm text-blue-200">
-              💡 <strong>Hinweis:</strong> Gemäß DSGVO hast du das Recht auf Löschung deiner Daten.
-              Nach der Löschung werden alle personenbezogenen Daten innerhalb von 30 Tagen vollständig
-              aus unseren Systemen entfernt.
+              💡 <strong>Note:</strong> According to GDPR, you have the right to delete your data.
+              After deletion, all personal data will be completely removed from our systems within 30 days.
             </p>
           </div>
 
@@ -93,13 +92,13 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
               onClick={onBack}
               className="flex-1 bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition font-medium"
             >
-              ← Zurück
+              ← Back
             </button>
             <button
               onClick={handleInitiateDelete}
               className="flex-1 bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg transition font-medium"
             >
-              Account löschen
+              Delete Account
             </button>
           </div>
         </div>
@@ -113,7 +112,7 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
       animate={{ opacity: 1, scale: 1 }}
       className="max-w-md mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl border-2 border-red-500"
     >
-      <h2 className="text-2xl font-bold mb-6 text-red-400">Löschung bestätigen</h2>
+      <h2 className="text-2xl font-bold mb-6 text-red-400">Confirm Deletion</h2>
 
       {error && (
         <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">
@@ -124,11 +123,11 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
       <form onSubmit={handleConfirmDelete} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-2">
-            Gib dein Passwort ein:
+            Enter your password:
           </label>
           <input
             type="password"
-            placeholder="Passwort"
+            placeholder="Password"
             className="w-full p-3 border border-gray-600 rounded-lg bg-gray-800 text-white focus:border-red-500 focus:outline-none"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -138,11 +137,11 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
 
         <div>
           <label className="block text-sm font-medium mb-2">
-            Tippe <span className="text-red-400 font-bold">"LÖSCHEN"</span> ein:
+            Type <span className="text-red-400 font-bold">"DELETE"</span>:
           </label>
           <input
             type="text"
-            placeholder="LÖSCHEN"
+            placeholder="DELETE"
             className="w-full p-3 border border-gray-600 rounded-lg bg-gray-800 text-white focus:border-red-500 focus:outline-none"
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
@@ -152,8 +151,8 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
 
         <div className="bg-red-500/20 border border-red-500 rounded-lg p-3 text-sm">
           <p className="text-red-300">
-            ⚠️ Dies ist deine letzte Chance! Nach dem Klick auf "Endgültig löschen" wird
-            dein Account unwiderruflich gelöscht.
+            ⚠️ This is your last chance! After clicking "Delete Permanently",
+            your account will be irreversibly deleted.
           </p>
         </div>
 
@@ -163,7 +162,7 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
             onClick={() => setShowConfirmation(false)}
             className="flex-1 bg-gray-600 hover:bg-gray-700 px-4 py-3 rounded-lg transition font-medium"
           >
-            Abbrechen
+            Cancel
           </button>
           <button
             type="submit"
@@ -172,7 +171,7 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            {loading ? "Wird gelöscht..." : "Endgültig löschen"}
+            {loading ? "Deleting..." : "Delete Permanently"}
           </button>
         </div>
       </form>

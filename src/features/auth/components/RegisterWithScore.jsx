@@ -17,14 +17,14 @@ export default function RegisterWithScore({ score, onSuccess }) {
     
     // reCAPTCHA Token holen
     if (!recaptchaRef.current) {
-      setError("❌ reCAPTCHA konnte nicht geladen werden.");
+      setError("❌ reCAPTCHA could not be loaded.");
       return;
     }
     
     const recaptchaToken = recaptchaRef.current.getValue();
     
     if (!recaptchaToken) {
-      setError("❌ Bitte bestätige, dass du kein Roboter bist.");
+      setError("❌ Please confirm you're not a robot.");
       return;
     }
 
@@ -44,7 +44,7 @@ export default function RegisterWithScore({ score, onSuccess }) {
       if (err.response?.data?.message) {
         setError(`❌ ${err.response.data.message}`);
       } else {
-        setError("❌ Ein unbekannter Fehler ist aufgetreten.");
+        setError("❌ An unknown error occurred.");
       }
     } finally {
       setLoading(false);
@@ -56,10 +56,10 @@ export default function RegisterWithScore({ score, onSuccess }) {
       onSubmit={handleSubmit}
       className="space-y-4 max-w-sm mx-auto bg-white p-6 rounded-xl shadow text-black mt-6"
     >
-      <h2 className="text-xl font-bold mb-2">Registrieren & Score speichern</h2>
+      <h2 className="text-xl font-bold mb-2">Register & Save Score</h2>
       
       <div className="bg-green-100 text-green-700 p-3 rounded text-center font-semibold">
-        🎯 Dein Score: {score} Punkte
+        🎯 Your Score: {score} Points
       </div>
 
       {error && (
@@ -69,7 +69,7 @@ export default function RegisterWithScore({ score, onSuccess }) {
       )}
 
       <input
-        placeholder="Benutzername"
+        placeholder="Username"
         className="w-full p-2 border rounded"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
@@ -87,7 +87,7 @@ export default function RegisterWithScore({ score, onSuccess }) {
       
       <input
         type="password"
-        placeholder="Passwort (mind. 6 Zeichen)"
+        placeholder="Password (min. 6 characters)"
         className="w-full p-2 border rounded"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
@@ -111,7 +111,7 @@ export default function RegisterWithScore({ score, onSuccess }) {
         }`}
         disabled={loading}
       >
-        {loading ? "Registrieren..." : "Registrieren & Score speichern"}
+        {loading ? "Registering..." : "Register & Save Score"}
       </button>
     </form>
   );

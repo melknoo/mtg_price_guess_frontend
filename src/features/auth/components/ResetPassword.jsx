@@ -12,12 +12,12 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("❌ Die Passwörter stimmen nicht überein.");
+      setError("❌ The passwords do not match.");
       return;
     }
 
     if (password.length < 6) {
-      setError("❌ Das Passwort muss mindestens 6 Zeichen lang sein.");
+      setError("❌ The Password must be at least 6 characters long.");
       return;
     }
 
@@ -27,14 +27,14 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
       const res = await resetPassword(token, password);
 
       if (onSuccess) {
-        onSuccess(res.message || "Passwort erfolgreich zurückgesetzt!");
+        onSuccess(res.message || "✅ Your password has been reset successfully.");
       }
     } catch (err) {
       console.error(err);
       if (err.response?.data?.message) {
         setError(`❌ ${err.response.data.message}`);
       } else {
-        setError("❌ Ein Fehler ist aufgetreten. Der Link könnte abgelaufen sein.");
+        setError("❌ An Error occured. The link could be expired.");
       }
     } finally {
       setLoading(false);
@@ -43,7 +43,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
 
   return (
     <div className="space-y-4 max-w-sm mx-auto bg-white p-6 rounded-xl shadow text-black">
-      <h2 className="text-xl font-bold mb-2">Neues Passwort setzen</h2>
+      <h2 className="text-xl font-bold mb-2">Set New Password</h2>
 
       {error && (
         <div className="bg-red-100 text-red-700 p-2 rounded mb-2 text-sm">
@@ -54,7 +54,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="password"
-          placeholder="Neues Passwort"
+          placeholder="New Password"
           className="w-full p-2 border rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -63,7 +63,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
 
         <input
           type="password"
-          placeholder="Passwort bestätigen"
+          placeholder="Confirm Password"
           className="w-full p-2 border rounded"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
@@ -77,7 +77,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
           }`}
           disabled={loading}
         >
-          {loading ? "Wird gespeichert..." : "Passwort zurücksetzen"}
+          {loading ? "Saving..." : "Reset Password"}
         </button>
       </form>
 
@@ -87,7 +87,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
           onClick={onBack}
           className="text-sm text-blue-600 hover:underline cursor-pointer w-full text-center"
         >
-          ← Zurück zum Login
+          ← Back to Login
         </button>
       )}
     </div>

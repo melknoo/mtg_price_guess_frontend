@@ -22,12 +22,12 @@ export default function ChangeEmail({ onBack, onSuccess }) {
 
     // Validierung
     if (!validateEmail(newEmail)) {
-      setError("⚠️ Bitte gib eine gültige E-Mail-Adresse ein.");
+      setError("⚠️ Please enter a valid email address.");
       return;
     }
 
     if (newEmail === user.email) {
-      setError("⚠️ Die neue E-Mail-Adresse muss sich von der alten unterscheiden.");
+      setError("⚠️ The new email address must be different from the old one.");
       return;
     }
 
@@ -49,10 +49,10 @@ export default function ChangeEmail({ onBack, onSuccess }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Fehler beim Ändern der E-Mail");
+        throw new Error(data.message || "Error while changing email.");
       }
 
-      setSuccess("✅ E-Mail erfolgreich geändert!");
+      setSuccess("✅ Email changed successfully!");
       setNewEmail("");
       setPassword("");
 
@@ -76,7 +76,7 @@ export default function ChangeEmail({ onBack, onSuccess }) {
       animate={{ opacity: 1, y: 0 }}
       className="max-w-md mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl"
     >
-      <h2 className="text-2xl font-bold mb-6">E-Mail-Adresse ändern</h2>
+      <h2 className="text-2xl font-bold mb-6">Change Email Address</h2>
 
       {error && (
         <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">
@@ -92,18 +92,18 @@ export default function ChangeEmail({ onBack, onSuccess }) {
 
       <div className="bg-white/5 p-3 rounded-lg mb-4 text-sm">
         <p className="text-gray-300">
-          Aktuelle E-Mail: <span className="font-medium text-white">{user.email}</span>
+          Current Email: <span className="font-medium text-white">{user.email}</span>
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-2">
-            Neue E-Mail-Adresse
+            New E-Mail-Address
           </label>
           <input
             type="email"
-            placeholder="neue@email.de"
+            placeholder="new@email.com"
             className="w-full p-3 border border-gray-600 rounded-lg bg-gray-800 text-white focus:border-purple-500 focus:outline-none"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
@@ -113,11 +113,11 @@ export default function ChangeEmail({ onBack, onSuccess }) {
 
         <div>
           <label className="block text-sm font-medium mb-2">
-            Passwort zur Bestätigung
+            Password for Confirmation
           </label>
           <input
             type="password"
-            placeholder="Dein aktuelles Passwort"
+            placeholder="Your current password"
             className="w-full p-3 border border-gray-600 rounded-lg bg-gray-800 text-white focus:border-purple-500 focus:outline-none"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -127,8 +127,7 @@ export default function ChangeEmail({ onBack, onSuccess }) {
 
         <div className="bg-yellow-500/20 border border-yellow-500 rounded-lg p-3 text-sm">
           <p className="text-yellow-200">
-            ⚠️ <strong>Hinweis:</strong> Nach der Änderung musst du dich möglicherweise
-            mit der neuen E-Mail-Adresse anmelden.
+            ⚠️ <strong>Note:</strong>After the change, you may need to log in with the new email address.
           </p>
         </div>
 
@@ -138,7 +137,7 @@ export default function ChangeEmail({ onBack, onSuccess }) {
             onClick={onBack}
             className="flex-1 bg-gray-600 hover:bg-gray-700 px-4 py-3 rounded-lg transition font-medium"
           >
-            Abbrechen
+            Cancel
           </button>
           <button
             type="submit"
@@ -147,7 +146,7 @@ export default function ChangeEmail({ onBack, onSuccess }) {
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            {loading ? "Wird geändert..." : "E-Mail ändern"}
+            {loading ? "Changing..." : "Change Email"}
           </button>
         </div>
       </form>

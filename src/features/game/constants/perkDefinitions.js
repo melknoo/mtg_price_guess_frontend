@@ -13,33 +13,33 @@ export const PERK_RARITY = {
 export const PERKS = {
     SECOND_CHANCE: {
         id: 'second_chance',
-        name: 'Zweite Chance',
-        description: 'Dein nächster Fehler zählt nicht',
+        name: 'Second Chance',
+        description: 'Your next mistake doesn\'t count',
         icon: '💚',
         type: PERK_TYPES.DEFENSIVE,
         rarity: PERK_RARITY.EPIC,
         effect: 'shield',
         value: 1,
-        duration: 3, // 1 Fehler
+        duration: 3,
     },
 
     TIME_BUFFER: {
         id: 'time_buffer',
-        name: 'Zeitpuffer',
-        description: '+5 Sekunden zusätzliche Zeit pro Runde',
+        name: 'Time Buffer',
+        description: '+5 seconds extra time per round',
         icon: '⏰',
         type: PERK_TYPES.DEFENSIVE,
         rarity: PERK_RARITY.COMMON,
         effect: 'time_bonus',
         value: 5,
-        duration: 5, // 5 Runden
+        duration: 5,
     },
 
     // OFFENSIVE PERKS
     DOUBLE_POINTS: {
         id: 'double_points',
-        name: 'Doppelte Punkte',
-        description: 'Verdopple alle Punkte für die nächsten 5 Runden',
+        name: 'Double Points',
+        description: 'Double all points for the next 5 rounds',
         icon: '⚡',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.EPIC,
@@ -51,19 +51,19 @@ export const PERKS = {
     STREAK_BOOSTER: {
         id: 'streak_booster',
         name: 'Streak Booster',
-        description: 'Streak Bonus schon ab 3 statt 5 richtigen Antworten',
+        description: 'Streak bonus from 3 instead of 5 correct answers',
         icon: '🔥',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.RARE,
         effect: 'streak_threshold',
         value: 3,
-        duration: -1, // Permanent für dieses Spiel
+        duration: -1, // Permanent for this game
     },
 
     PERFECTIONIST: {
         id: 'perfectionist',
-        name: 'Perfektionist',
-        description: '+50 Bonus wenn du bei voller Zeit antwortest',
+        name: 'Perfectionist',
+        description: '+50 bonus when you answer at full time',
         icon: '🎯',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.RARE,
@@ -74,8 +74,8 @@ export const PERKS = {
 
     POINT_BOOST: {
         id: 'point_boost',
-        name: 'Punkte Boost',
-        description: '+20 Extra-Punkte pro richtiger Antwort',
+        name: 'Point Boost',
+        description: '+20 extra points per correct answer',
         icon: '💎',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.COMMON,
@@ -87,8 +87,8 @@ export const PERKS = {
     // UTILITY PERKS
     PRICE_HINT: {
         id: 'price_hint',
-        name: 'Preis-Hinweis',
-        description: 'Zeigt die Preisspanne für die nächsten 3 Runden',
+        name: 'Price Hint',
+        description: 'Shows the price range for the next 3 rounds',
         icon: '🔮',
         type: PERK_TYPES.UTILITY,
         rarity: PERK_RARITY.RARE,
@@ -99,20 +99,20 @@ export const PERKS = {
 
     SLOW_TIME: {
         id: 'slow_time',
-        name: 'Zeitlupe',
-        description: 'Der Timer läuft 50% langsamer für 5 Runden',
+        name: 'Slow Motion',
+        description: 'Timer runs 50% slower for 5 rounds',
         icon: '⏱️',
         type: PERK_TYPES.UTILITY,
         rarity: PERK_RARITY.EPIC,
         effect: 'slow_time',
-        value: 0.5, // 50% langsamer
+        value: 0.5, // 50% slower
         duration: 5,
     },
 
     STATISTICS: {
         id: 'statistics',
-        name: 'Statistik',
-        description: 'Zeigt den Durchschnittspreis beider Karten',
+        name: 'Statistics',
+        description: 'Shows the average price of both cards',
         icon: '📊',
         type: PERK_TYPES.UTILITY,
         rarity: PERK_RARITY.COMMON,
@@ -123,9 +123,9 @@ export const PERKS = {
 
     SKIP_CARD: {
         id: 'skip_card',
-        name: 'Karte Überspringen',
-        description: 'Überspringe ein Kartenpaar ohne Strafe (manuell aktivierbar)',
-        icon: '⏭️',
+        name: 'Skip Card',
+        description: 'Skip a card pair without penalty (manually activated)',
+        icon: '⭐',
         type: PERK_TYPES.UTILITY,
         rarity: PERK_RARITY.COMMON,
         effect: 'skip',
@@ -135,7 +135,7 @@ export const PERKS = {
     },
 };
 
-// Gewichtung für Rarity beim zufälligen Ziehen
+// Rarity weighting for random drawing
 export const RARITY_WEIGHTS = {
     [PERK_RARITY.COMMON]: 60,
     [PERK_RARITY.RARE]: 30,
@@ -144,6 +144,6 @@ export const RARITY_WEIGHTS = {
 
 // Config
 export const PERK_CONFIG = {
-    ROUNDS_BETWEEN_PERKS: 5, // Alle 5 Runden gibt es Perks
-    PERKS_TO_CHOOSE: 3, // Anzahl der zur Auswahl stehenden Perks
+    ROUNDS_BETWEEN_PERKS: 5, // Perks every 5 rounds
+    PERKS_TO_CHOOSE: 3, // Number of perks to choose from
 };

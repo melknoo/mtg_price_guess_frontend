@@ -39,14 +39,14 @@ export default function LoginForm({ onForgotPassword }) {
     
     if (needsCaptcha) {
       if (!recaptchaRef.current) {
-        setError("❌ reCAPTCHA konnte nicht geladen werden.");
+        setError("❌ reCAPTCHA could not be loaded.");
         return;
       }
       
       const recaptchaToken = recaptchaRef.current.getValue();
       
       if (!recaptchaToken) {
-        setError("❌ Bitte bestätige, dass du kein Roboter bist.");
+        setError("❌ Please confirm you're not a robot.");
         return;
       }
     }
@@ -87,17 +87,17 @@ export default function LoginForm({ onForgotPassword }) {
           
           if (newAttempts >= 3) {
             setShowCaptchaOnLogin(true);
-            setError("❌ Zu viele fehlgeschlagene Versuche. Bitte bestätige, dass du kein Roboter bist.");
+            setError("❌ Too many failed attempts. Please confirm you're not a robot.");
           } else {
-            setError(`❌ Benutzername oder Passwort ist falsch. (Versuch ${newAttempts}/3)`);
+            setError(`❌ Benutzername oder Passwort ist falsch. (Attempt ${newAttempts}/3)`);
           }
         } else {
-          setError("❌ Benutzername oder Passwort ist falsch.");
+          setError("❌ Username or password is incorrect.");
         }
       } else if (err.response?.data?.message) {
         setError(`❌ ${err.response.data.message}`);
       } else {
-        setError("❌ Ein unbekannter Fehler ist aufgetreten.");
+        setError("❌ An unknown error occurred.");
       }
     } finally {
       setLoading(false);
@@ -131,13 +131,13 @@ export default function LoginForm({ onForgotPassword }) {
 
       {showWarning && (
         <div className="bg-yellow-100 text-yellow-700 p-2 rounded mb-2 text-sm">
-          ⚠️ Noch {3 - failedAttempts} Versuch(e) bis zur Captcha-Verifizierung
+          ⚠️ Still ${3 - failedAttempts} attempt(s) until captcha verification
         </div>
       )}
 
       {isLogin && (
         <input
-          placeholder="Benutzername oder Email"
+          placeholder="Username or Email"
           className="w-full p-2 border rounded"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -169,7 +169,7 @@ export default function LoginForm({ onForgotPassword }) {
 
       <input
         type="password"
-        placeholder="Passwort"
+        placeholder="Password"
         className="w-full p-2 border rounded"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
@@ -194,7 +194,7 @@ export default function LoginForm({ onForgotPassword }) {
             onClick={onForgotPassword}
             className="text-sm text-blue-600 hover:underline"
           >
-            Passwort vergessen?
+            Forgot password?
           </button>
         </div>
       )}
@@ -206,14 +206,14 @@ export default function LoginForm({ onForgotPassword }) {
         loading={loading}
         className="w-full"
       >
-        {isLogin ? "Einloggen" : "Registrieren"}
+        {isLogin ? "Login" : "Register"}
       </Button>
 
       <p
         className="text-sm text-blue-600 hover:underline cursor-pointer text-center"
         onClick={handleModeSwitch}
       >
-        {isLogin ? "Noch kein Account? Registrieren" : "Schon registriert? Login"}
+        {isLogin ? "No account yet? Register" : "Already registered? Login"}
       </p>
 
       <button
@@ -221,7 +221,7 @@ export default function LoginForm({ onForgotPassword }) {
         onClick={handleGuest}
         className="text-sm text-blue-600 hover:underline cursor-pointer w-full"
       >
-        Als Gast spielen
+        Play as Guest
       </button>
     </form>
   );

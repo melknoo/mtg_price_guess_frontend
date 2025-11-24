@@ -193,7 +193,7 @@ export default function Game({
         // Falsche Antwort - prüfe Shield Perk
         if (perkSystem.hasPerk("second_chance")) {
           perkSystem.consumePerk("second_chance");
-          setMessage("💚 Zweite Chance aktiviert! Leben gespart!");
+          setMessage("💚 Second Chance activated! Life saved!");
           // Kein Leben verlieren
         } else {
           streak.resetStreak();
@@ -259,7 +259,7 @@ export default function Game({
       setSelectedCard(null);
       setCorrectIndex(null);
       setShowPrices(false);
-      setMessage("⭐️ Karte übersprungen!");
+      setMessage("⭐️ Card skipped!");
 
       // Load new cards
       cardLoader.setNextPair();
@@ -326,7 +326,7 @@ export default function Game({
           onClick={initGame}
           className="mt-4 bg-blue-600 px-6 py-3 rounded hover:bg-blue-700"
         >
-          Erneut versuchen
+          Try Again
         </button>
       </div>
     );
@@ -340,13 +340,13 @@ export default function Game({
           <div className="flex items-right items-center justify-end sm:justify-start gap-4 mb-2">
             <div className="bg-white/10 sm:mb-auto backdrop-blur-lg rounded-lg px-4 py-2 border border-white/20">
               <span className="text-purple-300 text-sm font-semibold">
-                🎯 Runde {currentRound}
+                🎯 Round {currentRound}
               </span>
             </div>
           </div>
           <div className="flex flex-col sm:ml-3">
-            <p className="mb-2 text-lg">Dein Highscore: {user.highscore}</p>
-            <p className="mb-2 font-bold text-2xl">Punkte: {score}</p>
+            <p className="mb-2 text-lg">Your Highscore: {user.highscore}</p>
+            <p className="mb-2 font-bold text-2xl">Points: {score}</p>
           </div>
         </div>
         {/* Lives */}
@@ -370,7 +370,7 @@ export default function Game({
           {showPriceHint && getPriceRange() && (
             <div className="bg-blue-500/20 border border-blue-400 rounded-lg p-2 mb-2">
               <span className="text-blue-200 text-sm font-semibold">
-                🔮 Preisspanne: {formatPrice(getPriceRange().min)} -{" "}
+                🔮 Price Range: {formatPrice(getPriceRange().min)} -{" "}
                 {formatPrice(getPriceRange().max)}
               </span>
             </div>
@@ -379,7 +379,7 @@ export default function Game({
           {showAverage && getAveragePrice() && (
             <div className="bg-green-500/20 border border-green-400 rounded-lg p-2">
               <span className="text-green-200 text-sm font-semibold">
-                📊 Durchschnitt: {formatPrice(getAveragePrice())}
+                📊 Average: {formatPrice(getAveragePrice())}
               </span>
             </div>
           )}
@@ -395,7 +395,7 @@ export default function Game({
 
       {/* Card Pair */}
       {cardLoader.loading ? (
-        <p>Lade Karten...</p>
+        <p>Loading Cards...</p>
       ) : (
         <CardPair
           cards={cardLoader.currentPair}
@@ -417,9 +417,9 @@ export default function Game({
             <button
               onClick={handleSkipCard}
               className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 text-white px-6 py-4 rounded transition shadow-lg hover:shadow-xl"
-              title="Überspringe dieses Kartenpaar ohne Strafe"
+              title="Skip a card pair without penalty (manually activated)"
             >
-              ⭐️ Überspringen
+              ⭐️ Skip
             </button>
           )}
 
@@ -429,7 +429,7 @@ export default function Game({
             onClick={handleNextPair}
             className="bg-blue-500 text-2xl min-w-[250px] font-semibold hover:bg-blue-600 text-white px-6 py-6 rounded transition"
           >
-            Weiter
+            Next
           </button>
         )}
       </div>

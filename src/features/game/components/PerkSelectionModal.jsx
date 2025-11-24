@@ -34,13 +34,13 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
     const getRarityLabel = (rarity) => {
         switch (rarity) {
             case PERK_RARITY.COMMON:
-                return 'Gewöhnlich';
+                return 'Common';
             case PERK_RARITY.RARE:
-                return 'Selten';
+                return 'Rare';
             case PERK_RARITY.EPIC:
-                return 'Episch';
+                return 'Epic';
             default:
-                return 'Unbekannt';
+                return 'Unknown';
         }
     };
 
@@ -67,7 +67,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                 transition={{ delay: 0.1 }}
                                 className="text-4xl font-bold text-white mb-2"
                             >
-                                ✨ Wähle deinen Bonus!
+                                ✨ Choose Your Bonus!
                             </motion.h2>
                             <motion.p
                                 initial={{ y: -20, opacity: 0 }}
@@ -75,7 +75,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                 transition={{ delay: 0.2 }}
                                 className="text-gray-300 text-lg"
                             >
-                                Du hast {PERK_CONFIG.ROUNDS_BETWEEN_PERKS} Runden gemeistert! Zeit für ein Upgrade.
+                                You've mastered {PERK_CONFIG.ROUNDS_BETWEEN_PERKS} rounds! Time for an upgrade.
                             </motion.p>
                         </div>
 
@@ -134,7 +134,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                     {perk.duration > 0 && (
                                         <div className="bg-black/30 rounded-lg p-2 text-center">
                                             <span className="text-yellow-300 text-xs font-semibold">
-                                                ⏱️ {perk.duration} {perk.duration === 1 ? 'Runde' : 'Runden'}
+                                                ⏱️ {perk.duration} {perk.duration === 1 ? 'Round' : 'Rounds'}
                                             </span>
                                         </div>
                                     )}
@@ -142,7 +142,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                     {perk.duration === -1 && (
                                         <div className="bg-black/30 rounded-lg p-2 text-center">
                                             <span className="text-green-300 text-xs font-semibold">
-                                                ♾️ Permanent (dieses Spiel)
+                                                ♾️ Permanent (this game)
                                             </span>
                                         </div>
                                     )}
@@ -162,7 +162,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                             transition={{ delay: 0.5 }}
                             className="text-center text-gray-400 text-sm mt-8"
                         >
-                            💡 Tipp: Wähle weise! Manche Perks können gestackt werden.
+                            💡 Tip: Choose wisely! Some perks can be stacked.
                         </motion.p>
                     </motion.div>
                 </motion.div>

@@ -14,6 +14,6 @@ export const fetchLeaderboard = async () => {
     return response.data;
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
-    throw new Error('Fehler beim Laden der Rangliste');
+    throw new Error('Error fetching leaderboard');
   }
 };

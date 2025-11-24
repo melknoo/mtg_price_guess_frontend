@@ -52,15 +52,15 @@ export default function AccountSettings({ onBack }) {
       animate={{ opacity: 1, y: 0 }}
       className="max-w-2xl mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl"
     >
-      <h2 className="text-3xl font-bold mb-6">Account-Einstellungen</h2>
+      <h2 className="text-3xl font-bold mb-6">Account Settings</h2>
 
       <div className="space-y-6 text-gray-200">
         {/* Account Info */}
         <section className="bg-white/5 p-4 rounded-lg">
-          <h3 className="text-xl font-semibold mb-3 text-purple-300">Deine Daten</h3>
+          <h3 className="text-xl font-semibold mb-3 text-purple-300">Your Data</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-400">Benutzername:</span>
+              <span className="text-gray-400">Username:</span>
               <span className="font-medium">{user.username}</span>
             </div>
             <div className="flex justify-between">
@@ -76,13 +76,13 @@ export default function AccountSettings({ onBack }) {
 
         {/* Account Actions */}
         <section className="bg-white/5 p-4 rounded-lg">
-          <h3 className="text-xl font-semibold mb-3 text-purple-300">Account-Aktionen</h3>
+          <h3 className="text-xl font-semibold mb-3 text-purple-300">Account-Actions</h3>
           <div className="space-y-3">
             <button
               onClick={() => setView("password")}
               className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-lg transition font-medium text-left flex items-center justify-between"
             >
-              <span>🔒 Passwort ändern</span>
+              <span>🔒 Change Password</span>
               <span className="text-sm text-purple-200">→</span>
             </button>
             
@@ -90,7 +90,7 @@ export default function AccountSettings({ onBack }) {
               onClick={() => setView("email")}
               className="w-full bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg transition font-medium text-left flex items-center justify-between"
             >
-              <span>📧 E-Mail ändern</span>
+              <span>📧 Change E-Mail</span>
               <span className="text-sm text-blue-200">→</span>
             </button>
           </div>
@@ -98,36 +98,35 @@ export default function AccountSettings({ onBack }) {
 
         {/* Datenschutz */}
         <section className="bg-white/5 p-4 rounded-lg">
-          <h3 className="text-xl font-semibold mb-3 text-purple-300">Datenschutz & Rechte</h3>
+          <h3 className="text-xl font-semibold mb-3 text-purple-300">Privacy & Rights</h3>
           <p className="text-sm text-gray-300 mb-4">
-            Gemäß DSGVO hast du folgende Rechte bezüglich deiner Daten:
+            According to GDPR, you have the following rights regarding your data:
           </p>
           <ul className="list-disc list-inside space-y-2 text-sm">
-            <li>Recht auf Auskunft über deine gespeicherten Daten</li>
-            <li>Recht auf Berichtigung falscher Daten</li>
-            <li>Recht auf Löschung deiner Daten</li>
-            <li>Recht auf Datenportabilität</li>
+            <li>Right to information about your stored data"</li>
+            <li>Right to correct incorrect data</li>
+            <li>Right to delete your data</li>
+            <li>Right to data portability</li>
           </ul>
           <p className="text-sm text-gray-400 mt-4">
-            Bei Fragen zu deinen Daten kontaktiere uns unter:{" "}
+            For questions about your data, contact us at::{" "}
             <a href="mailto:datenschutz@magic-preis-duell.de" className="text-blue-400 hover:underline">
-              datenschutz@magic-preis-duell.de
+              melleee17+magic-price-guess@gmail.com
             </a>
           </p>
         </section>
 
         {/* Danger Zone */}
         <section className="bg-red-500/10 border-2 border-red-500 p-4 rounded-lg">
-          <h3 className="text-xl font-semibold mb-3 text-red-400">Gefahrenzone</h3>
+          <h3 className="text-xl font-semibold mb-3 text-red-400">Danger Zone</h3>
           <p className="text-sm text-gray-300 mb-4">
-            Das Löschen deines Accounts ist unwiderruflich. Alle deine Daten werden
-            permanent entfernt.
+            Deleting your account is irreversible. All your data will be permanently removed.
           </p>
           <button
             onClick={() => setView("delete")}
             className="w-full bg-red-600 hover:bg-red-700 px-4 py-3 rounded-lg transition font-medium"
           >
-            Account löschen
+            Delete Account
           </button>
         </section>
 
@@ -136,7 +135,7 @@ export default function AccountSettings({ onBack }) {
           onClick={onBack}
           className="w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition font-medium"
         >
-          ← Zurück zum Menü
+          ← Back to Menu
         </button>
       </div>
     </motion.div>

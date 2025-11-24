@@ -9,134 +9,134 @@ export default function Terms({ onBack }) {
       className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white p-6"
     >
       <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl">
-        <h1 className="text-4xl font-bold mb-6">Allgemeine Geschäftsbedingungen (AGB)</h1>
+        <h1 className="text-4xl font-bold mb-6">Terms and Conditions</h1>
         
         <div className="space-y-6 text-gray-200">
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">1. Geltungsbereich</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-purple-300">1. Scope</h2>
             <p>
-              Diese Allgemeinen Geschäftsbedingungen gelten für die Nutzung des Online-Spiels 
-              "Magic Preis-Duell". Mit der Registrierung und Nutzung des Spiels erklärst du dich 
-              mit diesen Bedingungen einverstanden.
+              These Terms and Conditions apply to the use of the online game 
+              "Magic Price Duel". By registering and using the game, you agree 
+              to these terms.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">2. Leistungsbeschreibung</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-purple-300">2. Service Description</h2>
             <p className="mb-3">
-              "Magic Preis-Duell" ist ein kostenloses Browser-Spiel, bei dem Nutzer ihr Wissen über 
-              Magic: The Gathering Kartenpreise testen können.
+              "Magic Price Duel" is a free browser game where users can test their knowledge of 
+              Magic: The Gathering card prices.
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Registrierung und Nutzung sind kostenlos</li>
-              <li>Es werden keine In-App-Käufe oder kostenpflichtige Features angeboten</li>
-              <li>Das Spiel dient ausschließlich Unterhaltungszwecken</li>
+              <li>Registration and use are free</li>
+              <li>No in-app purchases or paid features are offered</li>
+              <li>The game is for entertainment purposes only</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">3. Registrierung und Nutzerkonto</h2>
-            <p className="mb-3">Für die Nutzung bestimmter Funktionen ist eine Registrierung erforderlich:</p>
+            <h2 className="text-2xl font-semibold mb-3 text-purple-300">3. Registration and User Account</h2>
+            <p className="mb-3">Registration is required to use certain features:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Bei der Registrierung sind wahrheitsgemäße Angaben zu machen</li>
-              <li>Der Benutzername darf nicht gegen geltendes Recht verstoßen oder andere verletzen</li>
-              <li>Du bist für die Geheimhaltung deines Passworts selbst verantwortlich</li>
-              <li>Ein Account ist nicht übertragbar</li>
-              <li>Du kannst deinen Account jederzeit löschen</li>
+              <li>Truthful information must be provided during registration</li>
+              <li>Username must not violate applicable law or harm others</li>
+              <li>You are responsible for keeping your password confidential</li>
+              <li>An account is not transferable</li>
+              <li>You can delete your account at any time</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">4. Nutzungsregeln</h2>
-            <p className="mb-3">Bei der Nutzung des Spiels ist untersagt:</p>
+            <h2 className="text-2xl font-semibold mb-3 text-purple-300">4. Usage Rules</h2>
+            <p className="mb-3">The following is prohibited when using the game:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Verwendung von Bots, Cheats oder anderen Manipulationsprogrammen</li>
-              <li>Missbrauch von Bugs oder Exploits</li>
-              <li>Belästigung oder Beleidigung anderer Nutzer</li>
-              <li>Verwendung mehrerer Accounts zur Manipulation der Rangliste</li>
-              <li>Automatisierte Zugriffe auf die API</li>
+              <li>Use of bots, cheats, or other manipulation programs</li>
+              <li>Abuse of bugs or exploits</li>
+              <li>Harassment or insults of other users</li>
+              <li>Use of multiple accounts to manipulate the leaderboard</li>
+              <li>Automated access to the API</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">5. Highscores und Ranglisten</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-purple-300">5. Highscores and Leaderboards</h2>
             <p className="mb-3">
-              Highscores werden automatisch gespeichert und in der öffentlichen Rangliste angezeigt:
+              Highscores are automatically saved and displayed on the public leaderboard:
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Benutzernamen und Highscores sind für alle Nutzer sichtbar</li>
-              <li>Wir behalten uns vor, manipulierte Scores zu löschen</li>
-              <li>Bei Regelverstoß können Accounts gesperrt werden</li>
+              <li>Usernames and highscores are visible to all users</li>
+              <li>We reserve the right to delete manipulated scores</li>
+              <li>Accounts may be banned for rule violations</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">6. Verfügbarkeit</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-purple-300">6. Availability</h2>
             <p>
-              Wir bemühen uns um eine hohe Verfügbarkeit des Spiels, können aber keine 100%ige 
-              Erreichbarkeit garantieren. Es besteht kein Anspruch auf ständige Verfügbarkeit. 
-              Wartungsarbeiten können zu temporären Ausfällen führen.
+              We strive for high availability of the game, but cannot guarantee 100% 
+              accessibility. There is no claim to constant availability. 
+              Maintenance work may lead to temporary outages.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">7. Haftung</h2>
-            <p className="mb-3">Unsere Haftung ist wie folgt beschränkt:</p>
+            <h2 className="text-2xl font-semibold mb-3 text-purple-300">7. Liability</h2>
+            <p className="mb-3">Our liability is limited as follows:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Bei Vorsatz und grober Fahrlässigkeit haften wir unbeschränkt</li>
-              <li>Bei leichter Fahrlässigkeit haften wir nur bei Verletzung wesentlicher Vertragspflichten</li>
-              <li>Die Haftung für Datenverlust ist begrenzt auf den typischen Wiederherstellungsaufwand</li>
-              <li>Eine Haftung für die Richtigkeit der Kartenpreise wird ausgeschlossen</li>
+              <li>We are liable without limitation for intent and gross negligence</li>
+              <li>For slight negligence, we are only liable for breach of essential contractual obligations</li>
+              <li>Liability for data loss is limited to typical recovery costs</li>
+              <li>Liability for the accuracy of card prices is excluded</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">8. Geistiges Eigentum</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-purple-300">8. Intellectual Property</h2>
             <div className="space-y-3">
               <p>
-                Magic: The Gathering, alle Kartennamen, Bilder und das MTG-Logo sind Eigentum von 
-                Wizards of the Coast LLC. Dieses Projekt nutzt Daten von Scryfall und ist nicht 
-                offiziell mit Wizards of the Coast verbunden.
+                Magic: The Gathering, all card names, images, and the MTG logo are property of 
+                Wizards of the Coast LLC. This project uses data from Scryfall and is not 
+                officially affiliated with Wizards of the Coast.
               </p>
               <p>
-                Der Quellcode und die Gestaltung des Spiels unterliegen dem Urheberrecht des Betreibers, 
-                sofern nicht anders angegeben.
+                The source code and design of the game are subject to the copyright of the operator, 
+                unless otherwise stated.
               </p>
             </div>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">9. Änderungen der AGB</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-purple-300">9. Changes to Terms</h2>
             <p>
-              Wir behalten uns vor, diese AGB jederzeit zu ändern. Änderungen werden auf dieser Seite 
-              veröffentlicht. Die weitere Nutzung nach Änderung gilt als Zustimmung zu den neuen 
-              Bedingungen.
+              We reserve the right to change these terms at any time. Changes will be 
+              published on this page. Continued use after changes constitutes acceptance of the new 
+              terms.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">10. Account-Löschung</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-purple-300">10. Account Deletion</h2>
             <p className="mb-3">
-              Du kannst deinen Account jederzeit löschen:
+              You can delete your account at any time:
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Kontaktiere uns per E-Mail mit deiner Löschanfrage</li>
-              <li>Alle personenbezogenen Daten werden innerhalb von 30 Tagen gelöscht</li>
-              <li>Highscores können anonymisiert in der Rangliste verbleiben</li>
+              <li>Contact us via email with your deletion request</li>
+              <li>All personal data will be deleted within 30 days</li>
+              <li>Highscores may remain anonymized on the leaderboard</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">11. Schlussbestimmungen</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-purple-300">11. Final Provisions</h2>
             <p className="mb-3">
-              Es gilt das Recht der Bundesrepublik Deutschland. Sollten einzelne Bestimmungen dieser 
-              AGB unwirksam sein, berührt dies die Wirksamkeit der übrigen Bestimmungen nicht.
+              The law of the Federal Republic of Germany applies. Should individual provisions of these 
+              terms be invalid, this does not affect the validity of the remaining provisions.
             </p>
           </section>
 
           <section className="pt-4 border-t border-white/20">
             <p className="text-sm text-gray-400">
-              Stand: {new Date().toLocaleDateString('de-DE')}
+              Last updated: {new Date().toLocaleDateString('en-US')}
             </p>
           </section>
         </div>
@@ -146,7 +146,7 @@ export default function Terms({ onBack }) {
             onClick={onBack}
             className="mt-8 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
           >
-            ← Zurück
+            ← Back
           </button>
         )}
       </div>
