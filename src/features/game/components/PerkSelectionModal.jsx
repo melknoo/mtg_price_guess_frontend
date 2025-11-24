@@ -5,7 +5,6 @@ import { PERK_RARITY, PERK_CONFIG } from '../constants/perkDefinitions';
 export default function PerkSelectionModal({ perks, onSelect, show }) {
     if (!show || !perks || perks.length === 0) return null;
 
-
     const getRarityColor = (rarity) => {
         switch (rarity) {
             case PERK_RARITY.COMMON:
@@ -55,45 +54,50 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                     className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
                 >
                     <motion.div
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.95, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
                         className="max-w-5xl w-full"
                     >
                         {/* Header */}
                         <div className="text-center mb-8">
-                            <h2 className="text-4xl font-bold text-white mb-2">
+                            <motion.h2
+                                initial={{ y: -20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.1 }}
+                                className="text-4xl font-bold text-white mb-2"
+                            >
                                 ✨ Wähle deinen Bonus!
-                            </h2>
-                            <p className="text-gray-300 text-lg">
+                            </motion.h2>
+                            <motion.p
+                                initial={{ y: -20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="text-gray-300 text-lg"
+                            >
                                 Du hast {PERK_CONFIG.ROUNDS_BETWEEN_PERKS} Runden gemeistert! Zeit für ein Upgrade.
-                            </p>
+                            </motion.p>
                         </div>
 
                         {/* Perk Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {perks.map((perk, index) => (
-                                <motion.button
+                                <motion.div
                                     key={perk.id}
-                                    initial={{ y: 20, opacity: 0 }}
+                                    initial={{ y: 50, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
-                                    transition={{ delay: 0.05 * index, duration: 0.2 }}
+                                    transition={{ delay: 0.1 * index }}
+                                    whileHover={{ scale: 1.05, y: -10 }}
+                                    whileTap={{ scale: 0.95 }}
                                     onClick={() => onSelect(perk)}
                                     className={`
-                    relative
+                    relative cursor-pointer
                     bg-gradient-to-br ${getRarityColor(perk.rarity)}
-                    border-4 rounded-2xl p-2 sm:p-6
-                    shadow-2xl
-                    transition-all duration-200
-                    hover:scale-105 hover:shadow-3xl
-                    active:scale-95
-                    focus:outline-none focus:ring-4 focus:ring-white/50
+                    border-4 rounded-2xl p-6
+                    shadow-2xl hover:shadow-3xl
+                    transition-all duration-300
+                    group
                   `}
-                                    style={{
-                                        willChange: 'transform',
-                                        backfaceVisibility: 'hidden',
-                                    }}
                                 >
                                     {/* Rarity Badge */}
                                     <div className="absolute top-4 right-4">
@@ -107,9 +111,13 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
 
                                     {/* Icon */}
                                     <div className="text-center mb-4">
-                                        <div className="sm:text-7xl text-2xl inline-block transition-transform duration-200 hover:scale-110">
+                                        <motion.div
+                                            whileHover={{ rotate: 360, scale: 1.2 }}
+                                            transition={{ duration: 0.5 }}
+                                            className="text-7xl inline-block"
+                                        >
                                             {perk.icon}
-                                        </div>
+                                        </motion.div>
                                     </div>
 
                                     {/* Name */}
@@ -140,15 +148,22 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                     )}
 
                                     {/* Hover Glow Effect */}
-                                    <div className="absolute inset-0 rounded-2xl opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none bg-white/5" />
-                                </motion.button>
+                                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        <div className="absolute inset-0 rounded-2xl bg-white/10" />
+                                    </div>
+                                </motion.div>
                             ))}
                         </div>
 
                         {/* Footer Hint */}
-                        <p className="text-center text-gray-400 text-sm mt-8">
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.5 }}
+                            className="text-center text-gray-400 text-sm mt-8"
+                        >
                             💡 Tipp: Wähle weise! Manche Perks können gestackt werden.
-                        </p>
+                        </motion.p>
                     </motion.div>
                 </motion.div>
             )}
