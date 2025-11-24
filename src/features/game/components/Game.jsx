@@ -427,7 +427,12 @@ export default function Game({
         {selectedCard !== null && !gameOver && (
           <button
             onClick={handleNextPair}
-            className="bg-blue-500 text-2xl min-w-[250px] font-semibold hover:bg-blue-600 text-white px-6 py-6 rounded transition"
+            disabled={perkSystem.showPerkSelection}
+            className={`text-2xl min-w-[250px] font-semibold text-white px-6 py-6 rounded transition ${
+              perkSystem.showPerkSelection
+                ? 'bg-blue-500/50 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600'
+            }`}
           >
             Next
           </button>
