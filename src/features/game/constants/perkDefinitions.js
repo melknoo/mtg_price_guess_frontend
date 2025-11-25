@@ -83,20 +83,20 @@ export const PERKS = {
         rarity: PERK_RARITY.COMMON,
         effect: 'flat_bonus',
         value: 20,
-        duration: 5,
+        duration: 7,
     },
 
     // UTILITY PERKS
     PRICE_HINT: {
         id: 'price_hint',
         name: 'Price Hint',
-        description: 'Shows the price range for the next 3 rounds',
+        description: 'Shows the price range for the next 10 rounds',
         icon: '🔮',
         type: PERK_TYPES.UTILITY,
-        rarity: PERK_RARITY.RARE,
+        rarity: PERK_RARITY.COMMON,
         effect: 'price_range',
         value: 1,
-        duration: 3,
+        duration: 10,
     },
 
     SLOW_TIME: {
