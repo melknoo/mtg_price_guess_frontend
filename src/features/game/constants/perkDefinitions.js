@@ -13,14 +13,15 @@ export const PERK_RARITY = {
 export const PERKS = {
     SECOND_CHANCE: {
         id: 'second_chance',
-        name: 'Second Chance',
+        name: 'Extra Life',
         description: 'Your next mistake doesn\'t count',
         icon: '💚',
         type: PERK_TYPES.DEFENSIVE,
         rarity: PERK_RARITY.EPIC,
         effect: 'shield',
         value: 1,
-        duration: 3,
+        duration: -1,
+        consumable: true, // Can be selected again after being consumed
     },
 
     TIME_BUFFER: {
@@ -58,6 +59,7 @@ export const PERKS = {
         effect: 'streak_threshold',
         value: 3,
         duration: -1, // Permanent for this game
+        consumable: false, // Cannot be selected again once chosen
     },
 
     PERFECTIONIST: {
@@ -132,6 +134,7 @@ export const PERKS = {
         value: 1,
         duration: -1,
         manual: true,
+        consumable: true, // Can be selected again after being used
     },
 };
 

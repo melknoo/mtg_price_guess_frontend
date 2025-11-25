@@ -6,6 +6,7 @@ export const usePerkSystem = () => {
   const [roundsPlayed, setRoundsPlayed] = useState(0);
   const [showPerkSelection, setShowPerkSelection] = useState(false);
   const [availablePerks, setAvailablePerks] = useState([]);
+  const [selectedPermanentPerks, setSelectedPermanentPerks] = useState([]); // Track permanently selected perks
 
   // Generiere zufällige Perks basierend auf Rarity
   const generateRandomPerks = useCallback(() => {
@@ -13,20 +14,42 @@ export const usePerkSystem = () => {
     const selectedPerks = [];
     const usedIds = new Set();
 
+    // Filter out permanently selected perks that are not consumable
+    const excludedIds = new Set(
+      selectedPermanentPerks.filter(id => {
+        const perk = allPerks.find(p => p.id === id);
+        return perk && perk.duration === -1 && !perk.consumable;
+      })
+    );
+
+    // Filter out perks that are currently active and consumable
+    const activeConsumableIds = new Set(
+      activePerks
+        .filter(p => p.consumable && p.duration === -1)
+        .map(p => p.id)
+    );
+
     while (selectedPerks.length < PERK_CONFIG.PERKS_TO_CHOOSE && selectedPerks.length < allPerks.length) {
-      const perk = getWeightedRandomPerk(allPerks, usedIds);
+      const perk = getWeightedRandomPerk(allPerks, usedIds, excludedIds, activeConsumableIds);
       if (perk) {
         selectedPerks.push(perk);
         usedIds.add(perk.id);
+      } else {
+        break; // No more valid perks available
       }
     }
 
     return selectedPerks;
-  }, []);
+  }, [selectedPermanentPerks, activePerks]);
 
   // Wähle Perk basierend auf Rarity-Gewichtung
-  const getWeightedRandomPerk = (perks, excludeIds) => {
-    const availablePerks = perks.filter(p => !excludeIds.has(p.id));
+  const getWeightedRandomPerk = (perks, excludeIds, permanentExcludeIds, activeConsumableIds) => {
+    const availablePerks = perks.filter(p => 
+      !excludeIds.has(p.id) && 
+      !permanentExcludeIds.has(p.id) &&
+      !activeConsumableIds.has(p.id)
+    );
+    
     if (availablePerks.length === 0) return null;
 
     const totalWeight = availablePerks.reduce(
@@ -46,7 +69,7 @@ export const usePerkSystem = () => {
     return availablePerks[0];
   };
 
-  // NEU: Trigger Perk Selection (wird von Game.jsx aufgerufen)
+  // Trigger Perk Selection
   const triggerPerkSelection = useCallback(() => {
     const perks = generateRandomPerks();
     setAvailablePerks(perks);
@@ -79,6 +102,16 @@ export const usePerkSystem = () => {
       }
     });
 
+    // Track permanent perks that should not appear again (unless consumable)
+    if (perk.duration === -1 && !perk.consumable) {
+      setSelectedPermanentPerks(prev => {
+        if (!prev.includes(perk.id)) {
+          return [...prev, perk.id];
+        }
+        return prev;
+      });
+    }
+
     setShowPerkSelection(false);
     setAvailablePerks([]);
   }, [roundsPlayed]);
@@ -102,6 +135,12 @@ export const usePerkSystem = () => {
   // Verwende einen einmaligen Perk (z.B. Shield, Skip)
   const consumePerk = useCallback((perkId) => {
     setActivePerks(prev => prev.filter(p => p.id !== perkId));
+    
+    // If consumed perk was permanent and consumable, remove from permanent list
+    const consumedPerk = PERKS[Object.keys(PERKS).find(key => PERKS[key].id === perkId)];
+    if (consumedPerk && consumedPerk.duration === -1 && consumedPerk.consumable) {
+      setSelectedPermanentPerks(prev => prev.filter(id => id !== perkId));
+    }
   }, []);
 
   // Prüfe ob ein spezifischer Perk aktiv ist
@@ -126,6 +165,7 @@ export const usePerkSystem = () => {
     setRoundsPlayed(0);
     setShowPerkSelection(false);
     setAvailablePerks([]);
+    setSelectedPermanentPerks([]);
   }, []);
 
   return {
@@ -136,7 +176,7 @@ export const usePerkSystem = () => {
     availablePerks,
 
     // Actions
-    triggerPerkSelection, // NEU: Exportiere diese Funktion
+    triggerPerkSelection,
     selectPerk,
     decrementPerkDurations,
     consumePerk,

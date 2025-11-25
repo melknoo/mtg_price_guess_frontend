@@ -142,7 +142,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                         <div className="flex justify-center sm:flex-col mb-1 sm:mb-4">
                                             <div className="text-center sm:mb-4">
                                                 <motion.div
-                                                    whileHover={{ rotate: 360, scale: 1.2 }}
+                                                    whileHover={{ scale: 1.2 }}
                                                     transition={{ duration: 0.5 }}
                                                     className="sm:text-7xl text-2xl inline-block"
                                                 >
