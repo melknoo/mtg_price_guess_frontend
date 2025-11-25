@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "./features/auth/context/AuthContext";
 import LoginForm from "./features/auth/components/LoginForm";
 import Leaderboard from "./features/leaderboard/components/Leaderboard";
-import RegisterWithScore from "./features/auth/components/RegisterWithScore"; 
-import ForgotPassword from "./features/auth/components/ForgotPassword"; 
-import ResetPassword from "./features/auth/components/ResetPassword"; 
+import RegisterWithScore from "./features/auth/components/RegisterWithScore";
+import ForgotPassword from "./features/auth/components/ForgotPassword";
+import ResetPassword from "./features/auth/components/ResetPassword";
 import Game from "./features/game/components/Game";
 import Footer from "./shared/components/Footer";
 import CookieConsent from "./features/legal/components/CookieConsent";
@@ -12,6 +12,8 @@ import PrivacyPolicy from "./features/legal/components/PrivacyPolicy";
 import Impressum from "./features/legal/components/Impressum";
 import Terms from "./features/legal/components/Terms";
 import AccountSettings from "./features/account/components/AccountSettings";
+import SuggestionModal from "./features/suggestions/components/SuggestionModal";
+import { submitSuggestion } from "./features/suggestions/api/suggestionApi";
 
 
 export default function App() {
@@ -22,12 +24,13 @@ export default function App() {
   const [gameKey, setGameKey] = useState(0);
   const [resetToken, setResetToken] = useState(null);
   const [resetSuccess, setResetSuccess] = useState("");
+  const [showSuggestionModal, setShowSuggestionModal] = useState(false);
 
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
-    
+
     if (token) {
       console.log("Reset token found (URL-safe):", token);
       setResetToken(token);
@@ -79,6 +82,10 @@ export default function App() {
   const handleFooterNavigation = (route) => {
     setScreen(route);
     window.location.hash = `/${route}`;
+  };
+
+  const handleSubmitSuggestion = async (text) => {
+    await submitSuggestion(text);
   };
 
   // Legal Pages (always available, even without login)
@@ -225,6 +232,17 @@ export default function App() {
                 Leaderboard
               </button>
             </div>
+            {!user?.guest && (
+              <div className="mt-4">
+                <button
+                  onClick={() => setShowSuggestionModal(true)}
+                  className="bg-blue-500 px-6 py-3 rounded text-white text-lg hover:bg-blue-600 transition shadow-lg"
+                >
+                  💡 Suggestions
+                </button>
+              </div>
+            )}
+
             {user?.guest && !showRegister && (
               <button
                 onClick={() => setShowRegister(true)}
@@ -263,9 +281,16 @@ export default function App() {
           />
         )}
       </div>
-      
+
       {screen !== "game" && <Footer onNavigate={handleFooterNavigation} />}
       <CookieConsent />
+
+      {/* Suggestion Modal */}
+      <SuggestionModal
+        isOpen={showSuggestionModal}
+        onClose={() => setShowSuggestionModal(false)}
+        onSubmit={handleSubmitSuggestion}
+      />
     </div>
   );
 }
