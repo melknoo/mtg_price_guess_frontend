@@ -1,15 +1,25 @@
-import { SafeAreaView } from 'react-native';
-import React from 'react';
+import { SafeAreaView, StatusBar, View } from 'react-native';
+import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Platform } from 'react-native';
-
-
+import * as NavigationBar from 'expo-navigation-bar';
 
 export default function App() {
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      // Navigationsleiste transparent machen
+      NavigationBar.setBackgroundColorAsync('transparent');
+      // Behavior: Die Leiste wird versteckt und erscheint nur bei Swipe
+      NavigationBar.setBehaviorAsync('overlay-swipe');
+      // Navigationsleiste komplett verstecken
+      NavigationBar.setVisibilityAsync('hidden');
+      // Button-Style (falls sichtbar): 'light' oder 'dark'
+      NavigationBar.setButtonStyleAsync('dark');
+    }
+  }, []);
 
-   if (Platform.OS === 'web') {
-    // Im Web einfach iframe benutzen
+  if (Platform.OS === 'web') {
     return (
       <iframe
         src="https://mtg-price-guess-frontend.vercel.app"
@@ -18,19 +28,28 @@ export default function App() {
       />
     );
   }
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      {/* StatusBar auch verstecken für echtes Fullscreen */}
+      <StatusBar hidden={true} />
+      
       <WebView
         source={{ uri: 'https://mtg-price-guess-frontend.vercel.app' }}
-        style={{ flex: 1 }}
+        style={styles.webview}
+        // Wichtig für Edge-to-Edge
+        contentInsetAdjustmentBehavior="automatic"
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a2e', // Passend zu deinem App-Hintergrund
+  },
+  webview: {
+    flex: 1,
   },
 });

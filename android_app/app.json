@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/mtg_logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1a1a2e"
     },
     "ios": {
       "supportsTablet": true
@@ -18,10 +18,11 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/mtg_logo.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1a1a2e"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.melknoo.android_app"
+      "package": "com.melknoo.android_app",
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./assets/mtg_logo.png"
@@ -31,6 +32,9 @@
         "projectId": "2c2ed932-15c0-4ae8-8ea5-b1246d946d17"
       }
     },
+    "plugins": [
+      "expo-navigation-bar"
+    ],
     "owner": "melknoo"
   }
 }
