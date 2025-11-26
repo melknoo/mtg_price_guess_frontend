@@ -6,15 +6,16 @@ export const usePerkSystem = () => {
   const [roundsPlayed, setRoundsPlayed] = useState(0);
   const [showPerkSelection, setShowPerkSelection] = useState(false);
   const [availablePerks, setAvailablePerks] = useState([]);
-  const [selectedPermanentPerks, setSelectedPermanentPerks] = useState([]); // Track permanently selected perks
+  const [selectedPermanentPerks, setSelectedPermanentPerks] = useState([]);
 
-  // Generiere zufällige Perks basierend auf Rarity
+  // NEU: Tracking für Heart Regeneration
+  const [correctAnswersForRegen, setCorrectAnswersForRegen] = useState(0);
+
   const generateRandomPerks = useCallback(() => {
     const allPerks = Object.values(PERKS);
     const selectedPerks = [];
     const usedIds = new Set();
 
-    // Filter out permanently selected perks that are not consumable
     const excludedIds = new Set(
       selectedPermanentPerks.filter(id => {
         const perk = allPerks.find(p => p.id === id);
@@ -22,7 +23,6 @@ export const usePerkSystem = () => {
       })
     );
 
-    // Filter out perks that are currently active and consumable
     const activeConsumableIds = new Set(
       activePerks
         .filter(p => p.consumable && p.duration === -1)
@@ -35,25 +35,24 @@ export const usePerkSystem = () => {
         selectedPerks.push(perk);
         usedIds.add(perk.id);
       } else {
-        break; // No more valid perks available
+        break;
       }
     }
 
     return selectedPerks;
   }, [selectedPermanentPerks, activePerks]);
 
-  // Wähle Perk basierend auf Rarity-Gewichtung
   const getWeightedRandomPerk = (perks, excludeIds, permanentExcludeIds, activeConsumableIds) => {
-    const availablePerks = perks.filter(p => 
-      !excludeIds.has(p.id) && 
+    const availablePerks = perks.filter(p =>
+      !excludeIds.has(p.id) &&
       !permanentExcludeIds.has(p.id) &&
       !activeConsumableIds.has(p.id)
     );
-    
+
     if (availablePerks.length === 0) return null;
 
     const totalWeight = availablePerks.reduce(
-      (sum, perk) => sum + RARITY_WEIGHTS[perk.rarity], 
+      (sum, perk) => sum + RARITY_WEIGHTS[perk.rarity],
       0
     );
 
@@ -69,21 +68,17 @@ export const usePerkSystem = () => {
     return availablePerks[0];
   };
 
-  // Trigger Perk Selection
   const triggerPerkSelection = useCallback(() => {
     const perks = generateRandomPerks();
     setAvailablePerks(perks);
     setShowPerkSelection(true);
   }, [generateRandomPerks]);
 
-  // Wähle einen Perk aus
   const selectPerk = useCallback((perk) => {
     setActivePerks(prev => {
-      // Prüfe ob Perk bereits aktiv ist
       const existingIndex = prev.findIndex(p => p.id === perk.id);
-      
+
       if (existingIndex >= 0) {
-        // Stack: Erhöhe Dauer oder Wert
         const updated = [...prev];
         if (perk.duration > 0) {
           updated[existingIndex] = {
@@ -93,7 +88,6 @@ export const usePerkSystem = () => {
         }
         return updated;
       } else {
-        // Neuer Perk
         return [...prev, {
           ...perk,
           remainingDuration: perk.duration,
@@ -102,7 +96,6 @@ export const usePerkSystem = () => {
       }
     });
 
-    // Track permanent perks that should not appear again (unless consumable)
     if (perk.duration === -1 && !perk.consumable) {
       setSelectedPermanentPerks(prev => {
         if (!prev.includes(perk.id)) {
@@ -116,13 +109,12 @@ export const usePerkSystem = () => {
     setAvailablePerks([]);
   }, [roundsPlayed]);
 
-  // Reduziere Dauer von Perks nach Runde
   const decrementPerkDurations = useCallback(() => {
     setActivePerks(prev => {
       return prev
         .map(perk => {
-          if (perk.duration === -1) return perk; // Permanente Perks
-          
+          if (perk.duration === -1) return perk;
+
           return {
             ...perk,
             remainingDuration: perk.remainingDuration - 1
@@ -132,40 +124,67 @@ export const usePerkSystem = () => {
     });
   }, []);
 
-  // Verwende einen einmaligen Perk (z.B. Shield, Skip)
   const consumePerk = useCallback((perkId) => {
     setActivePerks(prev => prev.filter(p => p.id !== perkId));
-    
-    // If consumed perk was permanent and consumable, remove from permanent list
+
     const consumedPerk = PERKS[Object.keys(PERKS).find(key => PERKS[key].id === perkId)];
     if (consumedPerk && consumedPerk.duration === -1 && consumedPerk.consumable) {
       setSelectedPermanentPerks(prev => prev.filter(id => id !== perkId));
     }
   }, []);
 
-  // Prüfe ob ein spezifischer Perk aktiv ist
   const hasPerk = useCallback((perkId) => {
     return activePerks.some(p => p.id === perkId);
   }, [activePerks]);
 
-  // Hole Wert eines aktiven Perks
   const getPerkValue = useCallback((effect) => {
     const perk = activePerks.find(p => p.effect === effect);
     return perk ? perk.value : null;
   }, [activePerks]);
 
-  // Hole alle Perks mit bestimmtem Effect
   const getPerksByEffect = useCallback((effect) => {
     return activePerks.filter(p => p.effect === effect);
   }, [activePerks]);
 
-  // Reset für neues Spiel
+  // NEU: Tracking für richtige Antworten (Heart Regen)
+  const trackCorrectAnswer = useCallback(() => {
+    if (!activePerks.some(p => p.id === 'heart_regeneration')) {
+      return { shouldRegenerate: false, newCount: 0 };
+    }
+
+    const perk = activePerks.find(p => p.effect === 'heart_regen');
+    const threshold = perk ? perk.value : 5;
+    const newCount = correctAnswersForRegen + 1;
+
+    if (newCount >= threshold) {
+      setCorrectAnswersForRegen(0);
+      return { shouldRegenerate: true, newCount: 0 };
+    }
+
+    setCorrectAnswersForRegen(newCount);
+    return { shouldRegenerate: false, newCount };
+  }, [correctAnswersForRegen, activePerks]);
+
+  // NEU: Getter für aktuellen Fortschritt
+  const getHeartRegenProgress = useCallback(() => {
+    if (!activePerks.some(p => p.id === 'heart_regeneration')) return null;
+
+    const perk = activePerks.find(p => p.effect === 'heart_regen');
+    const threshold = perk ? perk.value : 5;
+    return {
+      current: correctAnswersForRegen,
+      threshold,
+      progress: (correctAnswersForRegen / threshold) * 100
+    };
+  }, [correctAnswersForRegen, activePerks]);
+
   const reset = useCallback(() => {
     setActivePerks([]);
     setRoundsPlayed(0);
     setShowPerkSelection(false);
     setAvailablePerks([]);
     setSelectedPermanentPerks([]);
+    setCorrectAnswersForRegen(0); // NEU: Reset
   }, []);
 
   return {
@@ -180,12 +199,17 @@ export const usePerkSystem = () => {
     selectPerk,
     decrementPerkDurations,
     consumePerk,
-    
+
     // Queries
     hasPerk,
     getPerkValue,
     getPerksByEffect,
-    
+
+    // NEU: Heart Regen
+    trackCorrectAnswer,
+    getHeartRegenProgress,
+    correctAnswersForRegen,
+
     // Reset
     reset,
   };

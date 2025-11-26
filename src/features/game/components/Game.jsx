@@ -102,7 +102,7 @@ export default function Game({
     const handleKeyDown = (e) => {
       // Ignoriere Tastatureingaben wenn Perk-Auswahl offen ist
       if (perkSystem.showPerkSelection) return;
-      
+
       // Ignoriere wenn Game Over
       if (gameOver) return;
 
@@ -198,6 +198,11 @@ export default function Game({
         let scoreMessage = formatScoreMessage(timeBonus, streakBonus);
         if (totalPoints > basePoints) {
           scoreMessage += ` 🎁 Perk Bonus: +${totalPoints - basePoints}`;
+        }
+        const regenResult = perkSystem.trackCorrectAnswer();
+        if (regenResult.shouldRegenerate && lives < GAME_CONFIG.INITIAL_LIVES) {
+          setLives(prev => Math.min(prev + 1, GAME_CONFIG.INITIAL_LIVES));
+          scoreMessage += ` 💖 Life regenerated!`;
         }
         setMessage(scoreMessage);
 
@@ -370,6 +375,25 @@ export default function Game({
         </div>
       )}
 
+      {/* NEU: Heart Regen Progress - HIER EINFÜGEN */}
+      {perkSystem.getHeartRegenProgress() && (
+        <div className="w-full max-w-xl mb-4">
+          <div className="bg-pink-500/20 border border-pink-400 rounded-lg p-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-pink-200 text-sm font-semibold">
+                💖 Heart Regen: {perkSystem.getHeartRegenProgress().current}/{perkSystem.getHeartRegenProgress().threshold}
+              </span>
+            </div>
+            <div className="w-full h-2 bg-gray-700 rounded overflow-hidden">
+              <div
+                className="h-full bg-pink-500 transition-all duration-300"
+                style={{ width: `${perkSystem.getHeartRegenProgress().progress}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <GameTimer timeLeft={timer.timeLeft} possiblePoints={calculateTimeBonus(timer.timeLeft)} progress={timer.progress} />
 
       {cardLoader.loading ? (
@@ -411,9 +435,8 @@ export default function Game({
           <button
             onClick={handleNextPair}
             disabled={perkSystem.showPerkSelection}
-            className={`text-2xl min-w-[250px] font-semibold text-white px-6 py-6 rounded transition ${
-              perkSystem.showPerkSelection ? "bg-blue-500/50 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
-            }`}
+            className={`text-2xl min-w-[250px] font-semibold text-white px-6 py-6 rounded transition ${perkSystem.showPerkSelection ? "bg-blue-500/50 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+              }`}
           >
             Next
           </button>

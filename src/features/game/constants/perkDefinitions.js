@@ -11,6 +11,17 @@ export const PERK_RARITY = {
 };
 
 export const PERKS = {
+    HEART_REGENERATION: {
+        id: 'heart_regeneration',
+        name: 'Heart Regeneration',
+        description: 'Regenerate 1 life after 5 correct answers (not consecutive)',
+        icon: '💖',
+        type: PERK_TYPES.DEFENSIVE,
+        rarity: PERK_RARITY.RARE,
+        effect: 'heart_regen',
+        value: 5,
+        duration: -1,
+    },
     SECOND_CHANCE: {
         id: 'second_chance',
         name: 'Extra Life',
