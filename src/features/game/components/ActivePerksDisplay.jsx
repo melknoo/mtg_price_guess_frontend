@@ -27,7 +27,7 @@ export default function ActivePerksDisplay({ perks }) {
       </div>
 
       {/* Mobile: Collapsible Top-Left Corner */}
-      <div className="md:hidden fixed top-4 left-4 z-40">
+      <div className="md:hidden fixed top-8 left-4 z-40">
         <AnimatePresence>
           {isOpen && (
             <motion.div
