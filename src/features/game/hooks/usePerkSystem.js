@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { PERKS, RARITY_WEIGHTS, PERK_CONFIG } from '../constants/perkDefinitions';
+import { PERKS, RARITY_WEIGHTS, PERK_CONFIG, getBasePerkId, isExtendedPerk } from '../constants/perkDefinitions';
 
 export const usePerkSystem = () => {
   const [activePerks, setActivePerks] = useState([]);
@@ -7,8 +7,6 @@ export const usePerkSystem = () => {
   const [showPerkSelection, setShowPerkSelection] = useState(false);
   const [availablePerks, setAvailablePerks] = useState([]);
   const [selectedPermanentPerks, setSelectedPermanentPerks] = useState([]);
-
-  // NEU: Tracking für Heart Regeneration
   const [correctAnswersForRegen, setCorrectAnswersForRegen] = useState(0);
 
   const generateRandomPerks = useCallback(() => {
@@ -16,6 +14,7 @@ export const usePerkSystem = () => {
     const selectedPerks = [];
     const usedIds = new Set();
 
+    // Exclude permanent non-consumable perks that were already selected
     const excludedIds = new Set(
       selectedPermanentPerks.filter(id => {
         const perk = allPerks.find(p => p.id === id);
@@ -23,17 +22,31 @@ export const usePerkSystem = () => {
       })
     );
 
+    // Exclude active consumable perks
     const activeConsumableIds = new Set(
       activePerks
         .filter(p => p.consumable && p.duration === -1)
         .map(p => p.id)
     );
 
+    // Get active perk effects to determine if extended versions should appear
+    const activeEffects = new Set(activePerks.map(p => p.effect));
+
     while (selectedPerks.length < PERK_CONFIG.PERKS_TO_CHOOSE && selectedPerks.length < allPerks.length) {
-      const perk = getWeightedRandomPerk(allPerks, usedIds, excludedIds, activeConsumableIds);
+      const perk = getWeightedRandomPerk(
+        allPerks, 
+        usedIds, 
+        excludedIds, 
+        activeConsumableIds,
+        activeEffects
+      );
       if (perk) {
         selectedPerks.push(perk);
         usedIds.add(perk.id);
+        // Also exclude the base/extended counterpart
+        if (perk.basePerkId) usedIds.add(perk.basePerkId);
+        const extended = allPerks.find(p => p.basePerkId === perk.id);
+        if (extended) usedIds.add(extended.id);
       } else {
         break;
       }
@@ -42,12 +55,20 @@ export const usePerkSystem = () => {
     return selectedPerks;
   }, [selectedPermanentPerks, activePerks]);
 
-  const getWeightedRandomPerk = (perks, excludeIds, permanentExcludeIds, activeConsumableIds) => {
-    const availablePerks = perks.filter(p =>
-      !excludeIds.has(p.id) &&
-      !permanentExcludeIds.has(p.id) &&
-      !activeConsumableIds.has(p.id)
-    );
+  const getWeightedRandomPerk = (perks, excludeIds, permanentExcludeIds, activeConsumableIds, activeEffects) => {
+    const availablePerks = perks.filter(p => {
+      // Basic exclusions
+      if (excludeIds.has(p.id)) return false;
+      if (permanentExcludeIds.has(p.id)) return false;
+      if (activeConsumableIds.has(p.id)) return false;
+
+      // For extended perks: only show if base perk is NOT active
+      // (selecting extended when base is active will extend duration)
+      // Actually, we WANT to show extended if base is active - that's the point!
+      // So no additional filtering needed here
+
+      return true;
+    });
 
     if (availablePerks.length === 0) return null;
 
@@ -76,18 +97,35 @@ export const usePerkSystem = () => {
 
   const selectPerk = useCallback((perk) => {
     setActivePerks(prev => {
-      const existingIndex = prev.findIndex(p => p.id === perk.id);
+      // Check if this is an extended perk and base perk is active
+      const basePerkId = getBasePerkId(perk.id);
+      const isExtended = isExtendedPerk(perk.id);
+      
+      // Find if base perk (or same effect perk) is already active
+      const existingIndex = prev.findIndex(p => 
+        p.id === perk.id || 
+        p.id === basePerkId ||
+        (isExtended && p.effect === perk.effect)
+      );
 
       if (existingIndex >= 0) {
+        // Perk with same effect exists - extend duration
         const updated = [...prev];
-        if (perk.duration > 0) {
+        const bonusDuration = perk.bonusDuration || perk.duration;
+        
+        if (updated[existingIndex].duration > 0 || perk.duration > 0) {
           updated[existingIndex] = {
             ...updated[existingIndex],
-            remainingDuration: updated[existingIndex].remainingDuration + perk.duration
+            remainingDuration: updated[existingIndex].remainingDuration + bonusDuration,
+            // Update name to show it's extended
+            name: updated[existingIndex].name.includes('+') 
+              ? updated[existingIndex].name 
+              : updated[existingIndex].name + '+'
           };
         }
         return updated;
       } else {
+        // New perk - add it
         return [...prev, {
           ...perk,
           remainingDuration: perk.duration,
@@ -96,10 +134,12 @@ export const usePerkSystem = () => {
       }
     });
 
+    // Track permanent perks
     if (perk.duration === -1 && !perk.consumable) {
       setSelectedPermanentPerks(prev => {
-        if (!prev.includes(perk.id)) {
-          return [...prev, perk.id];
+        const idToAdd = getBasePerkId(perk.id);
+        if (!prev.includes(idToAdd)) {
+          return [...prev, idToAdd];
         }
         return prev;
       });
@@ -114,7 +154,6 @@ export const usePerkSystem = () => {
       return prev
         .map(perk => {
           if (perk.duration === -1) return perk;
-
           return {
             ...perk,
             remainingDuration: perk.remainingDuration - 1
@@ -134,7 +173,12 @@ export const usePerkSystem = () => {
   }, []);
 
   const hasPerk = useCallback((perkId) => {
-    return activePerks.some(p => p.id === perkId);
+    // Also check for extended versions
+    return activePerks.some(p => 
+      p.id === perkId || 
+      p.id === perkId + '_extended' ||
+      getBasePerkId(p.id) === perkId
+    );
   }, [activePerks]);
 
   const getPerkValue = useCallback((effect) => {
@@ -146,7 +190,6 @@ export const usePerkSystem = () => {
     return activePerks.filter(p => p.effect === effect);
   }, [activePerks]);
 
-  // NEU: Tracking für richtige Antworten (Heart Regen)
   const trackCorrectAnswer = useCallback(() => {
     if (!activePerks.some(p => p.id === 'heart_regeneration')) {
       return { shouldRegenerate: false, newCount: 0 };
@@ -165,7 +208,6 @@ export const usePerkSystem = () => {
     return { shouldRegenerate: false, newCount };
   }, [correctAnswersForRegen, activePerks]);
 
-  // NEU: Getter für aktuellen Fortschritt
   const getHeartRegenProgress = useCallback(() => {
     if (!activePerks.some(p => p.id === 'heart_regeneration')) return null;
 
@@ -184,33 +226,24 @@ export const usePerkSystem = () => {
     setShowPerkSelection(false);
     setAvailablePerks([]);
     setSelectedPermanentPerks([]);
-    setCorrectAnswersForRegen(0); // NEU: Reset
+    setCorrectAnswersForRegen(0);
   }, []);
 
   return {
-    // State
     activePerks,
     roundsPlayed,
     showPerkSelection,
     availablePerks,
-
-    // Actions
     triggerPerkSelection,
     selectPerk,
     decrementPerkDurations,
     consumePerk,
-
-    // Queries
     hasPerk,
     getPerkValue,
     getPerksByEffect,
-
-    // NEU: Heart Regen
     trackCorrectAnswer,
     getHeartRegenProgress,
     correctAnswersForRegen,
-
-    // Reset
     reset,
   };
 };
