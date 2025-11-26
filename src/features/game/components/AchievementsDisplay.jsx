@@ -1,6 +1,6 @@
 // src/features/game/components/AchievementsDisplay.jsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ACHIEVEMENT_CATEGORIES } from '../constants/achievementDefinitions';
 
@@ -36,14 +36,13 @@ const AchievementCard = React.forwardRef(({ achievement, index }, ref) => {
       transition={{ duration: 0.2 }}
       className={`
         relative overflow-hidden rounded-xl border-2 p-4
-        ${achievement.unlocked 
-          ? `bg-gradient-to-br ${colorClass}` 
+        ${achievement.unlocked
+          ? `bg-gradient-to-br ${colorClass}`
           : 'bg-gray-800/50 border-gray-600'
         }
         ${!achievement.unlocked && 'opacity-60'}
       `}
     >
-      {/* Locked overlay for secrets */}
       {isSecret && (
         <div className="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-10">
           <div className="text-center">
@@ -53,22 +52,20 @@ const AchievementCard = React.forwardRef(({ achievement, index }, ref) => {
         </div>
       )}
 
-      {/* Content */}
       <div className="flex items-start gap-3">
         <div className={`text-3xl ${!achievement.unlocked && !isSecret ? 'grayscale' : ''}`}>
           {isSecret ? '❓' : achievement.icon}
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <h3 className={`font-bold truncate ${achievement.unlocked ? 'text-white' : 'text-gray-300'}`}>
             {isSecret ? '???' : achievement.name}
           </h3>
-          
+
           <p className={`text-sm mt-0.5 ${achievement.unlocked ? 'text-white/80' : 'text-gray-400'}`}>
             {isSecret ? 'Keep playing to discover!' : achievement.description}
           </p>
 
-          {/* Rarity Badge */}
           {!isSecret && (
             <span className={`
               inline-block mt-2 text-xs px-2 py-0.5 rounded-full
@@ -79,7 +76,6 @@ const AchievementCard = React.forwardRef(({ achievement, index }, ref) => {
           )}
         </div>
 
-        {/* Checkmark for unlocked */}
         {achievement.unlocked && (
           <motion.div
             initial={{ scale: 0 }}
@@ -91,11 +87,10 @@ const AchievementCard = React.forwardRef(({ achievement, index }, ref) => {
         )}
       </div>
 
-      {/* Progress bar for locked achievements */}
       {!achievement.unlocked && !isSecret && progress > 0 && (
         <div className="mt-3">
           <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-purple-500 transition-all duration-300"
               style={{ width: `${progress * 100}%` }}
             />
@@ -111,8 +106,117 @@ const AchievementCard = React.forwardRef(({ achievement, index }, ref) => {
 
 AchievementCard.displayName = 'AchievementCard';
 
+// Mobile Filter Dropdown Component
+function MobileFilterDropdown({ selectedCategory, setSelectedCategory, categoryInfo }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const getCurrentLabel = () => {
+    if (selectedCategory === 'all') return '📋 All Categories';
+    const info = categoryInfo[selectedCategory];
+    return info ? `${info.icon} ${info.name}` : 'Select Category';
+  };
+
+  const handleSelect = (category) => {
+    setSelectedCategory(category);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative sm:hidden mb-4">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-white/10 rounded-lg text-white font-medium border border-white/20"
+      >
+        <span>{getCurrentLabel()}</span>
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          ▼
+        </motion.span>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scaleY: 0.95 }}
+            animate={{ opacity: 1, y: 0, scaleY: 1 }}
+            exit={{ opacity: 0, y: -10, scaleY: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full left-0 right-0 mt-2 bg-gray-800 rounded-lg border border-white/20 shadow-xl z-20 overflow-hidden"
+          >
+            <button
+              onClick={() => handleSelect('all')}
+              className={`w-full px-4 py-3 text-left flex items-center gap-2 transition ${selectedCategory === 'all'
+                  ? 'bg-purple-600 text-white'
+                  : 'text-gray-300 hover:bg-white/10'
+                }`}
+            >
+              <span>📋</span>
+              <span>All Categories</span>
+              {selectedCategory === 'all' && <span className="ml-auto">✓</span>}
+            </button>
+
+            {Object.entries(categoryInfo).map(([key, info]) => (
+              <button
+                key={key}
+                onClick={() => handleSelect(key)}
+                className={`w-full px-4 py-3 text-left flex items-center gap-2 transition border-t border-white/10 ${selectedCategory === key
+                    ? 'bg-purple-600 text-white'
+                    : 'text-gray-300 hover:bg-white/10'
+                  }`}
+              >
+                <span>{info.icon}</span>
+                <span>{info.name}</span>
+                {selectedCategory === key && <span className="ml-auto">✓</span>}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Backdrop to close dropdown */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-10"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// Desktop Filter Buttons Component
+function DesktopFilterButtons({ selectedCategory, setSelectedCategory, categoryInfo }) {
+  return (
+    <div className="hidden sm:flex flex-wrap gap-2 mb-6">
+      <button
+        onClick={() => setSelectedCategory('all')}
+        className={`px-4 py-2 rounded-lg transition font-medium ${selectedCategory === 'all'
+            ? 'bg-purple-600 text-white'
+            : 'bg-white/10 text-gray-300 hover:bg-white/20'
+          }`}
+      >
+        All
+      </button>
+      {Object.entries(categoryInfo).map(([key, info]) => (
+        <button
+          key={key}
+          onClick={() => setSelectedCategory(key)}
+          className={`px-4 py-2 rounded-lg transition font-medium ${selectedCategory === key
+              ? 'bg-purple-600 text-white'
+              : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+        >
+          {info.icon} {info.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function AchievementsDisplay({ achievements, onBack }) {
-  const [selectedCategory, setSelectedCategory] = React.useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   const filteredAchievements = selectedCategory === 'all'
     ? achievements
@@ -126,19 +230,28 @@ export default function AchievementsDisplay({ achievements, onBack }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl w-full mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-2xl"
+      className="max-w-4xl w-full mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-2xl relative"
     >
+      {/* Mobile Close Button */}
+      <button
+        onClick={onBack}
+        className="sm:hidden absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition text-white text-xl"
+        aria-label="Close"
+      >
+        ✕
+      </button>
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-left sm:items-center sm:flex-row flex-col mb-4 sm:justify-between sm:mb-6 pr-12 sm:pr-0">
         <div>
           <h2 className="text-3xl font-bold text-white">🏆 Achievements</h2>
           <p className="text-gray-300 mt-1">
             {unlockedCount} / {totalCount} unlocked ({progressPercent}%)
           </p>
         </div>
-        
+
         {/* Overall Progress Bar */}
-        <div className="w-48">
+        <div className="w-full sm:w-48 mt-3 sm:mt-0">
           <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
@@ -150,43 +263,40 @@ export default function AchievementsDisplay({ achievements, onBack }) {
         </div>
       </div>
 
-      {/* Category Filter */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        <button
-          onClick={() => setSelectedCategory('all')}
-          className={`px-4 py-2 rounded-lg transition font-medium ${
-            selectedCategory === 'all'
-              ? 'bg-purple-600 text-white'
-              : 'bg-white/10 text-gray-300 hover:bg-white/20'
-          }`}
-        >
-          All
-        </button>
-        {Object.entries(categoryInfo).map(([key, info]) => (
-          <button
-            key={key}
-            onClick={() => setSelectedCategory(key)}
-            className={`px-4 py-2 rounded-lg transition font-medium ${
-              selectedCategory === key
-                ? 'bg-purple-600 text-white'
-                : 'bg-white/10 text-gray-300 hover:bg-white/20'
-            }`}
-          >
-            {info.icon} {info.name}
-          </button>
-        ))}
-      </div>
+      {/* Mobile Filter Dropdown */}
+      <MobileFilterDropdown
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        categoryInfo={categoryInfo}
+      />
+
+      {/* Desktop Filter Buttons */}
+      <DesktopFilterButtons
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        categoryInfo={categoryInfo}
+      />
 
       {/* Achievements Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto pr-2">
-        {filteredAchievements.map((achievement, index) => (
-          <AchievementCard 
-            key={achievement.id} 
-            achievement={achievement}
-            index={index}
-          />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {filteredAchievements.map((achievement, index) => (
+            <AchievementCard
+              key={achievement.id}
+              achievement={achievement}
+              index={index}
+            />
+          ))}
+        </AnimatePresence>
       </div>
+
+      {/* Empty State */}
+      {filteredAchievements.length === 0 && (
+        <div className="text-center py-12 text-gray-400">
+          <span className="text-4xl block mb-2">🔍</span>
+          <p>No achievements in this category yet.</p>
+        </div>
+      )}
 
       {/* Back Button */}
       <button
