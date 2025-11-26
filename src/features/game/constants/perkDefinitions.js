@@ -17,7 +17,7 @@ export const PERKS = {
         description: 'Regenerate 1 life after 5 correct answers (not consecutive)',
         icon: '💖',
         type: PERK_TYPES.DEFENSIVE,
-        rarity: PERK_RARITY.RARE,
+        rarity: PERK_RARITY.EPIC,
         effect: 'heart_regen',
         value: 5,
         duration: -1,
@@ -116,7 +116,7 @@ export const PERKS = {
         description: 'Timer runs 50% slower for 5 rounds',
         icon: '⏱️',
         type: PERK_TYPES.UTILITY,
-        rarity: PERK_RARITY.EPIC,
+        rarity: PERK_RARITY.RARE,
         effect: 'slow_time',
         value: 0.5, // 50% slower
         duration: 5,
