@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../auth/context/AuthContext";
+import { useAchievementContext } from "../context/AchievementContext";
 import { useGameTimer } from "../hooks/useGameTimer";
 import { useStreak } from "../hooks/useStreak";
 import { useCardLoader } from "../hooks/useCardLoader";
@@ -33,6 +34,7 @@ export default function Game({
   setShowRegister,
 }) {
   const { user, refreshUser, setUser } = useAuth();
+  const achievements = useAchievementContext();
 
   // Game State
   const [lives, setLives] = useState(GAME_CONFIG.INITIAL_LIVES);
@@ -52,18 +54,12 @@ export default function Game({
   // Timer mit Perk-Modifikationen
   const getTimerDuration = () => {
     let duration = GAME_CONFIG.TIMER_DURATION;
-
-    // Time Buffer Perk
     const timeBufferValue = perkSystem.getPerkValue("time_bonus");
-    if (timeBufferValue) {
-      duration += timeBufferValue;
-    }
-
+    if (timeBufferValue) duration += timeBufferValue;
     return duration;
   };
 
   const getTimerSpeed = () => {
-    // Slow Time Perk
     const slowTimeValue = perkSystem.getPerkValue("slow_time");
     return slowTimeValue || 1;
   };
@@ -83,7 +79,7 @@ export default function Game({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Starte Timer wenn beide Bilder geladen sind
+  // Start Timer when images loaded
   useEffect(() => {
     if (imagesLoaded.every(Boolean) && !showPrices) {
       timer.start();
@@ -102,6 +98,9 @@ export default function Game({
   }, [cardLoader.currentPair]);
 
   const initGame = async () => {
+    // Reset achievement stats for new game
+    achievements.resetGameStats();
+    
     const cards = await cardLoader.preloadCards();
     if (cards && cards.length >= 2) {
       await cardLoader.setNextPair();
@@ -110,27 +109,14 @@ export default function Game({
 
   const applyPerkEffects = (basePoints) => {
     let finalPoints = basePoints;
-
-    // Point Multiplier (Double Points)
     const multiplier = perkSystem.getPerkValue("point_multiplier");
-    if (multiplier) {
-      finalPoints *= multiplier;
-    }
-
-    // Flat Bonus
+    if (multiplier) finalPoints *= multiplier;
     const flatBonus = perkSystem.getPerkValue("flat_bonus");
-    if (flatBonus) {
-      finalPoints += flatBonus;
-    }
-
-    // Perfect Bonus
+    if (flatBonus) finalPoints += flatBonus;
     if (timer.timeLeft >= getTimerDuration() - 1) {
       const perfectBonus = perkSystem.getPerkValue("perfect_bonus");
-      if (perfectBonus) {
-        finalPoints += perfectBonus;
-      }
+      if (perfectBonus) finalPoints += perfectBonus;
     }
-
     return Math.floor(finalPoints);
   };
 
@@ -140,21 +126,14 @@ export default function Game({
 
       const [card1, card2] = cardLoader.currentPair;
       const correct = isChoiceCorrect(chosenIndex, card1, card2);
-      const correctCardIndex = correct
-        ? chosenIndex
-        : chosenIndex === 0
-        ? 1
-        : 0;
+      const correctCardIndex = correct ? chosenIndex : chosenIndex === 0 ? 1 : 0;
 
       setCorrectIndex(correctCardIndex);
       setSelectedCard(chosenIndex);
       setShowPrices(true);
 
       if (correct) {
-        // Richtige Antwort
         const timeBonus = calculateTimeBonus(timer.timeLeft);
-
-        // Streak Threshold Perk
         const customThreshold = perkSystem.getPerkValue("streak_threshold");
         const streakBonus = customThreshold
           ? streak.streak >= customThreshold
@@ -163,12 +142,22 @@ export default function Game({
           : streak.calculateStreakBonus();
 
         const basePoints = timeBonus + streakBonus;
+        const hadDoublePoints = !!perkSystem.getPerkValue("point_multiplier");
         const totalPoints = applyPerkEffects(basePoints);
 
         streak.incrementStreak();
 
         const newScore = score + totalPoints;
         setScore(newScore);
+
+        // Track achievements
+        achievements.trackCorrectAnswer(
+          timer.timeLeft,
+          getTimerDuration(),
+          hadDoublePoints,
+          totalPoints
+        );
+        achievements.trackScore(newScore);
 
         let scoreMessage = formatScoreMessage(timeBonus, streakBonus);
         if (totalPoints > basePoints) {
@@ -190,13 +179,15 @@ export default function Game({
           }
         }
       } else {
-        // Falsche Antwort - prüfe Shield Perk
+        // Wrong answer - check Shield Perk
         if (perkSystem.hasPerk("second_chance")) {
           perkSystem.consumePerk("second_chance");
           setMessage("💚 Second Chance activated! Life saved!");
-          // Kein Leben verlieren
+          achievements.trackShieldSave();
         } else {
           streak.resetStreak();
+          achievements.trackWrongAnswer();
+          
           const remainingLives = lives - 1;
           setLives(remainingLives);
 
@@ -210,7 +201,6 @@ export default function Game({
         }
       }
 
-      // Perk Durations NACH der Runde reduzieren
       perkSystem.decrementPerkDurations();
     },
     [
@@ -224,44 +214,38 @@ export default function Game({
       setUser,
       refreshUser,
       perkSystem,
+      achievements,
     ]
   );
 
   const handleNextPair = () => {
-    // Perk Durations werden in handleChoice reduziert
     setMessage("");
-
-    // Prüfe ob Perk-Auswahl angezeigt werden soll
     const nextRound = currentRound + 1;
     setCurrentRound(nextRound);
+    
+    // Track round for achievements
+    achievements.trackRound(nextRound);
 
     if (nextRound > 0 && nextRound % 5 === 0) {
-      // Zeige Perk-Auswahl BEVOR neue Karten geladen werden
       perkSystem.triggerPerkSelection();
     } else {
-      // Keine Perk-Auswahl - lade direkt nächste Karten
       cardLoader.setNextPair();
     }
   };
 
-  // Wrapper für selectPerk, der nach Auswahl neue Karten lädt
   const handlePerkSelect = (perk) => {
     perkSystem.selectPerk(perk);
-    // NACH Perk-Auswahl: Lade nächste Karten
+    achievements.trackPerkCollected();
     cardLoader.setNextPair();
   };
 
   const handleSkipCard = () => {
     if (perkSystem.hasPerk("skip_card")) {
       perkSystem.consumePerk("skip_card");
-
-      // Reset current round state
       setSelectedCard(null);
       setCorrectIndex(null);
       setShowPrices(false);
       setMessage("⭐️ Card skipped!");
-
-      // Load new cards
       cardLoader.setNextPair();
       timer.reset();
       setCurrentRound((prev) => prev + 1);
@@ -282,6 +266,7 @@ export default function Game({
     timer.reset();
     cardLoader.reset();
     perkSystem.reset();
+    achievements.resetGameStats();
 
     await cardLoader.preloadCards();
     await cardLoader.setNextPair();
@@ -295,27 +280,19 @@ export default function Game({
     });
   };
 
-  // Berechne ob Price Hint aktiv ist
   const showPriceHint = perkSystem.hasPerk("price_hint");
   const showAverage = perkSystem.hasPerk("statistics");
 
   const getPriceRange = () => {
     if (!showPriceHint || cardLoader.currentPair.length < 2) return null;
-
     const prices = cardLoader.currentPair.map((c) => parseFloat(c.prices.eur));
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-
-    return { min, max };
+    return { min: Math.min(...prices), max: Math.max(...prices) };
   };
 
   const getAveragePrice = () => {
     if (!showAverage || cardLoader.currentPair.length < 2) return null;
-
     const prices = cardLoader.currentPair.map((c) => parseFloat(c.prices.eur));
-    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-
-    return avg;
+    return prices.reduce((a, b) => a + b, 0) / prices.length;
   };
 
   if (cardLoader.error) {
@@ -334,7 +311,7 @@ export default function Game({
 
   return (
     <>
-      {/* Score Display mit Rundenzähler */}
+      {/* Score Display */}
       <div className="sm:mb-1 flex flex-row w-full max-w-2xl justify-between">
         <div className="sm:w-3/4 flex md:text-left sm:flex-row flex-col">
           <div className="flex items-right items-center justify-end sm:justify-start gap-4 mb-2">
@@ -349,14 +326,11 @@ export default function Game({
             <p className="mb-2 font-bold text-2xl">Points: {score}</p>
           </div>
         </div>
-        {/* Lives */}
         <LivesDisplay lives={lives} />
       </div>
 
-      {/* Active Perks Display */}
       <ActivePerksDisplay perks={perkSystem.activePerks} />
 
-      {/* Streak Display */}
       <StreakDisplay
         streak={streak.streak}
         bestStreak={streak.bestStreak}
@@ -364,7 +338,6 @@ export default function Game({
         streakBonus={streak.calculateStreakBonus()}
       />
 
-      {/* Utility Perks Info */}
       {(showPriceHint || showAverage) && (
         <div className="w-full max-w-xl mb-4">
           {showPriceHint && getPriceRange() && (
@@ -375,7 +348,6 @@ export default function Game({
               </span>
             </div>
           )}
-
           {showAverage && getAveragePrice() && (
             <div className="bg-green-500/20 border border-green-400 rounded-lg p-2">
               <span className="text-green-200 text-sm font-semibold">
@@ -386,14 +358,12 @@ export default function Game({
         </div>
       )}
 
-      {/* Timer */}
       <GameTimer
         timeLeft={timer.timeLeft}
         possiblePoints={calculateTimeBonus(timer.timeLeft)}
         progress={timer.progress}
       />
 
-      {/* Card Pair */}
       {cardLoader.loading ? (
         <p>Loading Cards...</p>
       ) : (
@@ -407,9 +377,7 @@ export default function Game({
         />
       )}
 
-      {/* Action Buttons */}
       <div className="sm:mt-6 mt-auto flex gap-4 text-lg min-h-[80px] items-center">
-        {/* Skip Button - nur wenn keine Karte ausgewählt und nicht Game Over */}
         {perkSystem.hasPerk("skip_card") &&
           selectedCard === null &&
           !gameOver &&
@@ -417,21 +385,19 @@ export default function Game({
             <button
               onClick={handleSkipCard}
               className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 text-white px-6 py-4 rounded transition shadow-lg hover:shadow-xl"
-              title="Skip a card pair without penalty (manually activated)"
             >
               ⭐️ Skip
             </button>
           )}
 
-        {/* Next Button */}
         {selectedCard !== null && !gameOver && (
           <button
             onClick={handleNextPair}
             disabled={perkSystem.showPerkSelection}
             className={`text-2xl min-w-[250px] font-semibold text-white px-6 py-6 rounded transition ${
               perkSystem.showPerkSelection
-                ? 'bg-blue-500/50 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600'
+                ? "bg-blue-500/50 cursor-not-allowed"
+                : "bg-blue-500 hover:bg-blue-600"
             }`}
           >
             Next
@@ -439,14 +405,12 @@ export default function Game({
         )}
       </div>
 
-      {/* Perk Selection Modal */}
       <PerkSelectionModal
         perks={perkSystem.availablePerks}
         onSelect={handlePerkSelect}
         show={perkSystem.showPerkSelection}
       />
 
-      {/* Game Over Screen */}
       {gameOver && (
         <GameOverScreen
           message={message}
@@ -470,7 +434,6 @@ export default function Game({
         </GameOverScreen>
       )}
 
-      {/* Message */}
       {message && !gameOver && (
         <p className="mt-6 text-xl transition-all duration-500">{message}</p>
       )}
