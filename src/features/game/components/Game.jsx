@@ -97,10 +97,47 @@ export default function Game({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardLoader.currentPair]);
 
+  // Keyboard Controls
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignoriere Tastatureingaben wenn Perk-Auswahl offen ist
+      if (perkSystem.showPerkSelection) return;
+      
+      // Ignoriere wenn Game Over
+      if (gameOver) return;
+
+      const key = e.key.toLowerCase();
+
+      // Kartenauswahl: 1/a für links, 2/d für rechts
+      if (selectedCard === null && !showPrices) {
+        if (key === "1" || key === "a") {
+          e.preventDefault();
+          handleChoice(0);
+        } else if (key === "2" || key === "d") {
+          e.preventDefault();
+          handleChoice(1);
+        }
+      }
+
+      // Weiter mit Leertaste oder Enter
+      if (selectedCard !== null && !gameOver && (key === " " || key === "enter")) {
+        e.preventDefault();
+        handleNextPair();
+      }
+
+      // Skip mit S (wenn Perk verfügbar)
+      if (key === "s" && perkSystem.hasPerk("skip_card") && selectedCard === null && !showPrices) {
+        e.preventDefault();
+        handleSkipCard();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedCard, showPrices, gameOver, perkSystem.showPerkSelection, perkSystem]);
+
   const initGame = async () => {
-    // Reset achievement stats for new game
     achievements.resetGameStats();
-    
     const cards = await cardLoader.preloadCards();
     if (cards && cards.length >= 2) {
       await cardLoader.setNextPair();
@@ -150,7 +187,6 @@ export default function Game({
         const newScore = score + totalPoints;
         setScore(newScore);
 
-        // Track achievements
         achievements.trackCorrectAnswer(
           timer.timeLeft,
           getTimerDuration(),
@@ -165,7 +201,6 @@ export default function Game({
         }
         setMessage(scoreMessage);
 
-        // Highscore Update
         if (newScore > user.highscore) {
           if (user?.guest) {
             setUser({ ...user, highscore: newScore });
@@ -179,7 +214,6 @@ export default function Game({
           }
         }
       } else {
-        // Wrong answer - check Shield Perk
         if (perkSystem.hasPerk("second_chance")) {
           perkSystem.consumePerk("second_chance");
           setMessage("💚 Second Chance activated! Life saved!");
@@ -187,7 +221,7 @@ export default function Game({
         } else {
           streak.resetStreak();
           achievements.trackWrongAnswer();
-          
+
           const remainingLives = lives - 1;
           setLives(remainingLives);
 
@@ -203,27 +237,13 @@ export default function Game({
 
       perkSystem.decrementPerkDurations();
     },
-    [
-      cardLoader.currentPair,
-      timer,
-      streak,
-      score,
-      lives,
-      user,
-      setScore,
-      setUser,
-      refreshUser,
-      perkSystem,
-      achievements,
-    ]
+    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements]
   );
 
   const handleNextPair = () => {
     setMessage("");
     const nextRound = currentRound + 1;
     setCurrentRound(nextRound);
-    
-    // Track round for achievements
     achievements.trackRound(nextRound);
 
     if (nextRound > 0 && nextRound % 5 === 0) {
@@ -299,10 +319,7 @@ export default function Game({
     return (
       <div className="text-center text-red-400">
         <p>❌ {cardLoader.error}</p>
-        <button
-          onClick={initGame}
-          className="mt-4 bg-blue-600 px-6 py-3 rounded hover:bg-blue-700"
-        >
+        <button onClick={initGame} className="mt-4 bg-blue-600 px-6 py-3 rounded hover:bg-blue-700">
           Try Again
         </button>
       </div>
@@ -316,9 +333,7 @@ export default function Game({
         <div className="sm:w-3/4 flex md:text-left sm:flex-row flex-col">
           <div className="flex items-right items-center justify-end sm:justify-start gap-4 mb-2">
             <div className="bg-white/10 sm:mb-auto backdrop-blur-lg rounded-lg px-4 py-2 border border-white/20">
-              <span className="text-purple-300 text-sm font-semibold">
-                🎯 Round {currentRound}
-              </span>
+              <span className="text-purple-300 text-sm font-semibold">🎯 Round {currentRound}</span>
             </div>
           </div>
           <div className="flex flex-col sm:ml-3">
@@ -343,26 +358,19 @@ export default function Game({
           {showPriceHint && getPriceRange() && (
             <div className="bg-blue-500/20 border border-blue-400 rounded-lg p-2 mb-2">
               <span className="text-blue-200 text-sm font-semibold">
-                🔮 Price Range: {formatPrice(getPriceRange().min)} -{" "}
-                {formatPrice(getPriceRange().max)}
+                🔮 Price Range: {formatPrice(getPriceRange().min)} - {formatPrice(getPriceRange().max)}
               </span>
             </div>
           )}
           {showAverage && getAveragePrice() && (
             <div className="bg-green-500/20 border border-green-400 rounded-lg p-2">
-              <span className="text-green-200 text-sm font-semibold">
-                📊 Average: {formatPrice(getAveragePrice())}
-              </span>
+              <span className="text-green-200 text-sm font-semibold">📊 Average: {formatPrice(getAveragePrice())}</span>
             </div>
           )}
         </div>
       )}
 
-      <GameTimer
-        timeLeft={timer.timeLeft}
-        possiblePoints={calculateTimeBonus(timer.timeLeft)}
-        progress={timer.progress}
-      />
+      <GameTimer timeLeft={timer.timeLeft} possiblePoints={calculateTimeBonus(timer.timeLeft)} progress={timer.progress} />
 
       {cardLoader.loading ? (
         <p>Loading Cards...</p>
@@ -377,27 +385,34 @@ export default function Game({
         />
       )}
 
+      {/* Keyboard Hints */}
+      {!gameOver && !perkSystem.showPerkSelection && (
+        <div className="text-gray-400 hidden sm:block text-sm mt-2 text-center">
+          {selectedCard === null && !showPrices ? (
+            <span>⌨️ Press <kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">1</kbd>/<kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">A</kbd> for left, <kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">2</kbd>/<kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">D</kbd> for right</span>
+          ) : selectedCard !== null ? (
+            <span>⌨️ Press <kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">Space</kbd> or <kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">Enter</kbd> to continue</span>
+          ) : null}
+        </div>
+      )}
+
       <div className="sm:mt-6 mt-auto flex gap-4 text-lg min-h-[80px] items-center">
-        {perkSystem.hasPerk("skip_card") &&
-          selectedCard === null &&
-          !gameOver &&
-          !showPrices && (
-            <button
-              onClick={handleSkipCard}
-              className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 text-white px-6 py-4 rounded transition shadow-lg hover:shadow-xl"
-            >
-              ⭐️ Skip
-            </button>
-          )}
+        {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
+          <button
+            onClick={handleSkipCard}
+            className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 text-white px-6 py-4 rounded transition shadow-lg hover:shadow-xl"
+            title="Press S to skip"
+          >
+            ⭐️ Skip
+          </button>
+        )}
 
         {selectedCard !== null && !gameOver && (
           <button
             onClick={handleNextPair}
             disabled={perkSystem.showPerkSelection}
             className={`text-2xl min-w-[250px] font-semibold text-white px-6 py-6 rounded transition ${
-              perkSystem.showPerkSelection
-                ? "bg-blue-500/50 cursor-not-allowed"
-                : "bg-blue-500 hover:bg-blue-600"
+              perkSystem.showPerkSelection ? "bg-blue-500/50 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
             }`}
           >
             Next
@@ -405,11 +420,7 @@ export default function Game({
         )}
       </div>
 
-      <PerkSelectionModal
-        perks={perkSystem.availablePerks}
-        onSelect={handlePerkSelect}
-        show={perkSystem.showPerkSelection}
-      />
+      <PerkSelectionModal perks={perkSystem.availablePerks} onSelect={handlePerkSelect} show={perkSystem.showPerkSelection} />
 
       {gameOver && (
         <GameOverScreen
@@ -434,9 +445,7 @@ export default function Game({
         </GameOverScreen>
       )}
 
-      {message && !gameOver && (
-        <p className="mt-6 text-xl transition-all duration-500">{message}</p>
-      )}
+      {message && !gameOver && <p className="mt-6 text-xl transition-all duration-500">{message}</p>}
     </>
   );
 }
