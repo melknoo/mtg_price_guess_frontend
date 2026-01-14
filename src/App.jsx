@@ -13,6 +13,8 @@ import PrivacyPolicy from "./features/legal/components/PrivacyPolicy";
 import Impressum from "./features/legal/components/Impressum";
 import Terms from "./features/legal/components/Terms";
 import AccountSettings from "./features/account/components/AccountSettings";
+import SuggestionModal from "./features/suggestions/components/SuggestionModal";
+import { submitSuggestion } from "./features/suggestions/api/suggestionApi";
 import AchievementsDisplay from "./features/game/components/AchievementsDisplay";
 
 function AppContent() {
@@ -24,6 +26,7 @@ function AppContent() {
   const [gameKey, setGameKey] = useState(0);
   const [resetToken, setResetToken] = useState(null);
   const [resetSuccess, setResetSuccess] = useState("");
+  const [showSuggestionModal, setShowSuggestionModal] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -76,6 +79,10 @@ function AppContent() {
   const handleFooterNavigation = (route) => {
     setScreen(route);
     window.location.hash = `/${route}`;
+  };
+
+  const handleSubmitSuggestion = async (text) => {
+    await submitSuggestion(text);
   };
 
   // Legal Pages
@@ -178,7 +185,7 @@ function AppContent() {
           <div className="text-center space-y-4">
             <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Price Duel</h1>
             <h2 className="text-2xl font-bold mb-4">Hello {user.username}</h2>
-            
+
             {/* Achievement Progress Badge */}
             <div className="bg-white/10 backdrop-blur-lg rounded-lg px-4 py-2 inline-block mb-4">
               <span className="text-yellow-300">
@@ -200,7 +207,16 @@ function AppContent() {
                 Leaderboard
               </button>
             </div>
-
+            {!user?.guest && (
+              <div className="mt-4">
+                <button
+                  onClick={() => setShowSuggestionModal(true)}
+                  className="bg-blue-500 px-6 py-3 rounded text-white text-lg hover:bg-blue-600 transition shadow-lg"
+                >
+                  💡 Suggestions
+                </button>
+              </div>
+            )}
             {/* Achievements Button */}
             <div className="pt-4">
               <button
@@ -232,11 +248,11 @@ function AppContent() {
 
         {screen === "leaderboard" && <Leaderboard onBack={() => setScreen("menu")} />}
         {screen === "settings" && <AccountSettings onBack={() => setScreen("menu")} />}
-        
+
         {screen === "achievements" && (
-          <AchievementsDisplay 
-            achievements={achievements.getAllWithStatus()} 
-            onBack={() => setScreen("menu")} 
+          <AchievementsDisplay
+            achievements={achievements.getAllWithStatus()}
+            onBack={() => setScreen("menu")}
           />
         )}
 
@@ -254,6 +270,11 @@ function AppContent() {
 
       {screen !== "game" && <Footer onNavigate={handleFooterNavigation} />}
       <CookieConsent />
+      <SuggestionModal
+        isOpen={showSuggestionModal}
+        onClose={() => setShowSuggestionModal(false)}
+        onSubmit={handleSubmitSuggestion}
+      />
     </div>
   );
 }
