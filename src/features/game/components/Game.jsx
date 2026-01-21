@@ -79,6 +79,12 @@ export default function Game({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Update filters when filter perks change
+  useEffect(() => {
+    const filterPerks = perkSystem.getActiveFilterPerks();
+    cardLoader.updateFilters(filterPerks);
+  }, [perkSystem.activePerks, cardLoader]);
+
   // Start Timer when images loaded
   useEffect(() => {
     if (imagesLoaded.every(Boolean) && !showPrices) {
@@ -270,7 +276,7 @@ export default function Game({
       setSelectedCard(null);
       setCorrectIndex(null);
       setShowPrices(false);
-      setMessage("⭐️ Card skipped!");
+      setMessage("⭐ Card skipped!");
       cardLoader.setNextPair();
       timer.reset();
       setCurrentRound((prev) => prev + 1);
@@ -320,6 +326,18 @@ export default function Game({
     return prices.reduce((a, b) => a + b, 0) / prices.length;
   };
 
+  // NEW: Get active filter info for display
+  const getActiveFilterInfo = () => {
+    const filterPerks = perkSystem.getActiveFilterPerks();
+    if (filterPerks.length === 0) return null;
+
+    return filterPerks.map(perk => ({
+      name: perk.name,
+      icon: perk.icon,
+      description: perk.description
+    }));
+  };
+
   if (cardLoader.error) {
     return (
       <div className="text-center text-red-400">
@@ -358,6 +376,19 @@ export default function Game({
         streakBonus={streak.calculateStreakBonus()}
       />
 
+      {/* Active Filter Display */}
+      {getActiveFilterInfo() && (
+        <div className="w-full max-w-xl mb-4">
+          {getActiveFilterInfo().map((filter, index) => (
+            <div key={index} className="bg-indigo-500/20 border border-indigo-400 rounded-lg p-2 mb-2">
+              <span className="text-indigo-200 text-sm font-semibold">
+                {filter.icon} {filter.name}: {filter.description}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {(showPriceHint || showAverage) && (
         <div className="w-full max-w-xl mb-4">
           {showPriceHint && getPriceRange() && (
@@ -375,7 +406,7 @@ export default function Game({
         </div>
       )}
 
-      {/* NEU: Heart Regen Progress - HIER EINFÜGEN */}
+      {/* Heart Regen Progress */}
       {perkSystem.getHeartRegenProgress() && (
         <div className="w-full max-w-xl mb-4">
           <div className="bg-pink-500/20 border border-pink-400 rounded-lg p-2">
@@ -427,7 +458,7 @@ export default function Game({
             className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 text-white px-6 py-4 rounded transition shadow-lg hover:shadow-xl"
             title="Press S to skip"
           >
-            ⭐️ Skip
+            ⭐ Skip
           </button>
         )}
 

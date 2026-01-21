@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { PERKS, RARITY_WEIGHTS, PERK_CONFIG, getBasePerkId, isExtendedPerk } from '../constants/perkDefinitions';
+import { PERKS, RARITY_WEIGHTS, PERK_CONFIG, PERK_TYPES, getBasePerkId, isExtendedPerk, isFilterPerk } from '../constants/perkDefinitions';
 
 export const usePerkSystem = () => {
   const [activePerks, setActivePerks] = useState([]);
@@ -29,8 +29,12 @@ export const usePerkSystem = () => {
         .map(p => p.id)
     );
 
-    // Get active perk effects to determine if extended versions should appear
-    const activeEffects = new Set(activePerks.map(p => p.effect));
+    // Get active filter types to avoid duplicate filter categories
+    const activeFilterTypes = new Set(
+      activePerks
+        .filter(p => p.type === PERK_TYPES.FILTER)
+        .map(p => p.filterType)
+    );
 
     while (selectedPerks.length < PERK_CONFIG.PERKS_TO_CHOOSE && selectedPerks.length < allPerks.length) {
       const perk = getWeightedRandomPerk(
@@ -38,7 +42,7 @@ export const usePerkSystem = () => {
         usedIds, 
         excludedIds, 
         activeConsumableIds,
-        activeEffects
+        activeFilterTypes
       );
       if (perk) {
         selectedPerks.push(perk);
@@ -47,6 +51,15 @@ export const usePerkSystem = () => {
         if (perk.basePerkId) usedIds.add(perk.basePerkId);
         const extended = allPerks.find(p => p.basePerkId === perk.id);
         if (extended) usedIds.add(extended.id);
+
+        // If it's a filter perk, exclude other perks of the same filter type
+        if (perk.type === PERK_TYPES.FILTER) {
+          allPerks.forEach(p => {
+            if (p.filterType === perk.filterType && p.id !== perk.id) {
+              usedIds.add(p.id);
+            }
+          });
+        }
       } else {
         break;
       }
@@ -55,17 +68,17 @@ export const usePerkSystem = () => {
     return selectedPerks;
   }, [selectedPermanentPerks, activePerks]);
 
-  const getWeightedRandomPerk = (perks, excludeIds, permanentExcludeIds, activeConsumableIds, activeEffects) => {
+  const getWeightedRandomPerk = (perks, excludeIds, permanentExcludeIds, activeConsumableIds, activeFilterTypes) => {
     const availablePerks = perks.filter(p => {
       // Basic exclusions
       if (excludeIds.has(p.id)) return false;
       if (permanentExcludeIds.has(p.id)) return false;
       if (activeConsumableIds.has(p.id)) return false;
 
-      // For extended perks: only show if base perk is NOT active
-      // (selecting extended when base is active will extend duration)
-      // Actually, we WANT to show extended if base is active - that's the point!
-      // So no additional filtering needed here
+      // Don't show filter perks if that filter type is already active
+      if (p.type === PERK_TYPES.FILTER && activeFilterTypes.has(p.filterType)) {
+        return false;
+      }
 
       return true;
     });
@@ -126,6 +139,18 @@ export const usePerkSystem = () => {
         return updated;
       } else {
         // New perk - add it
+        // For filter perks, replace existing filter of same type
+        if (perk.type === PERK_TYPES.FILTER) {
+          const filtered = prev.filter(p => 
+            !(p.type === PERK_TYPES.FILTER && p.filterType === perk.filterType)
+          );
+          return [...filtered, {
+            ...perk,
+            remainingDuration: perk.duration,
+            activatedAt: roundsPlayed
+          }];
+        }
+        
         return [...prev, {
           ...perk,
           remainingDuration: perk.duration,
@@ -190,6 +215,11 @@ export const usePerkSystem = () => {
     return activePerks.filter(p => p.effect === effect);
   }, [activePerks]);
 
+  // NEW: Get active filter perks
+  const getActiveFilterPerks = useCallback(() => {
+    return activePerks.filter(p => p.type === PERK_TYPES.FILTER);
+  }, [activePerks]);
+
   const trackCorrectAnswer = useCallback(() => {
     if (!activePerks.some(p => p.id === 'heart_regeneration')) {
       return { shouldRegenerate: false, newCount: 0 };
@@ -241,6 +271,7 @@ export const usePerkSystem = () => {
     hasPerk,
     getPerkValue,
     getPerksByEffect,
+    getActiveFilterPerks, // NEW
     trackCorrectAnswer,
     getHeartRegenProgress,
     correctAnswersForRegen,

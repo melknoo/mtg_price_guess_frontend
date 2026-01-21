@@ -7,13 +7,36 @@ export const useCardLoader = () => {
   const [currentPair, setCurrentPair] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeFilters, setActiveFilters] = useState({});
 
-  const preloadCards = useCallback(async () => {
+  /**
+   * Setzt aktive Filter basierend auf Perks
+   * @param {Array} filterPerks - Array von Filter-Perks
+   */
+  const updateFilters = useCallback((filterPerks) => {
+    const filters = {};
+
+    filterPerks.forEach(perk => {
+      if (perk.filterType === 'color') {
+        filters.color = perk.value;
+      } else if (perk.filterType === 'cmc') {
+        filters.cmc = perk.value;
+      } else if (perk.filterType === 'border_color') {
+        filters.border_color = perk.value;
+      } else if (perk.filterType === 'rarity') {
+        filters.rarity = perk.value;
+      }
+    });
+
+    setActiveFilters(filters);
+  }, []);
+
+  const preloadCards = useCallback(async (filters = activeFilters) => {
     setLoading(true);
     setError(null);
 
     try {
-      const cards = await fetchRandomCards(GAME_CONFIG.PRELOAD_CARDS);
+      const cards = await fetchRandomCards(GAME_CONFIG.PRELOAD_CARDS, filters);
       setCachedCards(cards);
       return cards;
     } catch (err) {
@@ -22,7 +45,7 @@ export const useCardLoader = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeFilters]);
 
   const setNextPair = useCallback(async () => {
     let cardsToUse = [...cachedCards];
@@ -51,14 +74,17 @@ export const useCardLoader = () => {
     setCachedCards([]);
     setCurrentPair([]);
     setError(null);
+    setActiveFilters({});
   }, []);
 
   return {
     currentPair,
     loading,
     error,
+    activeFilters,
     preloadCards,
     setNextPair,
+    updateFilters,
     reset,
     hasCards: currentPair.length === 2,
   };

@@ -1,13 +1,21 @@
 export const PERK_TYPES = {
     DEFENSIVE: 'defensive',
     OFFENSIVE: 'offensive',
-    UTILITY: 'utility'
+    UTILITY: 'utility',
+    FILTER: 'filter'
 };
 
 export const PERK_RARITY = {
     COMMON: 'common',
     RARE: 'rare',
     EPIC: 'epic'
+};
+
+export const FILTER_EFFECTS = {
+    COLOR: 'color_filter',
+    CMC: 'cmc_filter',
+    BORDER: 'border_filter',
+    RARITY: 'rarity_filter'
 };
 
 export const PERKS = {
@@ -224,6 +232,216 @@ export const PERKS = {
         manual: true,
         consumable: true,
     },
+    RED_FOCUS: {
+        id: 'red_focus',
+        name: 'Red Focus',
+        description: 'More red cards appear (10 rounds)',
+        icon: '🔴',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.COMMON,
+        effect: FILTER_EFFECTS.COLOR,
+        value: 'R',
+        duration: 10,
+        filterType: 'color'
+    },
+
+    GREEN_FOCUS: {
+        id: 'green_focus',
+        name: 'Green Focus',
+        description: 'More green cards appear (10 rounds)',
+        icon: '🟢',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.COMMON,
+        effect: FILTER_EFFECTS.COLOR,
+        value: 'G',
+        duration: 10,
+        filterType: 'color'
+    },
+
+    BLUE_FOCUS: {
+        id: 'blue_focus',
+        name: 'Blue Focus',
+        description: 'More blue cards appear (10 rounds)',
+        icon: '🔵',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.COMMON,
+        effect: FILTER_EFFECTS.COLOR,
+        value: 'U',
+        duration: 10,
+        filterType: 'color'
+    },
+
+    BLACK_FOCUS: {
+        id: 'black_focus',
+        name: 'Black Focus',
+        description: 'More black cards appear (10 rounds)',
+        icon: '⚫',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.COMMON,
+        effect: FILTER_EFFECTS.COLOR,
+        value: 'B',
+        duration: 10,
+        filterType: 'color'
+    },
+
+    WHITE_FOCUS: {
+        id: 'white_focus',
+        name: 'White Focus',
+        description: 'More white cards appear (10 rounds)',
+        icon: '⚪',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.COMMON,
+        effect: FILTER_EFFECTS.COLOR,
+        value: 'W',
+        duration: 10,
+        filterType: 'color'
+    },
+
+    MULTICOLOR_FOCUS: {
+        id: 'multicolor_focus',
+        name: 'Multicolor Focus',
+        description: 'More multicolor cards appear (10 rounds)',
+        icon: '🌈',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.RARE,
+        effect: FILTER_EFFECTS.COLOR,
+        value: 'multicolor',
+        duration: 10,
+        filterType: 'color'
+    },
+
+    COLORLESS_FOCUS: {
+        id: 'colorless_focus',
+        name: 'Colorless Focus',
+        description: 'More colorless/artifact cards appear (10 rounds)',
+        icon: '⚙️',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.RARE,
+        effect: FILTER_EFFECTS.COLOR,
+        value: 'colorless',
+        duration: 10,
+        filterType: 'color'
+    },
+
+    // ==================== NEW FILTER PERKS - CMC ====================
+    LOW_COST_FOCUS: {
+        id: 'low_cost_focus',
+        name: 'Low Cost Focus',
+        description: 'More cards with CMC ≤ 3 appear (10 rounds)',
+        icon: '1️⃣',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.COMMON,
+        effect: FILTER_EFFECTS.CMC,
+        value: { operator: '<=', threshold: 3 },
+        duration: 10,
+        filterType: 'cmc'
+    },
+
+    MID_COST_FOCUS: {
+        id: 'mid_cost_focus',
+        name: 'Mid Cost Focus',
+        description: 'More cards with CMC 4-6 appear (10 rounds)',
+        icon: '4️⃣',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.COMMON,
+        effect: FILTER_EFFECTS.CMC,
+        value: { operator: 'between', min: 4, max: 6 },
+        duration: 10,
+        filterType: 'cmc'
+    },
+
+    HIGH_COST_FOCUS: {
+        id: 'high_cost_focus',
+        name: 'High Cost Focus',
+        description: 'More cards with CMC ≥ 7 appear (10 rounds)',
+        icon: '7️⃣',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.RARE,
+        effect: FILTER_EFFECTS.CMC,
+        value: { operator: '>=', threshold: 7 },
+        duration: 10,
+        filterType: 'cmc'
+    },
+
+    // ==================== NEW FILTER PERKS - BORDER ====================
+    BLACK_BORDER_FOCUS: {
+        id: 'black_border_focus',
+        name: 'Black Border Focus',
+        description: 'More black border cards appear (10 rounds)',
+        icon: '🖤',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.COMMON,
+        effect: FILTER_EFFECTS.BORDER,
+        value: 'black',
+        duration: 10,
+        filterType: 'border_color'
+    },
+
+    WHITE_BORDER_FOCUS: {
+        id: 'white_border_focus',
+        name: 'White Border Focus',
+        description: 'More white border cards appear (10 rounds)',
+        icon: '🤍',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.RARE,
+        effect: FILTER_EFFECTS.BORDER,
+        value: 'white',
+        duration: 10,
+        filterType: 'border_color'
+    },
+
+    // ==================== NEW FILTER PERKS - RARITY ====================
+    COMMON_FOCUS: {
+        id: 'common_focus',
+        name: 'Common Focus',
+        description: 'More common cards appear (10 rounds)',
+        icon: '⬛',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.COMMON,
+        effect: FILTER_EFFECTS.RARITY,
+        value: 'common',
+        duration: 10,
+        filterType: 'rarity'
+    },
+
+    UNCOMMON_FOCUS: {
+        id: 'uncommon_focus',
+        name: 'Uncommon Focus',
+        description: 'More uncommon cards appear (10 rounds)',
+        icon: '🔷',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.COMMON,
+        effect: FILTER_EFFECTS.RARITY,
+        value: 'uncommon',
+        duration: 10,
+        filterType: 'rarity'
+    },
+
+    RARE_FOCUS: {
+        id: 'rare_focus',
+        name: 'Rare Focus',
+        description: 'More rare cards appear (10 rounds)',
+        icon: '🟡',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.RARE,
+        effect: FILTER_EFFECTS.RARITY,
+        value: 'rare',
+        duration: 10,
+        filterType: 'rarity'
+    },
+
+    MYTHIC_FOCUS: {
+        id: 'mythic_focus',
+        name: 'Mythic Focus',
+        description: 'More mythic rare cards appear (8 rounds)',
+        icon: '🔶',
+        type: PERK_TYPES.FILTER,
+        rarity: PERK_RARITY.EPIC,
+        effect: FILTER_EFFECTS.RARITY,
+        value: 'mythic',
+        duration: 8,
+        filterType: 'rarity'
+    },
 };
 
 // Helper: Get base perk ID for extended perks
@@ -241,6 +459,15 @@ export const isExtendedPerk = (perkId) => {
 // Helper: Get extended version of a perk
 export const getExtendedVersion = (perkId) => {
     return Object.values(PERKS).find(p => p.basePerkId === perkId);
+};
+
+export const isFilterPerk = (perkId) => {
+    const perk = Object.values(PERKS).find(p => p.id === perkId);
+    return perk?.type === PERK_TYPES.FILTER;
+};
+
+export const getActiveFilters = (activePerks) => {
+    return activePerks.filter(p => p.type === PERK_TYPES.FILTER);
 };
 
 // Rarity weighting for random drawing
