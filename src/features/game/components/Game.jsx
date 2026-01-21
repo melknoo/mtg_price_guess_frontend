@@ -83,7 +83,8 @@ export default function Game({
   useEffect(() => {
     const filterPerks = perkSystem.getActiveFilterPerks();
     cardLoader.updateFilters(filterPerks);
-  }, [perkSystem.activePerks, cardLoader]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [perkSystem.activePerks]);
 
   // Start Timer when images loaded
   useEffect(() => {

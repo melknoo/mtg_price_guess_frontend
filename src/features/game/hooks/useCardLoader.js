@@ -28,7 +28,16 @@ export const useCardLoader = () => {
       }
     });
 
-    setActiveFilters(filters);
+    // Nur updaten wenn sich die Filter tatsächlich geändert haben
+    setActiveFilters(prev => {
+      const prevString = JSON.stringify(prev);
+      const newString = JSON.stringify(filters);
+      
+      if (prevString === newString) {
+        return prev; // Keine Änderung, alten State behalten
+      }
+      return filters;
+    });
   }, []);
 
   const preloadCards = useCallback(async (filters = activeFilters) => {
