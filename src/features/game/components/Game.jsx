@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "../../auth/context/AuthContext";
 import { useAchievementContext } from "../context/AchievementContext";
 import { useGameTimer } from "../hooks/useGameTimer";
@@ -64,6 +64,16 @@ export default function Game({
     return slowTimeValue || 1;
   }, [perkSystem]);
 
+  // Ref für handleChoice, damit timer.onTimeUp darauf zugreifen kann
+  const handleChoiceRef = useRef(null);
+
+  const timer = useGameTimer({
+    onTimeUp: () => handleChoiceRef.current?.(-1),
+    enabled: !showPrices && selectedCard === null,
+    duration: getTimerDuration(),
+    speed: getTimerSpeed(),
+  });
+
   const applyPerkEffects = useCallback((basePoints, timeLeft) => {
     let finalPoints = basePoints;
     const multiplier = perkSystem.getPerkValue("point_multiplier");
@@ -77,13 +87,6 @@ export default function Game({
     }
     return Math.floor(finalPoints);
   }, [perkSystem, getTimerDuration]);
-
-  const timer = useGameTimer({
-    onTimeUp: () => handleChoiceRef.current(-1),
-    enabled: !showPrices && selectedCard === null,
-    duration: getTimerDuration(),
-    speed: getTimerSpeed(),
-  });
 
   const handleChoice = useCallback(
     async (chosenIndex) => {
@@ -173,11 +176,18 @@ export default function Game({
     [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration]
   );
 
-  // Ref für handleChoice, damit timer.onTimeUp darauf zugreifen kann
-  const handleChoiceRef = React.useRef(handleChoice);
+  // Update handleChoiceRef when handleChoice changes
   useEffect(() => {
     handleChoiceRef.current = handleChoice;
   }, [handleChoice]);
+
+  const initGame = useCallback(async () => {
+    achievements.resetGameStats();
+    const cards = await cardLoader.preloadCards();
+    if (cards && cards.length >= 2) {
+      await cardLoader.setNextPair();
+    }
+  }, [achievements, cardLoader]);
 
   // Initial Load
   useEffect(() => {
@@ -234,15 +244,11 @@ export default function Game({
   // Keyboard Controls
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ignoriere Tastatureingaben wenn Perk-Auswahl offen ist
       if (perkSystem.showPerkSelection) return;
-
-      // Ignoriere wenn Game Over
       if (gameOver) return;
 
       const key = e.key.toLowerCase();
 
-      // Kartenauswahl: 1/a für links, 2/d für rechts
       if (selectedCard === null && !showPrices) {
         if (key === "1" || key === "a") {
           e.preventDefault();
@@ -253,13 +259,11 @@ export default function Game({
         }
       }
 
-      // Weiter mit Leertaste oder Enter
       if (selectedCard !== null && !gameOver && (key === " " || key === "enter")) {
         e.preventDefault();
         handleNextPair();
       }
 
-      // Skip mit S (wenn Perk verfügbar)
       if (key === "s" && perkSystem.hasPerk("skip_card") && selectedCard === null && !showPrices) {
         e.preventDefault();
         handleSkipCard();
@@ -270,21 +274,13 @@ export default function Game({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedCard, showPrices, gameOver, perkSystem.showPerkSelection, perkSystem, handleChoice, handleNextPair, handleSkipCard]);
 
-  const initGame = async () => {
-    achievements.resetGameStats();
-    const cards = await cardLoader.preloadCards();
-    if (cards && cards.length >= 2) {
-      await cardLoader.setNextPair();
-    }
-  };
-
-  const handlePerkSelect = (perk) => {
+  const handlePerkSelect = useCallback((perk) => {
     perkSystem.selectPerk(perk);
     achievements.trackPerkCollected();
     cardLoader.setNextPair();
-  };
+  }, [perkSystem, achievements, cardLoader]);
 
-  const handleRestart = async () => {
+  const handleRestart = useCallback(async () => {
     setScore(0);
     setMessage("");
     setGameOver(false);
@@ -302,30 +298,30 @@ export default function Game({
 
     await cardLoader.preloadCards();
     await cardLoader.setNextPair();
-  };
+  }, [setScore, streak, timer, cardLoader, perkSystem, achievements]);
 
-  const handleImageLoad = (index) => {
+  const handleImageLoad = useCallback((index) => {
     setImagesLoaded((prev) => {
       const newLoaded = [...prev];
       newLoaded[index] = true;
       return newLoaded;
     });
-  };
+  }, []);
 
   const showPriceHint = perkSystem.hasPerk("price_hint");
   const showAverage = perkSystem.hasPerk("statistics");
 
-  const getPriceRange = () => {
+  const getPriceRange = useCallback(() => {
     if (!showPriceHint || cardLoader.currentPair.length < 2) return null;
     const prices = cardLoader.currentPair.map((c) => parseFloat(c.prices.eur));
     return { min: Math.min(...prices), max: Math.max(...prices) };
-  };
+  }, [showPriceHint, cardLoader.currentPair]);
 
-  const getAveragePrice = () => {
+  const getAveragePrice = useCallback(() => {
     if (!showAverage || cardLoader.currentPair.length < 2) return null;
     const prices = cardLoader.currentPair.map((c) => parseFloat(c.prices.eur));
     return prices.reduce((a, b) => a + b, 0) / prices.length;
-  };
+  }, [showAverage, cardLoader.currentPair]);
 
   if (cardLoader.error) {
     return (
