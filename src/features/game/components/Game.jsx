@@ -52,110 +52,38 @@ export default function Game({
   const perkSystem = usePerkSystem();
 
   // Timer mit Perk-Modifikationen
-  const getTimerDuration = () => {
+  const getTimerDuration = useCallback(() => {
     let duration = GAME_CONFIG.TIMER_DURATION;
     const timeBufferValue = perkSystem.getPerkValue("time_bonus");
     if (timeBufferValue) duration += timeBufferValue;
     return duration;
-  };
+  }, [perkSystem]);
 
-  const getTimerSpeed = () => {
+  const getTimerSpeed = useCallback(() => {
     const slowTimeValue = perkSystem.getPerkValue("slow_time");
     return slowTimeValue || 1;
-  };
+  }, [perkSystem]);
 
-  const timer = useGameTimer({
-    onTimeUp: () => handleChoice(-1),
-    enabled: !showPrices && selectedCard === null,
-    duration: getTimerDuration(),
-    speed: getTimerSpeed(),
-  });
-
-  // Initial Load
-  useEffect(() => {
-    if (user || user?.guest) {
-      initGame();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Start Timer when images loaded
-  useEffect(() => {
-    if (imagesLoaded.every(Boolean) && !showPrices) {
-      timer.start();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imagesLoaded, showPrices]);
-
-  // Reset bei neuem Paar
-  useEffect(() => {
-    setImagesLoaded([false, false]);
-    timer.reset();
-    setSelectedCard(null);
-    setCorrectIndex(null);
-    setShowPrices(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardLoader.currentPair]);
-
-  // Keyboard Controls
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ignoriere Tastatureingaben wenn Perk-Auswahl offen ist
-      if (perkSystem.showPerkSelection) return;
-
-      // Ignoriere wenn Game Over
-      if (gameOver) return;
-
-      const key = e.key.toLowerCase();
-
-      // Kartenauswahl: 1/a für links, 2/d für rechts
-      if (selectedCard === null && !showPrices) {
-        if (key === "1" || key === "a") {
-          e.preventDefault();
-          handleChoice(0);
-        } else if (key === "2" || key === "d") {
-          e.preventDefault();
-          handleChoice(1);
-        }
-      }
-
-      // Weiter mit Leertaste oder Enter
-      if (selectedCard !== null && !gameOver && (key === " " || key === "enter")) {
-        e.preventDefault();
-        handleNextPair();
-      }
-
-      // Skip mit S (wenn Perk verfügbar)
-      if (key === "s" && perkSystem.hasPerk("skip_card") && selectedCard === null && !showPrices) {
-        e.preventDefault();
-        handleSkipCard();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedCard, showPrices, gameOver, perkSystem.showPerkSelection, perkSystem]);
-
-  const initGame = async () => {
-    achievements.resetGameStats();
-    const cards = await cardLoader.preloadCards();
-    if (cards && cards.length >= 2) {
-      await cardLoader.setNextPair();
-    }
-  };
-
-  const applyPerkEffects = (basePoints) => {
+  const applyPerkEffects = useCallback((basePoints, timeLeft) => {
     let finalPoints = basePoints;
     const multiplier = perkSystem.getPerkValue("point_multiplier");
     if (multiplier) finalPoints *= multiplier;
     const flatBonus = perkSystem.getPerkValue("flat_bonus");
     if (flatBonus) finalPoints += flatBonus;
-    if (timer.timeLeft >= getTimerDuration() - 1) {
+    const currentDuration = getTimerDuration();
+    if (timeLeft >= currentDuration - 1) {
       const perfectBonus = perkSystem.getPerkValue("perfect_bonus");
       if (perfectBonus) finalPoints += perfectBonus;
     }
     return Math.floor(finalPoints);
-  };
+  }, [perkSystem, getTimerDuration]);
+
+  const timer = useGameTimer({
+    onTimeUp: () => handleChoiceRef.current(-1),
+    enabled: !showPrices && selectedCard === null,
+    duration: getTimerDuration(),
+    speed: getTimerSpeed(),
+  });
 
   const handleChoice = useCallback(
     async (chosenIndex) => {
@@ -180,7 +108,7 @@ export default function Game({
 
         const basePoints = timeBonus + streakBonus;
         const hadDoublePoints = !!perkSystem.getPerkValue("point_multiplier");
-        const totalPoints = applyPerkEffects(basePoints);
+        const totalPoints = applyPerkEffects(basePoints, timer.timeLeft);
 
         streak.incrementStreak();
 
@@ -242,10 +170,42 @@ export default function Game({
 
       perkSystem.decrementPerkDurations();
     },
-    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements]
+    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration]
   );
 
-  const handleNextPair = () => {
+  // Ref für handleChoice, damit timer.onTimeUp darauf zugreifen kann
+  const handleChoiceRef = React.useRef(handleChoice);
+  useEffect(() => {
+    handleChoiceRef.current = handleChoice;
+  }, [handleChoice]);
+
+  // Initial Load
+  useEffect(() => {
+    if (user || user?.guest) {
+      initGame();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Start Timer when images loaded
+  useEffect(() => {
+    if (imagesLoaded.every(Boolean) && !showPrices) {
+      timer.start();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imagesLoaded, showPrices]);
+
+  // Reset bei neuem Paar
+  useEffect(() => {
+    setImagesLoaded([false, false]);
+    timer.reset();
+    setSelectedCard(null);
+    setCorrectIndex(null);
+    setShowPrices(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardLoader.currentPair]);
+
+  const handleNextPair = useCallback(() => {
     setMessage("");
     const nextRound = currentRound + 1;
     setCurrentRound(nextRound);
@@ -256,25 +216,72 @@ export default function Game({
     } else {
       cardLoader.setNextPair();
     }
+  }, [currentRound, achievements, perkSystem, cardLoader]);
+
+  const handleSkipCard = useCallback(() => {
+    if (perkSystem.hasPerk("skip_card")) {
+      perkSystem.consumePerk("skip_card");
+      setSelectedCard(null);
+      setCorrectIndex(null);
+      setShowPrices(false);
+      setMessage("⭐ Card skipped!");
+      cardLoader.setNextPair();
+      timer.reset();
+      setCurrentRound((prev) => prev + 1);
+    }
+  }, [perkSystem, cardLoader, timer]);
+
+  // Keyboard Controls
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignoriere Tastatureingaben wenn Perk-Auswahl offen ist
+      if (perkSystem.showPerkSelection) return;
+
+      // Ignoriere wenn Game Over
+      if (gameOver) return;
+
+      const key = e.key.toLowerCase();
+
+      // Kartenauswahl: 1/a für links, 2/d für rechts
+      if (selectedCard === null && !showPrices) {
+        if (key === "1" || key === "a") {
+          e.preventDefault();
+          handleChoice(0);
+        } else if (key === "2" || key === "d") {
+          e.preventDefault();
+          handleChoice(1);
+        }
+      }
+
+      // Weiter mit Leertaste oder Enter
+      if (selectedCard !== null && !gameOver && (key === " " || key === "enter")) {
+        e.preventDefault();
+        handleNextPair();
+      }
+
+      // Skip mit S (wenn Perk verfügbar)
+      if (key === "s" && perkSystem.hasPerk("skip_card") && selectedCard === null && !showPrices) {
+        e.preventDefault();
+        handleSkipCard();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedCard, showPrices, gameOver, perkSystem.showPerkSelection, perkSystem, handleChoice, handleNextPair, handleSkipCard]);
+
+  const initGame = async () => {
+    achievements.resetGameStats();
+    const cards = await cardLoader.preloadCards();
+    if (cards && cards.length >= 2) {
+      await cardLoader.setNextPair();
+    }
   };
 
   const handlePerkSelect = (perk) => {
     perkSystem.selectPerk(perk);
     achievements.trackPerkCollected();
     cardLoader.setNextPair();
-  };
-
-  const handleSkipCard = () => {
-    if (perkSystem.hasPerk("skip_card")) {
-      perkSystem.consumePerk("skip_card");
-      setSelectedCard(null);
-      setCorrectIndex(null);
-      setShowPrices(false);
-      setMessage("⭐️ Card skipped!");
-      cardLoader.setNextPair();
-      timer.reset();
-      setCurrentRound((prev) => prev + 1);
-    }
   };
 
   const handleRestart = async () => {
@@ -375,7 +382,7 @@ export default function Game({
         </div>
       )}
 
-      {/* NEU: Heart Regen Progress - HIER EINFÜGEN */}
+      {/* Heart Regen Progress */}
       {perkSystem.getHeartRegenProgress() && (
         <div className="w-full max-w-xl mb-4">
           <div className="bg-pink-500/20 border border-pink-400 rounded-lg p-2">
@@ -427,7 +434,7 @@ export default function Game({
             className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 text-white px-6 py-4 rounded transition shadow-lg hover:shadow-xl"
             title="Press S to skip"
           >
-            ⭐️ Skip
+            ⭐ Skip
           </button>
         )}
 

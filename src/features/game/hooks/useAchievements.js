@@ -46,6 +46,7 @@ export const useAchievements = (user) => {
 
   useEffect(() => {
     loadAchievements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const loadAchievements = async () => {
