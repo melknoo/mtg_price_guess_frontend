@@ -37,24 +37,19 @@ export const useAchievements = (user) => {
   const processingRef = useRef(false);
   const pendingUnlocksRef = useRef([]);
   
-  // NEW: Track unlocked achievements in a ref to avoid race conditions
   const unlockedRef = useRef(new Set());
-  // NEW: Track achievements unlocked in current session to prevent duplicates
   const sessionUnlockedRef = useRef(new Set());
 
-  // Sync ref with state
   useEffect(() => {
     unlockedRef.current = new Set(unlockedAchievements);
   }, [unlockedAchievements]);
 
-  // Load achievements on mount or user change
   useEffect(() => {
     loadAchievements();
   }, [user?.id]);
 
   const loadAchievements = async () => {
     setIsLoading(true);
-    // Reset session tracking on load
     sessionUnlockedRef.current = new Set();
     
     try {
@@ -106,15 +101,12 @@ export const useAchievements = (user) => {
   const saveAchievements = useCallback(async (newAchievementIds) => {
     if (newAchievementIds.length === 0) return;
 
-    // Always save to localStorage immediately
     const allUnlocked = [...unlockedRef.current, ...newAchievementIds];
     const uniqueUnlocked = [...new Set(allUnlocked)];
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(uniqueUnlocked));
     
-    // Update state
     setUnlockedAchievements(uniqueUnlocked);
 
-    // For registered users, also save to server
     if (user && !user.guest) {
       pendingUnlocksRef.current.push(...newAchievementIds);
       
@@ -133,7 +125,6 @@ export const useAchievements = (user) => {
     }
   }, [user]);
 
-  // Process toast queue
   useEffect(() => {
     if (toastQueue.length > 0 && !currentToast && !processingRef.current) {
       processingRef.current = true;
@@ -148,18 +139,15 @@ export const useAchievements = (user) => {
     }
   }, [toastQueue, currentToast]);
 
-  // Check and unlock achievements - uses refs for immediate duplicate prevention
   const checkAchievements = useCallback((stats) => {
     const newlyUnlocked = [];
     
     getAllAchievements().forEach(achievement => {
-      // Check BOTH ref and session ref to prevent any duplicates
       if (unlockedRef.current.has(achievement.id)) return;
       if (sessionUnlockedRef.current.has(achievement.id)) return;
       
       if (achievement.condition(stats)) {
         newlyUnlocked.push(achievement);
-        // Mark as unlocked in BOTH refs immediately to prevent race conditions
         sessionUnlockedRef.current.add(achievement.id);
         unlockedRef.current.add(achievement.id);
       }
@@ -168,27 +156,27 @@ export const useAchievements = (user) => {
     if (newlyUnlocked.length > 0) {
       const newIds = newlyUnlocked.map(a => a.id);
       
-      // Queue toasts (only once per achievement)
       setToastQueue(prev => {
         const existingIds = new Set(prev.map(a => a.id));
         const trulyNew = newlyUnlocked.filter(a => !existingIds.has(a.id));
         return [...prev, ...trulyNew];
       });
       
-      // Save to storage/server
       saveAchievements(newIds);
     }
 
     return newlyUnlocked;
   }, [saveAchievements]);
 
-  // Update stats and check achievements
   const updateStats = useCallback((updates) => {
     setGameStats(prev => {
       const newStats = { ...prev, ...updates };
-      if (newStats.correctFromStart >= 5 && !prev.perfectStart) {
+      
+      // FIX: Set perfectStart to true when reaching 5 correct from start
+      if (newStats.correctFromStart >= 5 && !newStats.isAfterLifeLoss && !prev.perfectStart) {
         newStats.perfectStart = true;
       }
+      
       setTimeout(() => checkAchievements(newStats), 0);
       return newStats;
     });
@@ -209,6 +197,11 @@ export const useAchievements = (user) => {
         biggestDoublePoints: hadDoublePoints ? Math.max(prev.biggestDoublePoints, pointsEarned) : prev.biggestDoublePoints
       };
       
+      // FIX: Check and set perfectStart immediately when reaching 5 correct from start
+      if (newStats.correctFromStart >= 5 && !newStats.isAfterLifeLoss && !prev.perfectStart) {
+        newStats.perfectStart = true;
+      }
+      
       setTimeout(() => checkAchievements(newStats), 0);
       return newStats;
     });
@@ -219,7 +212,9 @@ export const useAchievements = (user) => {
       ...prev,
       currentStreak: 0,
       isAfterLifeLoss: true,
-      comebackStreak: 0
+      comebackStreak: 0,
+      // Reset perfectStart tracking when a wrong answer occurs
+      correctFromStart: 0
     }));
   }, []);
 
@@ -256,7 +251,6 @@ export const useAchievements = (user) => {
   }, [checkAchievements]);
 
   const resetGameStats = useCallback(() => {
-    // Reset session tracking for new game
     sessionUnlockedRef.current = new Set();
     
     setGameStats({
