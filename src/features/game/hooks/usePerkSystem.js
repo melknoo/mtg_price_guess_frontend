@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { PERKS, RARITY_WEIGHTS, PERK_CONFIG, PERK_TYPES, getBasePerkId, isExtendedPerk, isFilterPerk } from '../constants/perkDefinitions';
+import { PERKS, RARITY_WEIGHTS, PERK_CONFIG, PERK_TYPES, getBasePerkId, isExtendedPerk } from '../constants/perkDefinitions';
 
 export const usePerkSystem = () => {
   const [activePerks, setActivePerks] = useState([]);
