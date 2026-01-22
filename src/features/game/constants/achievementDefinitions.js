@@ -256,8 +256,11 @@ export const ACHIEVEMENTS = {
     icon: '✨',
     category: ACHIEVEMENT_CATEGORIES.SPECIAL,
     rarity: ACHIEVEMENT_RARITY.RARE,
-    condition: (stats) => stats.perfectStart === true,
-    progress: (stats) => stats.perfectStart ? 1 : Math.min(stats.correctFromStart / 5, 0.99),
+    condition: (stats) => stats.correctFromStart >= 5 && !stats.isAfterLifeLoss,
+    progress: (stats) => {
+      if (stats.isAfterLifeLoss) return 0;
+      return Math.min(stats.correctFromStart / 5, 1);
+    },
     secret: false
   },
   CLOSE_CALL: {
