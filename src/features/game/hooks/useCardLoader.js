@@ -7,13 +7,45 @@ export const useCardLoader = () => {
   const [currentPair, setCurrentPair] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeFilters, setActiveFilters] = useState({});
 
-  const preloadCards = useCallback(async () => {
+  /**
+   * Setzt aktive Filter basierend auf Perks
+   * @param {Array} filterPerks - Array von Filter-Perks
+   */
+  const updateFilters = useCallback((filterPerks) => {
+    const filters = {};
+
+    filterPerks.forEach(perk => {
+      if (perk.filterType === 'color') {
+        filters.color = perk.value;
+      } else if (perk.filterType === 'cmc') {
+        filters.cmc = perk.value;
+      } else if (perk.filterType === 'border_color') {
+        filters.border_color = perk.value;
+      } else if (perk.filterType === 'rarity') {
+        filters.rarity = perk.value;
+      }
+    });
+
+    // Nur updaten wenn sich die Filter tatsächlich geändert haben
+    setActiveFilters(prev => {
+      const prevString = JSON.stringify(prev);
+      const newString = JSON.stringify(filters);
+      
+      if (prevString === newString) {
+        return prev; // Keine Änderung, alten State behalten
+      }
+      return filters;
+    });
+  }, []);
+
+  const preloadCards = useCallback(async (filters = activeFilters) => {
     setLoading(true);
     setError(null);
 
     try {
-      const cards = await fetchRandomCards(GAME_CONFIG.PRELOAD_CARDS);
+      const cards = await fetchRandomCards(GAME_CONFIG.PRELOAD_CARDS, filters);
       setCachedCards(cards);
       return cards;
     } catch (err) {
@@ -22,15 +54,22 @@ export const useCardLoader = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeFilters]);
 
-  const setNextPair = useCallback(async () => {
-    let cardsToUse = [...cachedCards];
+  const setNextPair = useCallback(async (forceReload = false, providedCards = null) => {
+    let cardsToUse;
 
-    // Nur neue Karten laden wenn weniger als 2 Karten im Cache
-    if (cardsToUse.length < GAME_CONFIG.MIN_CARDS_NEEDED) {
-      const newCards = await preloadCards();
-      cardsToUse = newCards;
+    // Wenn Karten direkt übergeben werden, verwende diese
+    if (providedCards && providedCards.length > 0) {
+      cardsToUse = providedCards;
+    } else {
+      cardsToUse = [...cachedCards];
+
+      // Wenn forceReload = true, erzwinge das Laden neuer Karten
+      if (forceReload || cardsToUse.length < GAME_CONFIG.MIN_CARDS_NEEDED) {
+        const newCards = await preloadCards();
+        cardsToUse = newCards;
+      }
     }
 
     if (cardsToUse.length < GAME_CONFIG.MIN_CARDS_NEEDED) {
@@ -51,14 +90,17 @@ export const useCardLoader = () => {
     setCachedCards([]);
     setCurrentPair([]);
     setError(null);
+    setActiveFilters({});
   }, []);
 
   return {
     currentPair,
     loading,
     error,
+    activeFilters,
     preloadCards,
     setNextPair,
+    updateFilters,
     reset,
     hasCards: currentPair.length === 2,
   };

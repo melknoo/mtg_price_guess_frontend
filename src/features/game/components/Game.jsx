@@ -197,6 +197,13 @@ export default function Game({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Update filters when filter perks change
+  useEffect(() => {
+    const filterPerks = perkSystem.getActiveFilterPerks();
+    cardLoader.updateFilters(filterPerks);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [perkSystem.activePerks]);
+
   // Start Timer when images loaded
   useEffect(() => {
     if (imagesLoaded.every(Boolean) && !showPrices) {
@@ -227,6 +234,51 @@ export default function Game({
       cardLoader.setNextPair();
     }
   }, [currentRound, achievements, perkSystem, cardLoader]);
+
+  const handlePerkSelect = useCallback(async (perk) => {
+    // Wenn es ein Filter-Perk ist, lade sofort neue Karten mit dem neuen Filter
+    if (perk.type === 'filter') {
+      // Berechne die neuen Filter BEVOR selectPerk aufgerufen wird
+      const currentFilterPerks = perkSystem.getActiveFilterPerks();
+      
+      // Filtere alte Perks des gleichen Filtertyps raus (nur ein Filter pro Typ)
+      const otherFilterPerks = currentFilterPerks.filter(
+        p => p.filterType !== perk.filterType
+      );
+      
+      // Füge das neue Perk hinzu
+      const allFilterPerks = [...otherFilterPerks, perk];
+      
+      // Baue Filter-Objekt manuell auf
+      const filters = {};
+      allFilterPerks.forEach(filterPerk => {
+        if (filterPerk.filterType === 'color') {
+          filters.color = filterPerk.value;
+        } else if (filterPerk.filterType === 'cmc') {
+          filters.cmc = filterPerk.value;
+        } else if (filterPerk.filterType === 'border_color') {
+          filters.border_color = filterPerk.value;
+        } else if (filterPerk.filterType === 'rarity') {
+          filters.rarity = filterPerk.value;
+        }
+      });
+      
+      // Lade neue Karten direkt mit den Filtern
+      const newCards = await cardLoader.preloadCards(filters);
+      
+      // Jetzt erst das Perk zum State hinzufügen
+      perkSystem.selectPerk(perk);
+      achievements.trackPerkCollected();
+      
+      // Verwende die frisch geladenen gefilterten Karten direkt
+      await cardLoader.setNextPair(false, newCards);
+    } else {
+      // Normale Perks ohne Filter
+      perkSystem.selectPerk(perk);
+      achievements.trackPerkCollected();
+      await cardLoader.setNextPair();
+    }
+  }, [perkSystem, achievements, cardLoader]);
 
   const handleSkipCard = useCallback(() => {
     if (perkSystem.hasPerk("skip_card")) {
@@ -274,12 +326,6 @@ export default function Game({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedCard, showPrices, gameOver, perkSystem.showPerkSelection, perkSystem, handleChoice, handleNextPair, handleSkipCard]);
 
-  const handlePerkSelect = useCallback((perk) => {
-    perkSystem.selectPerk(perk);
-    achievements.trackPerkCollected();
-    cardLoader.setNextPair();
-  }, [perkSystem, achievements, cardLoader]);
-
   const handleRestart = useCallback(async () => {
     setScore(0);
     setMessage("");
@@ -323,6 +369,18 @@ export default function Game({
     return prices.reduce((a, b) => a + b, 0) / prices.length;
   }, [showAverage, cardLoader.currentPair]);
 
+  // Get active filter info for display
+  const getActiveFilterInfo = useCallback(() => {
+    const filterPerks = perkSystem.getActiveFilterPerks();
+    if (filterPerks.length === 0) return null;
+
+    return filterPerks.map(perk => ({
+      name: perk.name,
+      icon: perk.icon,
+      description: perk.description
+    }));
+  }, [perkSystem]);
+
   if (cardLoader.error) {
     return (
       <div className="text-center text-red-400">
@@ -360,6 +418,19 @@ export default function Game({
         color={streak.getStreakColor()}
         streakBonus={streak.calculateStreakBonus()}
       />
+
+      {/* Active Filter Display */}
+      {getActiveFilterInfo() && (
+        <div className="w-full max-w-xl mb-4">
+          {getActiveFilterInfo().map((filter, index) => (
+            <div key={index} className="bg-indigo-500/20 border border-indigo-400 rounded-lg p-2 mb-2">
+              <span className="text-indigo-200 text-sm font-semibold">
+                {filter.icon} {filter.name}: {filter.description}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {(showPriceHint || showAverage) && (
         <div className="w-full max-w-xl mb-4">
