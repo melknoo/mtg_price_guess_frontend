@@ -2,7 +2,7 @@ export const PERK_TYPES = {
     DEFENSIVE: 'defensive',
     OFFENSIVE: 'offensive',
     UTILITY: 'utility',
-    FILTER: 'filter'
+    FILTER: 'filter' // NEU: Filter-Perks
 };
 
 export const PERK_RARITY = {
@@ -11,6 +11,7 @@ export const PERK_RARITY = {
     EPIC: 'epic'
 };
 
+// Filter-Effekt-Typen
 export const FILTER_EFFECTS = {
     COLOR: 'color_filter',
     CMC: 'cmc_filter',
@@ -19,7 +20,7 @@ export const FILTER_EFFECTS = {
 };
 
 export const PERKS = {
-    // ==================== DEFENSIVE PERKS ====================
+    // ==================== EXISTING DEFENSIVE PERKS ====================
     HEART_REGENERATION: {
         id: 'heart_regeneration',
         name: 'Heart Regeneration',
@@ -72,7 +73,7 @@ export const PERKS = {
         bonusDuration: 2,
     },
 
-    // ==================== OFFENSIVE PERKS ====================
+    // ==================== EXISTING OFFENSIVE PERKS ====================
     DOUBLE_POINTS: {
         id: 'double_points',
         name: 'Double Points',
@@ -167,7 +168,7 @@ export const PERKS = {
         bonusDuration: 2,
     },
 
-    // ==================== UTILITY PERKS ====================
+    // ==================== EXISTING UTILITY PERKS ====================
     PRICE_HINT: {
         id: 'price_hint',
         name: 'Price Hint',
@@ -232,6 +233,8 @@ export const PERKS = {
         manual: true,
         consumable: true,
     },
+
+    // ==================== NEW FILTER PERKS - COLOR ====================
     RED_FOCUS: {
         id: 'red_focus',
         name: 'Red Focus',
@@ -300,7 +303,7 @@ export const PERKS = {
     MULTICOLOR_FOCUS: {
         id: 'multicolor_focus',
         name: 'Multicolor Focus',
-        description: 'More multicolor cards appear (10 rounds)',
+        description: 'More multicolor cards (2+ colors) appear (10 rounds)',
         icon: '🌈',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
@@ -461,11 +464,13 @@ export const getExtendedVersion = (perkId) => {
     return Object.values(PERKS).find(p => p.basePerkId === perkId);
 };
 
+// Helper: Check if perk is a filter perk
 export const isFilterPerk = (perkId) => {
     const perk = Object.values(PERKS).find(p => p.id === perkId);
     return perk?.type === PERK_TYPES.FILTER;
 };
 
+// Helper: Get all active filter perks
 export const getActiveFilters = (activePerks) => {
     return activePerks.filter(p => p.type === PERK_TYPES.FILTER);
 };

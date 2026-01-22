@@ -56,13 +56,20 @@ export const useCardLoader = () => {
     }
   }, [activeFilters]);
 
-  const setNextPair = useCallback(async () => {
-    let cardsToUse = [...cachedCards];
+  const setNextPair = useCallback(async (forceReload = false, providedCards = null) => {
+    let cardsToUse;
 
-    // Nur neue Karten laden wenn weniger als 2 Karten im Cache
-    if (cardsToUse.length < GAME_CONFIG.MIN_CARDS_NEEDED) {
-      const newCards = await preloadCards();
-      cardsToUse = newCards;
+    // Wenn Karten direkt übergeben werden, verwende diese
+    if (providedCards && providedCards.length > 0) {
+      cardsToUse = providedCards;
+    } else {
+      cardsToUse = [...cachedCards];
+
+      // Wenn forceReload = true, erzwinge das Laden neuer Karten
+      if (forceReload || cardsToUse.length < GAME_CONFIG.MIN_CARDS_NEEDED) {
+        const newCards = await preloadCards();
+        cardsToUse = newCards;
+      }
     }
 
     if (cardsToUse.length < GAME_CONFIG.MIN_CARDS_NEEDED) {

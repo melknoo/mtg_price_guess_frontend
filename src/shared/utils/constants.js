@@ -1,5 +1,5 @@
 export const GAME_CONFIG = {
-    INITIAL_LIVES: 3,
+    INITIAL_LIVES: 10,
     TIMER_DURATION: 10,
     TIMER_TICK: 0.1,
     PRELOAD_CARDS: 20,

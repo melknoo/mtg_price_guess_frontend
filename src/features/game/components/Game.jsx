@@ -6,6 +6,7 @@ import { useStreak } from "../hooks/useStreak";
 import { useCardLoader } from "../hooks/useCardLoader";
 import { usePerkSystem } from "../hooks/usePerkSystem";
 import { updateHighscore } from "../api/gameApi";
+import { PERK_TYPES } from "../constants/perkDefinitions";
 import {
   isChoiceCorrect,
   getMoreExpensiveCard,
@@ -265,10 +266,49 @@ export default function Game({
     }
   };
 
-  const handlePerkSelect = (perk) => {
-    perkSystem.selectPerk(perk);
-    achievements.trackPerkCollected();
-    cardLoader.setNextPair();
+  const handlePerkSelect = async (perk) => {
+    // Wenn es ein Filter-Perk ist, lade sofort neue Karten mit dem neuen Filter
+    if (perk.type === 'filter') {
+      // Berechne die neuen Filter BEVOR selectPerk aufgerufen wird
+      const currentFilterPerks = perkSystem.getActiveFilterPerks();
+      
+      // Filtere alte Perks des gleichen Filtertyps raus (nur ein Filter pro Typ)
+      const otherFilterPerks = currentFilterPerks.filter(
+        p => p.filterType !== perk.filterType
+      );
+      
+      // Füge das neue Perk hinzu
+      const allFilterPerks = [...otherFilterPerks, perk];
+      
+      // Baue Filter-Objekt manuell auf
+      const filters = {};
+      allFilterPerks.forEach(filterPerk => {
+        if (filterPerk.filterType === 'color') {
+          filters.color = filterPerk.value;
+        } else if (filterPerk.filterType === 'cmc') {
+          filters.cmc = filterPerk.value;
+        } else if (filterPerk.filterType === 'border_color') {
+          filters.border_color = filterPerk.value;
+        } else if (filterPerk.filterType === 'rarity') {
+          filters.rarity = filterPerk.value;
+        }
+      });
+      
+      // Lade neue Karten direkt mit den Filtern
+      const newCards = await cardLoader.preloadCards(filters);
+      
+      // Jetzt erst das Perk zum State hinzufügen
+      perkSystem.selectPerk(perk);
+      achievements.trackPerkCollected();
+      
+      // Verwende die frisch geladenen gefilterten Karten direkt
+      await cardLoader.setNextPair(false, newCards);
+    } else {
+      // Normale Perks ohne Filter
+      perkSystem.selectPerk(perk);
+      achievements.trackPerkCollected();
+      await cardLoader.setNextPair();
+    }
   };
 
   const handleSkipCard = () => {
