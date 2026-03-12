@@ -86,6 +86,20 @@ export const useCardLoader = () => {
     return true;
   }, [cachedCards, preloadCards]);
 
+  /**
+   * Initialisiert den Card-Pool direkt mit vorgegebenen Karten (z.B. Daily Challenge).
+   * Setzt das erste Paar sofort, ohne einen API-Call zu machen.
+   */
+  const initWithCards = useCallback((cards) => {
+    if (!cards || cards.length < 2) {
+      setError('Nicht genügend Karten verfügbar');
+      return false;
+    }
+    setCurrentPair(cards.slice(0, 2));
+    setCachedCards(cards.slice(2));
+    return true;
+  }, []);
+
   const reset = useCallback(() => {
     setCachedCards([]);
     setCurrentPair([]);
@@ -101,6 +115,7 @@ export const useCardLoader = () => {
     preloadCards,
     setNextPair,
     updateFilters,
+    initWithCards,
     reset,
     hasCards: currentPair.length === 2,
   };

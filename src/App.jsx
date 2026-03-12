@@ -7,6 +7,7 @@ import RegisterWithScore from "./features/auth/components/RegisterWithScore";
 import ForgotPassword from "./features/auth/components/ForgotPassword";
 import ResetPassword from "./features/auth/components/ResetPassword";
 import Game from "./features/game/components/Game";
+import DailyChallengeGame from "./features/game/components/DailyChallengeGame";
 import Footer from "./shared/components/Footer";
 import CookieConsent from "./features/legal/components/CookieConsent";
 import PrivacyPolicy from "./features/legal/components/PrivacyPolicy";
@@ -164,7 +165,7 @@ function AppContent() {
     <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center sm:p-4 pt-16 pb-20 px-4 relative">
         <div className="absolute top-12 sm:top-4 right-4 flex gap-2">
-          {screen === "game" && (
+          {(screen === "game" || screen === "daily-challenge") && (
             <button onClick={() => setScreen("menu")} className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded transition">
               Back to Menu
             </button>
@@ -207,6 +208,17 @@ function AppContent() {
                 Leaderboard
               </button>
             </div>
+
+            {!user?.guest && (
+              <div className="mt-2">
+                <button
+                  onClick={() => setScreen("daily-challenge")}
+                  className="bg-yellow-500 hover:bg-yellow-600 px-6 py-3 rounded text-white text-lg transition font-semibold shadow-lg"
+                >
+                  📅 Daily Challenge
+                </button>
+              </div>
+            )}
             {!user?.guest && (
               <div className="mt-4">
                 <button
@@ -266,9 +278,13 @@ function AppContent() {
             setShowRegister={setShowRegister}
           />
         )}
+
+        {screen === "daily-challenge" && (
+          <DailyChallengeGame onBack={() => setScreen("menu")} />
+        )}
       </div>
 
-      {screen !== "game" && <Footer onNavigate={handleFooterNavigation} />}
+      {screen !== "game" && screen !== "daily-challenge" && <Footer onNavigate={handleFooterNavigation} />}
       <CookieConsent />
       <SuggestionModal
         isOpen={showSuggestionModal}

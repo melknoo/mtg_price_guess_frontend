@@ -32,6 +32,8 @@ export default function Game({
   onBack,
   showRegister,
   setShowRegister,
+  initialCards = null,
+  onGameOver = null,
 }) {
   const { user, refreshUser, setUser } = useAuth();
   const achievements = useAchievementContext();
@@ -166,6 +168,7 @@ export default function Game({
 
           if (remainingLives <= 0) {
             setGameOver(true);
+            if (onGameOver) onGameOver(score);
             return;
           }
         }
@@ -173,7 +176,7 @@ export default function Game({
 
       perkSystem.decrementPerkDurations();
     },
-    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration]
+    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver]
   );
 
   // Update handleChoiceRef when handleChoice changes
@@ -183,11 +186,15 @@ export default function Game({
 
   const initGame = useCallback(async () => {
     achievements.resetGameStats();
-    const cards = await cardLoader.preloadCards();
-    if (cards && cards.length >= 2) {
-      await cardLoader.setNextPair();
+    if (initialCards && initialCards.length >= 2) {
+      cardLoader.initWithCards(initialCards);
+    } else {
+      const cards = await cardLoader.preloadCards();
+      if (cards && cards.length >= 2) {
+        await cardLoader.setNextPair();
+      }
     }
-  }, [achievements, cardLoader]);
+  }, [achievements, cardLoader, initialCards]);
 
   // Initial Load
   useEffect(() => {
