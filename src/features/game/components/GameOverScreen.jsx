@@ -30,7 +30,7 @@ export default function GameOverScreen({
 
       <button
         onClick={onBack}
-        className="mt-4 bg-blue-600 px-6 py-3 rounded text-white text-lg hover:bg-blue-700 transition"
+        className="mt-4 bg-purple-600 px-6 py-3 rounded text-white text-lg hover:bg-purple-700 transition"
       >
         Back to Menu
       </button>

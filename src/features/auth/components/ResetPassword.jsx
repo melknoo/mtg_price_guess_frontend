@@ -87,7 +87,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
           onClick={onBack}
           className="text-sm text-blue-600 hover:underline cursor-pointer w-full text-center"
         >
-          ← Back to Login
+          Back to Login
         </button>
       )}
     </div>

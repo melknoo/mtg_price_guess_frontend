@@ -301,9 +301,9 @@ export default function AchievementsDisplay({ achievements, onBack }) {
       {/* Back Button */}
       <button
         onClick={onBack}
-        className="mt-6 w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition font-medium text-white"
+        className="mt-6 w-full bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition font-medium text-white"
       >
-        ← Back to Menu
+        Back to Menu
       </button>
     </motion.div>
   );

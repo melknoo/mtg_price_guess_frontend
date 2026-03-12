@@ -112,7 +112,7 @@ export default function PrivacyPolicy({ onBack }) {
             onClick={onBack}
             className="mt-8 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
           >
-            ← Back
+            Back
           </button>
         )}
       </div>

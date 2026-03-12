@@ -6,6 +6,7 @@ import { useStreak } from "../hooks/useStreak";
 import { useCardLoader } from "../hooks/useCardLoader";
 import { usePerkSystem } from "../hooks/usePerkSystem";
 import { updateHighscore } from "../api/gameApi";
+import { saveGameSession } from "../api/statsApi";
 import {
   isChoiceCorrect,
   getMoreExpensiveCard,
@@ -69,6 +70,10 @@ export default function Game({
   // Ref für handleChoice, damit timer.onTimeUp darauf zugreifen kann
   const handleChoiceRef = useRef(null);
 
+  // Refs für Session-Statistiken (kein Re-render nötig)
+  const correctCountRef = useRef(0);
+  const wrongCountRef = useRef(0);
+
   const timer = useGameTimer({
     onTimeUp: () => handleChoiceRef.current?.(-1),
     enabled: !showPrices && selectedCard === null,
@@ -103,6 +108,7 @@ export default function Game({
       setShowPrices(true);
 
       if (correct) {
+        correctCountRef.current++;
         const timeBonus = calculateTimeBonus(timer.timeLeft);
         const customThreshold = perkSystem.getPerkValue("streak_threshold");
         const streakBonus = customThreshold
@@ -157,6 +163,7 @@ export default function Game({
           setMessage("💚 Second Chance activated! Life saved!");
           achievements.trackShieldSave();
         } else {
+          wrongCountRef.current++;
           streak.resetStreak();
           achievements.trackWrongAnswer();
 
@@ -168,6 +175,16 @@ export default function Game({
 
           if (remainingLives <= 0) {
             setGameOver(true);
+            if (!user?.guest) {
+              saveGameSession({
+                score,
+                rounds_played: currentRound,
+                correct_answers: correctCountRef.current,
+                wrong_answers: wrongCountRef.current,
+                best_streak: streak.bestStreak,
+                mode: initialCards ? 'daily' : 'normal',
+              });
+            }
             if (onGameOver) onGameOver(score);
             return;
           }
@@ -186,6 +203,8 @@ export default function Game({
 
   const initGame = useCallback(async () => {
     achievements.resetGameStats();
+    correctCountRef.current = 0;
+    wrongCountRef.current = 0;
     if (initialCards && initialCards.length >= 2) {
       cardLoader.initWithCards(initialCards);
     } else {

@@ -133,9 +133,9 @@ export default function AccountSettings({ onBack }) {
         {/* Back Button */}
         <button
           onClick={onBack}
-          className="w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition font-medium"
+          className="w-full bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition font-medium text-white"
         >
-          ← Back to Menu
+          Back to Menu
         </button>
       </div>
     </motion.div>

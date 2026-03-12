@@ -92,7 +92,7 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
               onClick={onBack}
               className="flex-1 bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition font-medium"
             >
-              ← Back
+              Back
             </button>
             <button
               onClick={handleInitiateDelete}

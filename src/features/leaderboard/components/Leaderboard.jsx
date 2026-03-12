@@ -37,7 +37,7 @@ export default function Leaderboard({ onBack }) {
         <p className="text-red-400 mb-4">❌ {error}</p>
         <button
           onClick={onBack}
-          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+          className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded text-white transition"
         >
           Back
         </button>
@@ -66,7 +66,7 @@ export default function Leaderboard({ onBack }) {
 
       <button
         onClick={onBack}
-        className="mt-6 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+        className="mt-6 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded text-white transition"
       >
         Back
       </button>
