@@ -99,6 +99,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const socialLogin = async (provider, token) => {
+    try {
+      const res = await axios.post(`${API_URL}/auth/social/${provider}`, { token });
+      const newToken = res.data.token;
+      axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+      setToken(newToken);
+      localStorage.setItem("token", newToken);
+      setUser(res.data.user);
+    } catch (err) {
+      setToken(null);
+      localStorage.removeItem("token");
+      throw err;
+    }
+  };
+
   const logout = async () => {
     try {
       await axios.post(API_URL + "/auth/logout");
@@ -110,14 +125,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      logout, 
-      register, 
+    <AuthContext.Provider value={{
+      user,
+      login,
+      logout,
+      register,
       registerWithScore,
-      setUser, 
-      refreshUser 
+      socialLogin,
+      setUser,
+      refreshUser
     }}>
       {children}
     </AuthContext.Provider>

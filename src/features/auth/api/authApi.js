@@ -46,9 +46,14 @@ export const requestPasswordReset = async (email) => {
 };
 
 export const resetPassword = async (token, password) => {
-  const response = await apiClient.post('/auth/reset-password', { 
-    token, 
-    password 
+  const response = await apiClient.post('/auth/reset-password', {
+    token,
+    password
   });
+  return response.data;
+};
+
+export const socialLoginApi = async (provider, token) => {
+  const response = await apiClient.post(`/auth/social/${provider}`, { token });
   return response.data;
 };
