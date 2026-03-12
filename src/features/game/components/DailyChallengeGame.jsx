@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useAuth } from "../../auth/context/AuthContext";
 import Game from "./Game";
 import {
   fetchDailyChallengeCards,
@@ -69,7 +68,6 @@ function DailyLeaderboard({ leaderboard, userRank, userScore }) {
 }
 
 export default function DailyChallengeGame({ onBack }) {
-  const { user } = useAuth();
 
   const [status, setStatus] = useState("loading"); // loading | ready | already_played | finished | error
   const [dailyCards, setDailyCards] = useState(null);
