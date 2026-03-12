@@ -193,7 +193,7 @@ export default function Game({
 
       perkSystem.decrementPerkDurations();
     },
-    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver]
+    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards]
   );
 
   // Update handleChoiceRef when handleChoice changes
