@@ -8,10 +8,32 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem("token"));
 
+  // Handle Google redirect callback (access_token in URL hash)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes("access_token=")) {
+      const params = new URLSearchParams(hash.slice(1));
+      const googleAccessToken = params.get("access_token");
+      if (googleAccessToken) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        axios.post(`${API_URL}/auth/social/google`, { token: googleAccessToken })
+          .then((res) => {
+            const newToken = res.data.token;
+            axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+            setToken(newToken);
+            localStorage.setItem("token", newToken);
+            setUser(res.data.user);
+          })
+          .catch((err) => console.error("Google redirect login failed:", err));
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      
+
       axios.get(API_URL + "/auth/me")
         .then((res) => {
           setUser(res.data);

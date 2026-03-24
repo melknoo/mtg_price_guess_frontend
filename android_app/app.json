@@ -2,6 +2,7 @@
   "expo": {
     "name": "MTG Price Guess",
     "slug": "mtg-price-guess",
+    "scheme": "mtgpriceguess",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/mtg_logo.png",
