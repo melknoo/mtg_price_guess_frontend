@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import { useAuth } from "./features/auth/context/AuthContext";
 import { AchievementProvider, useAchievementContext } from "./features/game/context/AchievementContext";
 import LoginForm from "./features/auth/components/LoginForm";
@@ -338,10 +337,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || ""}>
-      <AchievementProvider>
-        <AppContent />
-      </AchievementProvider>
-    </GoogleOAuthProvider>
+    <AchievementProvider>
+      <AppContent />
+    </AchievementProvider>
   );
 }
