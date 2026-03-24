@@ -1,18 +1,20 @@
 import React from "react";
-import { useGoogleLogin } from "@react-oauth/google";
 
-function GoogleButton({ onError }) {
-  const login = useGoogleLogin({
-    flow: "implicit",
-    ux_mode: "redirect",
-    redirect_uri: window.location.origin,
-    onError: () => onError("Google Login fehlgeschlagen."),
-  });
+function GoogleButton() {
+  const handleClick = () => {
+    const params = new URLSearchParams({
+      client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+      redirect_uri: window.location.origin,
+      response_type: "token",
+      scope: "email profile",
+    });
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  };
 
   return (
     <button
       type="button"
-      onClick={() => login()}
+      onClick={handleClick}
       className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg border border-gray-300 transition shadow-sm active:scale-95"
     >
       <svg width="18" height="18" viewBox="0 0 24 24">
@@ -28,5 +30,5 @@ function GoogleButton({ onError }) {
 
 export default function SocialLoginButtons({ onError }) {
   if (!process.env.REACT_APP_GOOGLE_CLIENT_ID) return null;
-  return <GoogleButton onError={onError} />;
+  return <GoogleButton />;
 }
