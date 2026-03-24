@@ -79,13 +79,13 @@ export default function ChangeEmail({ onBack, onSuccess }) {
       <h2 className="text-2xl font-bold mb-6">Change Email Address</h2>
 
       {error && (
-        <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">
+        <div className="bg-red-500/20 text-red-300 p-3 rounded-lg mb-4 text-sm">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="bg-green-100 text-green-700 p-3 rounded-lg mb-4 text-sm">
+        <div className="bg-green-500/20 text-green-300 p-3 rounded-lg mb-4 text-sm">
           {success}
         </div>
       )}
@@ -104,7 +104,7 @@ export default function ChangeEmail({ onBack, onSuccess }) {
           <input
             type="email"
             placeholder="new@email.com"
-            className="w-full p-3 border border-gray-600 rounded-lg bg-gray-800 text-white focus:border-purple-500 focus:outline-none"
+            className="w-full p-3 border border-white/20 rounded-lg bg-white/10 text-white placeholder-white/40 focus:border-amber-400/60 focus:outline-none"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             required
@@ -118,7 +118,7 @@ export default function ChangeEmail({ onBack, onSuccess }) {
           <input
             type="password"
             placeholder="Your current password"
-            className="w-full p-3 border border-gray-600 rounded-lg bg-gray-800 text-white focus:border-purple-500 focus:outline-none"
+            className="w-full p-3 border border-white/20 rounded-lg bg-white/10 text-white placeholder-white/40 focus:border-amber-400/60 focus:outline-none"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -135,14 +135,14 @@ export default function ChangeEmail({ onBack, onSuccess }) {
           <button
             type="button"
             onClick={onBack}
-            className="flex-1 bg-gray-600 hover:bg-gray-700 px-4 py-3 rounded-lg transition font-medium"
+            className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-3 rounded-lg transition font-medium"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className={`flex-1 bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-lg transition font-medium ${
+            className={`flex-1 bg-amber-600 hover:bg-amber-500 px-4 py-3 rounded-lg transition font-medium ${
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >

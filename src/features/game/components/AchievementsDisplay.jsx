@@ -91,7 +91,7 @@ const AchievementCard = React.forwardRef(({ achievement, index }, ref) => {
         <div className="mt-3">
           <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-purple-500 transition-all duration-300"
+              className="h-full bg-amber-500 transition-all duration-300"
               style={{ width: `${progress * 100}%` }}
             />
           </div>
@@ -143,12 +143,12 @@ function MobileFilterDropdown({ selectedCategory, setSelectedCategory, categoryI
             animate={{ opacity: 1, y: 0, scaleY: 1 }}
             exit={{ opacity: 0, y: -10, scaleY: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 right-0 mt-2 bg-gray-800 rounded-lg border border-white/20 shadow-xl z-20 overflow-hidden"
+            className="absolute top-full left-0 right-0 mt-2 bg-[#0d1b3e] rounded-lg border border-white/20 shadow-xl z-20 overflow-hidden"
           >
             <button
               onClick={() => handleSelect('all')}
               className={`w-full px-4 py-3 text-left flex items-center gap-2 transition ${selectedCategory === 'all'
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-amber-600 text-white'
                   : 'text-gray-300 hover:bg-white/10'
                 }`}
             >
@@ -162,7 +162,7 @@ function MobileFilterDropdown({ selectedCategory, setSelectedCategory, categoryI
                 key={key}
                 onClick={() => handleSelect(key)}
                 className={`w-full px-4 py-3 text-left flex items-center gap-2 transition border-t border-white/10 ${selectedCategory === key
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-amber-600 text-white'
                     : 'text-gray-300 hover:bg-white/10'
                   }`}
               >
@@ -193,7 +193,7 @@ function DesktopFilterButtons({ selectedCategory, setSelectedCategory, categoryI
       <button
         onClick={() => setSelectedCategory('all')}
         className={`px-4 py-2 rounded-lg transition font-medium ${selectedCategory === 'all'
-            ? 'bg-purple-600 text-white'
+            ? 'bg-amber-600 text-white'
             : 'bg-white/10 text-gray-300 hover:bg-white/20'
           }`}
       >
@@ -204,7 +204,7 @@ function DesktopFilterButtons({ selectedCategory, setSelectedCategory, categoryI
           key={key}
           onClick={() => setSelectedCategory(key)}
           className={`px-4 py-2 rounded-lg transition font-medium ${selectedCategory === key
-              ? 'bg-purple-600 text-white'
+              ? 'bg-amber-600 text-white'
               : 'bg-white/10 text-gray-300 hover:bg-white/20'
             }`}
         >
@@ -254,7 +254,7 @@ export default function AchievementsDisplay({ achievements, onBack }) {
         <div className="w-full sm:w-48 mt-3 sm:mt-0">
           <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+              className="h-full bg-gradient-to-r from-amber-500 to-amber-300"
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent}%` }}
               transition={{ duration: 1, ease: 'easeOut' }}
@@ -301,7 +301,7 @@ export default function AchievementsDisplay({ achievements, onBack }) {
       {/* Back Button */}
       <button
         onClick={onBack}
-        className="mt-6 w-full bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition font-medium text-white"
+        className="mt-6 w-full bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-lg transition font-medium text-white"
       >
         Back to Menu
       </button>

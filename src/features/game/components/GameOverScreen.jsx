@@ -11,7 +11,7 @@ export default function GameOverScreen({
   children
 }) {
   return (
-    <div className="absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center z-10">
+    <div className="absolute inset-0 bg-[#0d1b3e]/92 backdrop-blur-sm flex flex-col items-center justify-center z-10">
       <h2 className="text-2xl mb-4 font-bold">❌ Wrong Guess!</h2>
       <p className="mb-2 text-lg">{message}</p>
       
@@ -30,7 +30,7 @@ export default function GameOverScreen({
 
       <button
         onClick={onBack}
-        className="mt-4 bg-purple-600 px-6 py-3 rounded text-white text-lg hover:bg-purple-700 transition"
+        className="mt-4 bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded text-white text-lg transition"
       >
         Back to Menu
       </button>
@@ -38,7 +38,7 @@ export default function GameOverScreen({
       {isGuest && !showRegister && (
         <button
           onClick={onShowRegister}
-          className="mt-4 bg-blue-400 px-6 py-3 rounded text-white text-lg hover:bg-blue-600 transition"
+          className="mt-4 bg-amber-600 px-6 py-3 rounded text-white text-lg hover:bg-amber-500 transition"
         >
           Register & Save Score
         </button>

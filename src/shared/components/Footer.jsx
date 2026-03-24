@@ -53,7 +53,7 @@ export default function Footer({ onNavigate }) {
             href="https://scryfall.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-purple-400 hover:text-purple-300 underline"
+            className="text-amber-400 hover:text-amber-300 underline"
           >
             Scryfall
           </a>

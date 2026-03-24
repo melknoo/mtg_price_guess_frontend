@@ -37,7 +37,7 @@ export default function Leaderboard({ onBack }) {
         <p className="text-red-400 mb-4">❌ {error}</p>
         <button
           onClick={onBack}
-          className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded text-white transition"
+          className="bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded text-white transition"
         >
           Back
         </button>
@@ -54,11 +54,11 @@ export default function Leaderboard({ onBack }) {
           No highscores yet. Be the first!
         </p>
       ) : (
-        <ol className="bg-white text-black rounded-lg shadow-lg p-4">
+        <ol className="bg-white/10 border border-white/20 rounded-lg p-4">
           {players.map((player, index) => (
-            <li key={index} className="py-1 border-b last:border-none">
+            <li key={index} className="py-1 border-b border-white/10 last:border-none">
               <span className="font-bold">{index + 1}.</span> {player.username} –{" "}
-              <span className="text-green-600 font-semibold">{player.highscore}</span>
+              <span className="text-amber-400 font-semibold">{player.highscore}</span>
             </li>
           ))}
         </ol>
@@ -66,7 +66,7 @@ export default function Leaderboard({ onBack }) {
 
       <button
         onClick={onBack}
-        className="mt-6 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded text-white transition"
+        className="mt-6 bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded text-white transition"
       >
         Back
       </button>

@@ -120,18 +120,18 @@ export default function LoginForm({ onForgotPassword }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 max-w-sm mx-auto bg-white p-6 rounded-xl shadow text-black"
+      className="space-y-4 max-w-sm mx-auto bg-white/10 backdrop-blur-lg border border-white/20 p-6 rounded-xl shadow-2xl text-white"
     >
-      <h2 className="text-xl font-bold mb-2">{isLogin ? "Login" : "Registrieren"}</h2>
+      <h2 className="text-xl font-bold mb-2 text-amber-200">{isLogin ? "Login" : "Registrieren"}</h2>
 
       {error && (
-        <div className="bg-red-100 text-red-700 p-2 rounded mb-2 text-sm">
+        <div className="bg-red-500/20 text-red-300 p-2 rounded mb-2 text-sm">
           {error}
         </div>
       )}
 
       {showWarning && (
-        <div className="bg-yellow-100 text-yellow-700 p-2 rounded mb-2 text-sm">
+        <div className="bg-yellow-500/20 text-yellow-200 p-2 rounded mb-2 text-sm">
           ⚠️ Still ${3 - failedAttempts} attempt(s) until captcha verification
         </div>
       )}
@@ -139,7 +139,7 @@ export default function LoginForm({ onForgotPassword }) {
       {isLogin && (
         <input
           placeholder="Username or Email"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
@@ -151,7 +151,7 @@ export default function LoginForm({ onForgotPassword }) {
           <input
             placeholder="Email"
             type="email"
-            className="w-full p-2 border rounded"
+            className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -160,7 +160,7 @@ export default function LoginForm({ onForgotPassword }) {
           <input
             placeholder="Username"
             type="text"
-            className="w-full p-2 border rounded"
+            className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
@@ -171,7 +171,7 @@ export default function LoginForm({ onForgotPassword }) {
       <input
         type="password"
         placeholder="Password"
-        className="w-full p-2 border rounded"
+        className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
@@ -193,7 +193,7 @@ export default function LoginForm({ onForgotPassword }) {
           <button
             type="button"
             onClick={onForgotPassword}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-amber-400 hover:text-amber-300"
           >
             Forgot password?
           </button>
@@ -211,7 +211,7 @@ export default function LoginForm({ onForgotPassword }) {
       </Button>
 
       <p
-        className="text-sm text-blue-600 hover:underline cursor-pointer text-center"
+        className="text-sm text-amber-400 hover:text-amber-300 cursor-pointer text-center"
         onClick={handleModeSwitch}
       >
         {isLogin ? "No account yet? Register" : "Already registered? Login"}
@@ -220,7 +220,7 @@ export default function LoginForm({ onForgotPassword }) {
       <button
         type="button"
         onClick={handleGuest}
-        className="text-sm text-blue-600 hover:underline cursor-pointer w-full"
+        className="text-sm text-amber-400 hover:text-amber-300 cursor-pointer w-full"
       >
         Play as Guest
       </button>
@@ -228,9 +228,9 @@ export default function LoginForm({ onForgotPassword }) {
       {process.env.REACT_APP_GOOGLE_CLIENT_ID && (
         <>
           <div className="relative flex items-center gap-3 py-1">
-            <div className="flex-1 border-t border-gray-200" />
-            <span className="text-xs text-gray-400 shrink-0">or continue with</span>
-            <div className="flex-1 border-t border-gray-200" />
+            <div className="flex-1 border-t border-white/20" />
+            <span className="text-xs text-white/40 shrink-0">or continue with</span>
+            <div className="flex-1 border-t border-white/20" />
           </div>
           <SocialLoginButtons onError={(msg) => setError(`❌ ${msg}`)} />
         </>

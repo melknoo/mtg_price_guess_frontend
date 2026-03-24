@@ -30,20 +30,20 @@ export default function ForgotPassword({ onBack }) {
   };
 
   return (
-    <div className="space-y-4 max-w-sm mx-auto bg-white p-6 rounded-xl shadow text-black">
-      <h2 className="text-xl font-bold mb-2">Forgot Password</h2>
-      <p className="text-sm text-gray-600 mb-4">
+    <div className="space-y-4 max-w-sm mx-auto bg-white/10 backdrop-blur-lg border border-white/20 p-6 rounded-xl shadow-2xl text-white">
+      <h2 className="text-xl font-bold mb-2 text-amber-200">Forgot Password</h2>
+      <p className="text-sm text-white/60 mb-4">
         Enter your email address and we'll send you a reset link.
       </p>
 
       {error && (
-        <div className="bg-red-100 text-red-700 p-2 rounded mb-2 text-sm">
+        <div className="bg-red-500/20 text-red-300 p-2 rounded mb-2 text-sm">
           {error}
         </div>
       )}
 
       {message && (
-        <div className="bg-green-100 text-green-700 p-2 rounded mb-2 text-sm">
+        <div className="bg-green-500/20 text-green-300 p-2 rounded mb-2 text-sm">
           {message}
         </div>
       )}
@@ -52,7 +52,7 @@ export default function ForgotPassword({ onBack }) {
         <input
           type="email"
           placeholder="Email"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -60,7 +60,7 @@ export default function ForgotPassword({ onBack }) {
 
         <button
           type="submit"
-          className={`bg-blue-600 text-white p-2 rounded w-full hover:bg-blue-700 transition ${
+          className={`bg-amber-600 text-white p-2 rounded w-full hover:bg-amber-500 transition ${
             loading ? "opacity-50 cursor-not-allowed" : ""
           }`}
           disabled={loading}
@@ -72,7 +72,7 @@ export default function ForgotPassword({ onBack }) {
       <button
         type="button"
         onClick={onBack}
-        className="text-sm text-blue-600 hover:underline cursor-pointer w-full text-center"
+        className="text-sm text-amber-400 hover:text-amber-300 cursor-pointer w-full text-center"
       >
         Back to Login
       </button>

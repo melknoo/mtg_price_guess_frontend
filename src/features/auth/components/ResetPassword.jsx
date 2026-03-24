@@ -42,11 +42,11 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
   };
 
   return (
-    <div className="space-y-4 max-w-sm mx-auto bg-white p-6 rounded-xl shadow text-black">
-      <h2 className="text-xl font-bold mb-2">Set New Password</h2>
+    <div className="space-y-4 max-w-sm mx-auto bg-white/10 backdrop-blur-lg border border-white/20 p-6 rounded-xl shadow-2xl text-white">
+      <h2 className="text-xl font-bold mb-2 text-amber-200">Set New Password</h2>
 
       {error && (
-        <div className="bg-red-100 text-red-700 p-2 rounded mb-2 text-sm">
+        <div className="bg-red-500/20 text-red-300 p-2 rounded mb-2 text-sm">
           {error}
         </div>
       )}
@@ -55,7 +55,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
         <input
           type="password"
           placeholder="New Password"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -64,7 +64,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
         <input
           type="password"
           placeholder="Confirm Password"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
@@ -72,7 +72,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
 
         <button
           type="submit"
-          className={`bg-blue-600 text-white p-2 rounded w-full hover:bg-blue-700 transition ${
+          className={`bg-amber-600 text-white p-2 rounded w-full hover:bg-amber-500 transition ${
             loading ? "opacity-50 cursor-not-allowed" : ""
           }`}
           disabled={loading}
@@ -85,7 +85,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
         <button
           type="button"
           onClick={onBack}
-          className="text-sm text-blue-600 hover:underline cursor-pointer w-full text-center"
+          className="text-sm text-amber-400 hover:text-amber-300 cursor-pointer w-full text-center"
         >
           Back to Login
         </button>

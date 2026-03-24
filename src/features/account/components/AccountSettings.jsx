@@ -11,7 +11,7 @@ export default function AccountSettings({ onBack }) {
 
   if (view === "delete") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white p-6 flex items-center justify-center">
+      <div className="min-h-screen text-white p-6 flex items-center justify-center">
         <DeleteAccount
           onBack={() => setView("main")}
           onDeleteSuccess={() => {
@@ -26,7 +26,7 @@ export default function AccountSettings({ onBack }) {
 
   if (view === "password") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white p-6 flex items-center justify-center">
+      <div className="min-h-screen text-white p-6 flex items-center justify-center">
         <ChangePassword
           onBack={() => setView("main")}
           onSuccess={() => setView("main")}
@@ -37,7 +37,7 @@ export default function AccountSettings({ onBack }) {
 
   if (view === "email") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white p-6 flex items-center justify-center">
+      <div className="min-h-screen text-white p-6 flex items-center justify-center">
         <ChangeEmail
           onBack={() => setView("main")}
           onSuccess={() => setView("main")}
@@ -57,7 +57,7 @@ export default function AccountSettings({ onBack }) {
       <div className="space-y-6 text-gray-200">
         {/* Account Info */}
         <section className="bg-white/5 p-4 rounded-lg">
-          <h3 className="text-xl font-semibold mb-3 text-purple-300">Your Data</h3>
+          <h3 className="text-xl font-semibold mb-3 text-amber-300">Your Data</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-400">Username:</span>
@@ -76,29 +76,29 @@ export default function AccountSettings({ onBack }) {
 
         {/* Account Actions */}
         <section className="bg-white/5 p-4 rounded-lg">
-          <h3 className="text-xl font-semibold mb-3 text-purple-300">Account-Actions</h3>
+          <h3 className="text-xl font-semibold mb-3 text-amber-300">Account-Actions</h3>
           <div className="space-y-3">
             <button
               onClick={() => setView("password")}
-              className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-lg transition font-medium text-left flex items-center justify-between"
+              className="w-full bg-blue-900/60 hover:bg-blue-800/80 border border-blue-700/30 px-4 py-3 rounded-lg transition font-medium text-left flex items-center justify-between"
             >
               <span>🔒 Change Password</span>
-              <span className="text-sm text-purple-200">→</span>
+              <span className="text-sm text-white/60">→</span>
             </button>
-            
+
             <button
               onClick={() => setView("email")}
-              className="w-full bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg transition font-medium text-left flex items-center justify-between"
+              className="w-full bg-blue-900/60 hover:bg-blue-800/80 border border-blue-700/30 px-4 py-3 rounded-lg transition font-medium text-left flex items-center justify-between"
             >
               <span>📧 Change E-Mail</span>
-              <span className="text-sm text-blue-200">→</span>
+              <span className="text-sm text-white/60">→</span>
             </button>
           </div>
         </section>
 
         {/* Datenschutz */}
         <section className="bg-white/5 p-4 rounded-lg">
-          <h3 className="text-xl font-semibold mb-3 text-purple-300">Privacy & Rights</h3>
+          <h3 className="text-xl font-semibold mb-3 text-amber-300">Privacy & Rights</h3>
           <p className="text-sm text-gray-300 mb-4">
             According to GDPR, you have the following rights regarding your data:
           </p>
@@ -110,7 +110,7 @@ export default function AccountSettings({ onBack }) {
           </ul>
           <p className="text-sm text-gray-400 mt-4">
             For questions about your data, contact us at::{" "}
-            <a href="mailto:datenschutz@magic-preis-duell.de" className="text-blue-400 hover:underline">
+            <a href="mailto:datenschutz@magic-preis-duell.de" className="text-amber-400 hover:underline">
               melleee17+magic-price-guess@gmail.com
             </a>
           </p>
@@ -133,7 +133,7 @@ export default function AccountSettings({ onBack }) {
         {/* Back Button */}
         <button
           onClick={onBack}
-          className="w-full bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition font-medium text-white"
+          className="w-full bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-lg transition font-medium text-white"
         >
           Back to Menu
         </button>

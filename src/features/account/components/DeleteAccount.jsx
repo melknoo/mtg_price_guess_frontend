@@ -80,8 +80,8 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
             <li>This action cannot be undone</li>
           </ul>
 
-          <div className="bg-blue-500/20 border border-blue-500 rounded-lg p-4 mt-6">
-            <p className="text-sm text-blue-200">
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mt-6">
+            <p className="text-sm text-amber-200">
               💡 <strong>Note:</strong> According to GDPR, you have the right to delete your data.
               After deletion, all personal data will be completely removed from our systems within 30 days.
             </p>
@@ -90,7 +90,7 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
           <div className="flex gap-4 mt-8">
             <button
               onClick={onBack}
-              className="flex-1 bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition font-medium"
+              className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-lg transition font-medium"
             >
               Back
             </button>
@@ -115,7 +115,7 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
       <h2 className="text-2xl font-bold mb-6 text-red-400">Confirm Deletion</h2>
 
       {error && (
-        <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">
+        <div className="bg-red-500/20 text-red-300 p-3 rounded-lg mb-4 text-sm">
           {error}
         </div>
       )}
@@ -128,7 +128,7 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
           <input
             type="password"
             placeholder="Password"
-            className="w-full p-3 border border-gray-600 rounded-lg bg-gray-800 text-white focus:border-red-500 focus:outline-none"
+            className="w-full p-3 border border-white/20 rounded-lg bg-white/10 text-white placeholder-white/40 focus:border-red-500/60 focus:outline-none"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -142,7 +142,7 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
           <input
             type="text"
             placeholder="DELETE"
-            className="w-full p-3 border border-gray-600 rounded-lg bg-gray-800 text-white focus:border-red-500 focus:outline-none"
+            className="w-full p-3 border border-white/20 rounded-lg bg-white/10 text-white placeholder-white/40 focus:border-red-500/60 focus:outline-none"
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
             required
@@ -160,7 +160,7 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
           <button
             type="button"
             onClick={() => setShowConfirmation(false)}
-            className="flex-1 bg-gray-600 hover:bg-gray-700 px-4 py-3 rounded-lg transition font-medium"
+            className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-3 rounded-lg transition font-medium"
           >
             Cancel
           </button>

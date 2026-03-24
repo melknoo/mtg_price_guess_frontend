@@ -411,7 +411,7 @@ export default function Game({
     return (
       <div className="text-center text-red-400">
         <p>❌ {cardLoader.error}</p>
-        <button onClick={initGame} className="mt-4 bg-blue-600 px-6 py-3 rounded hover:bg-blue-700">
+        <button onClick={initGame} className="mt-4 bg-amber-600 px-6 py-3 rounded hover:bg-amber-500">
           Try Again
         </button>
       </div>
@@ -425,7 +425,7 @@ export default function Game({
         <div className="sm:w-3/4 flex md:text-left sm:flex-row flex-col">
           <div className="flex items-right items-center justify-end sm:justify-start gap-4 mb-2">
             <div className="bg-white/10 sm:mb-auto backdrop-blur-lg rounded-lg px-4 py-2 border border-white/20">
-              <span className="text-purple-300 text-sm font-semibold">🎯 Round {currentRound}</span>
+              <span className="text-amber-300 text-sm font-semibold">🎯 Round {currentRound}</span>
             </div>
           </div>
           <div className="flex flex-col sm:ml-3">
@@ -535,7 +535,7 @@ export default function Game({
           <button
             onClick={handleNextPair}
             disabled={perkSystem.showPerkSelection}
-            className={`text-2xl min-w-[250px] font-semibold text-white px-6 py-6 rounded transition ${perkSystem.showPerkSelection ? "bg-blue-500/50 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+            className={`text-2xl min-w-[250px] font-semibold text-white px-6 py-6 rounded transition ${perkSystem.showPerkSelection ? "bg-amber-600/50 cursor-not-allowed" : "bg-amber-600 hover:bg-amber-500"
               }`}
           >
             Next
