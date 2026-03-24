@@ -520,7 +520,7 @@ export default function Game({
         </div>
       )}
 
-      <div className="sm:mt-6 mt-auto flex gap-4 text-lg min-h-[80px] items-center">
+      <div className="sm:mt-6 mt-auto flex gap-4 text-lg min-h-[80px] items-center pb-2">
         {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
           <button
             onClick={handleSkipCard}

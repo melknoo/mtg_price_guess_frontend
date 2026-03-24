@@ -19,6 +19,7 @@ import SuggestionModal from "./features/suggestions/components/SuggestionModal";
 import { submitSuggestion } from "./features/suggestions/api/suggestionApi";
 import AchievementsDisplay from "./features/game/components/AchievementsDisplay";
 import StatsDisplay from "./features/game/components/StatsDisplay";
+import InstallBanner from "./shared/components/InstallBanner";
 
 function AppContent() {
   const { user, logout, refreshUser, setUser } = useAuth();
@@ -91,7 +92,7 @@ function AppContent() {
   // Legal Pages
   if (screen === "privacy") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 flex flex-col">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 flex flex-col pt-safe">
         <PrivacyPolicy onBack={() => { setScreen(user ? "menu" : "login"); window.location.hash = ""; }} />
         <Footer onNavigate={handleFooterNavigation} />
       </div>
@@ -100,7 +101,7 @@ function AppContent() {
 
   if (screen === "impressum") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 flex flex-col">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 flex flex-col pt-safe">
         <Impressum onBack={() => { setScreen(user ? "menu" : "login"); window.location.hash = ""; }} />
         <Footer onNavigate={handleFooterNavigation} />
       </div>
@@ -109,7 +110,7 @@ function AppContent() {
 
   if (screen === "terms") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 flex flex-col">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 flex flex-col pt-safe">
         <Terms onBack={() => { setScreen(user ? "menu" : "login"); window.location.hash = ""; }} />
         <Footer onNavigate={handleFooterNavigation} />
       </div>
@@ -118,7 +119,7 @@ function AppContent() {
 
   if (!user && screen === "forgot-password") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col pt-safe">
         <div className="flex-1 flex items-center justify-center p-4">
           <ForgotPassword onBack={() => setScreen("login")} />
         </div>
@@ -130,7 +131,7 @@ function AppContent() {
 
   if (!user && screen === "reset-password" && resetToken) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col pt-safe">
         <div className="flex-1 flex items-center justify-center p-4">
           <ResetPassword
             token={resetToken}
@@ -146,7 +147,7 @@ function AppContent() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col pt-safe">
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="space-y-4">
             {resetSuccess && (
@@ -164,25 +165,27 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center sm:p-4 pt-16 pb-20 px-4 relative">
-        <div className="absolute top-12 sm:top-4 right-4 flex gap-2">
-          {(screen === "game" || screen === "daily-challenge") && (
-            <button onClick={() => setScreen("menu")} className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded transition">
-              Back to Menu
+    <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col pt-safe">
+      {/* Header row — never overlaps content */}
+      <div className="flex justify-end items-center gap-2 px-4 py-3 min-h-[56px] shrink-0">
+        {(screen === "game" || screen === "daily-challenge") && (
+          <button onClick={() => setScreen("menu")} className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded transition">
+            Back to Menu
+          </button>
+        )}
+        {screen === "menu" && (
+          <>
+            <button onClick={() => setScreen("settings")} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded transition">
+              ⚙️ Settings
             </button>
-          )}
-          {screen === "menu" && (
-            <>
-              <button onClick={() => setScreen("settings")} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded transition">
-                ⚙️ Settings
-              </button>
-              <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">
-                Logout
-              </button>
-            </>
-          )}
-        </div>
+            <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">
+              Logout
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center sm:p-4 px-4 pb-safe" style={{paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)'}}>
 
         {screen === "menu" && (
           <div className="text-center space-y-4">
@@ -302,6 +305,7 @@ function AppContent() {
 
       {screen !== "game" && screen !== "daily-challenge" && screen !== "stats" && <Footer onNavigate={handleFooterNavigation} />}
       <CookieConsent />
+      <InstallBanner />
       <SuggestionModal
         isOpen={showSuggestionModal}
         onClose={() => setShowSuggestionModal(false)}
