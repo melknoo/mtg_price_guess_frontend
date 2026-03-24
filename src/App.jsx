@@ -18,11 +18,22 @@ import SuggestionModal from "./features/suggestions/components/SuggestionModal";
 import { submitSuggestion } from "./features/suggestions/api/suggestionApi";
 import AchievementsDisplay from "./features/game/components/AchievementsDisplay";
 import StatsDisplay from "./features/game/components/StatsDisplay";
-import InstallBanner from "./shared/components/InstallBanner";
 
 function AppContent() {
   const { user, logout, refreshUser, setUser } = useAuth();
   const achievements = useAchievementContext();
+
+  // Request fullscreen on first tap — mobile only (Android Chrome supports this; iOS Safari does not)
+  useEffect(() => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!isMobile) return;
+    const requestFullscreen = () => {
+      const el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    };
+    document.addEventListener("click", requestFullscreen, { once: true });
+    return () => document.removeEventListener("click", requestFullscreen);
+  }, []);
   const [screen, setScreen] = useState("menu");
   const [showRegister, setShowRegister] = useState(false);
   const [score, setScore] = useState(0);
@@ -325,7 +336,6 @@ function AppContent() {
 
       {screen !== "game" && screen !== "daily-challenge" && screen !== "stats" && <Footer onNavigate={handleFooterNavigation} />}
       <CookieConsent />
-      <InstallBanner />
       <SuggestionModal
         isOpen={showSuggestionModal}
         onClose={() => setShowSuggestionModal(false)}
