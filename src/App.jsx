@@ -91,7 +91,7 @@ function AppContent() {
   // Legal Pages
   if (screen === "privacy") {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#0d1b3e] via-[#1a3668] to-[#0c2454] flex flex-col pt-safe">
         <PrivacyPolicy onBack={() => { setScreen(user ? "menu" : "login"); window.location.hash = ""; }} />
         <Footer onNavigate={handleFooterNavigation} />
       </div>
@@ -100,7 +100,7 @@ function AppContent() {
 
   if (screen === "impressum") {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#0d1b3e] via-[#1a3668] to-[#0c2454] flex flex-col pt-safe">
         <Impressum onBack={() => { setScreen(user ? "menu" : "login"); window.location.hash = ""; }} />
         <Footer onNavigate={handleFooterNavigation} />
       </div>
@@ -109,7 +109,7 @@ function AppContent() {
 
   if (screen === "terms") {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#0d1b3e] via-[#1a3668] to-[#0c2454] flex flex-col pt-safe">
         <Terms onBack={() => { setScreen(user ? "menu" : "login"); window.location.hash = ""; }} />
         <Footer onNavigate={handleFooterNavigation} />
       </div>
@@ -118,7 +118,7 @@ function AppContent() {
 
   if (!user && screen === "forgot-password") {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] text-white flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#0d1b3e] via-[#1a3668] to-[#0c2454] text-white flex flex-col pt-safe">
         <div className="flex-1 flex items-center justify-center p-4">
           <ForgotPassword onBack={() => setScreen("login")} />
         </div>
@@ -130,7 +130,7 @@ function AppContent() {
 
   if (!user && screen === "reset-password" && resetToken) {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] text-white flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#0d1b3e] via-[#1a3668] to-[#0c2454] text-white flex flex-col pt-safe">
         <div className="flex-1 flex items-center justify-center p-4">
           <ResetPassword
             token={resetToken}
@@ -146,7 +146,7 @@ function AppContent() {
 
   if (!user) {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] text-white flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#0d1b3e] via-[#1a3668] to-[#0c2454] text-white flex flex-col pt-safe">
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="space-y-4">
             {resetSuccess && (
@@ -164,7 +164,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] text-white flex flex-col pt-safe">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-[#0d1b3e] via-[#1a3668] to-[#0c2454] text-white flex flex-col pt-safe">
       {/* Header row — never overlaps content */}
       <div className="flex justify-end items-center gap-2 px-4 py-3 min-h-[56px] shrink-0">
         {(screen === "game" || screen === "daily-challenge") && (
@@ -205,7 +205,7 @@ function AppContent() {
             </div>
 
             {/* Achievement Badge */}
-            <div className="inline-flex items-center gap-2 bg-amber-950/50 border border-amber-600/25 rounded-full px-4 py-1.5 mb-5 shadow-inner">
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-5 shadow-inner">
               <span className="text-amber-400 text-sm font-medium tracking-wide">
                 🏆 {achievements.totalUnlocked} / {achievements.totalAchievements} Achievements
               </span>
@@ -215,13 +215,13 @@ function AppContent() {
             <div className="grid grid-cols-2 gap-3 mb-3">
               <button
                 onClick={() => { setShowRegister(false); setScore(0); setGameKey((k) => k + 1); setScreen("game"); }}
-                className="bg-gradient-to-b from-emerald-700 to-emerald-950 border border-emerald-600/30 rounded-xl py-4 text-white font-semibold text-lg hover:from-emerald-600 hover:to-emerald-900 transition-all shadow-lg active:scale-95"
+                className="bg-emerald-700 hover:bg-emerald-600 border border-emerald-500/40 rounded-xl py-4 text-white font-semibold text-lg transition-all shadow-md active:scale-95"
               >
                 New Game
               </button>
               <button
                 onClick={() => { setShowRegister(false); setScreen("leaderboard"); }}
-                className="bg-gradient-to-b from-violet-700 to-violet-950 border border-violet-500/30 rounded-xl py-4 text-white font-semibold text-lg hover:from-violet-600 hover:to-violet-900 transition-all shadow-lg active:scale-95"
+                className="bg-violet-600 hover:bg-violet-500 border border-violet-400/40 rounded-xl py-4 text-white font-semibold text-lg transition-all shadow-md active:scale-95"
               >
                 Leaderboard
               </button>
@@ -231,7 +231,7 @@ function AppContent() {
             {!user?.guest && (
               <button
                 onClick={() => setScreen("daily-challenge")}
-                className="w-full mb-3 bg-gradient-to-b from-amber-700 to-amber-950 border border-amber-500/30 rounded-xl py-4 text-white font-semibold text-lg hover:from-amber-600 hover:to-amber-900 transition-all shadow-lg active:scale-95 tracking-wide"
+                className="w-full mb-3 bg-amber-600 hover:bg-amber-500 border border-amber-400/40 rounded-xl py-4 text-white font-semibold text-lg transition-all shadow-md active:scale-95 tracking-wide"
               >
                 📅 Daily Challenge
               </button>
@@ -242,19 +242,19 @@ function AppContent() {
               <div className="grid grid-cols-3 gap-2 mb-4">
                 <button
                   onClick={() => setScreen("stats")}
-                  className="bg-slate-800/80 border border-slate-600/30 rounded-xl py-3 text-slate-200 text-sm font-medium hover:bg-slate-700/80 transition-all active:scale-95"
+                  className="bg-slate-600/70 hover:bg-slate-500/70 border border-slate-400/30 rounded-xl py-3 text-white text-sm font-medium transition-all active:scale-95"
                 >
                   📊 Stats
                 </button>
                 <button
                   onClick={() => setScreen("achievements")}
-                  className="bg-stone-800/80 border border-amber-700/25 rounded-xl py-3 text-amber-200 text-sm font-medium hover:bg-stone-700/80 transition-all active:scale-95"
+                  className="bg-amber-700/70 hover:bg-amber-600/70 border border-amber-500/30 rounded-xl py-3 text-white text-sm font-medium transition-all active:scale-95"
                 >
                   🏆 Trophies
                 </button>
                 <button
                   onClick={() => setShowSuggestionModal(true)}
-                  className="bg-rose-950/80 border border-rose-700/25 rounded-xl py-3 text-rose-200 text-sm font-medium hover:bg-rose-900/80 transition-all active:scale-95"
+                  className="bg-rose-700/70 hover:bg-rose-600/70 border border-rose-500/30 rounded-xl py-3 text-white text-sm font-medium transition-all active:scale-95"
                 >
                   💡 Ideas
                 </button>
@@ -266,7 +266,7 @@ function AppContent() {
               <div className="mb-4">
                 <button
                   onClick={() => setScreen("achievements")}
-                  className="bg-gradient-to-b from-amber-800 to-stone-950 border border-amber-600/25 rounded-xl px-8 py-3 text-amber-200 font-medium hover:from-amber-700 transition-all active:scale-95"
+                  className="bg-amber-700 hover:bg-amber-600 border border-amber-500/40 rounded-xl px-8 py-3 text-white font-medium transition-all active:scale-95"
                 >
                   🏆 Achievements
                 </button>
@@ -277,7 +277,7 @@ function AppContent() {
             {user?.guest && !showRegister && (
               <button
                 onClick={() => setShowRegister(true)}
-                className="w-full bg-gradient-to-b from-indigo-700 to-indigo-950 border border-indigo-500/30 rounded-xl py-3 text-white font-medium hover:from-indigo-600 transition-all active:scale-95"
+                className="w-full bg-indigo-600 hover:bg-indigo-500 border border-indigo-400/40 rounded-xl py-3 text-white font-medium transition-all active:scale-95"
               >
                 Register & Save Score
               </button>
