@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import PasswordInput from "../../../shared/components/PasswordInput";
 
 export default function ChangePassword({ onBack, onSuccess }) {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -93,8 +94,7 @@ export default function ChangePassword({ onBack, onSuccess }) {
           <label className="block text-sm font-medium mb-2">
             Current Password
           </label>
-          <input
-            type="password"
+          <PasswordInput
             placeholder="Current Password"
             className="w-full p-3 border border-white/20 rounded-lg bg-white/10 text-white placeholder-white/40 focus:border-amber-400/60 focus:outline-none"
             value={currentPassword}
@@ -107,8 +107,7 @@ export default function ChangePassword({ onBack, onSuccess }) {
           <label className="block text-sm font-medium mb-2">
             New Password
           </label>
-          <input
-            type="password"
+          <PasswordInput
             placeholder="New Password (at least 6 characters)"
             className="w-full p-3 border border-white/20 rounded-lg bg-white/10 text-white placeholder-white/40 focus:border-amber-400/60 focus:outline-none"
             value={newPassword}
@@ -121,8 +120,7 @@ export default function ChangePassword({ onBack, onSuccess }) {
           <label className="block text-sm font-medium mb-2">
             Neues Passwort bestätigen
           </label>
-          <input
-            type="password"
+          <PasswordInput
             placeholder="Neues Passwort wiederholen"
             className="w-full p-3 border border-white/20 rounded-lg bg-white/10 text-white placeholder-white/40 focus:border-amber-400/60 focus:outline-none"
             value={confirmPassword}

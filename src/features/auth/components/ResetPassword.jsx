@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { resetPassword } from "../api/authApi";
+import PasswordInput from "../../../shared/components/PasswordInput";
 
 export default function ResetPassword({ token, onSuccess, onBack }) {
   const [password, setPassword] = useState("");
@@ -52,8 +53,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="password"
+        <PasswordInput
           placeholder="New Password"
           className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
           value={password}
@@ -61,8 +61,7 @@ export default function ResetPassword({ token, onSuccess, onBack }) {
           required
         />
 
-        <input
-          type="password"
+        <PasswordInput
           placeholder="Confirm Password"
           className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
           value={confirmPassword}

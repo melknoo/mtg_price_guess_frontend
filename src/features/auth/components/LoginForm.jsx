@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import Button from "../../../shared/components/Button";
 import ReCAPTCHA from "react-google-recaptcha";
 import SocialLoginButtons from "./SocialLoginButtons";
+import PasswordInput from "../../../shared/components/PasswordInput";
 
 export default function LoginForm({ onForgotPassword }) {
   const [username, setUsername] = useState("");
@@ -168,8 +169,7 @@ export default function LoginForm({ onForgotPassword }) {
         </>
       )}
 
-      <input
-        type="password"
+      <PasswordInput
         placeholder="Password"
         className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
         value={password}

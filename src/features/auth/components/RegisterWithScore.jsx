@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import ReCAPTCHA from "react-google-recaptcha";
+import PasswordInput from "../../../shared/components/PasswordInput";
 
 export default function RegisterWithScore({ score, onSuccess }) {
   const [username, setUsername] = useState("");
@@ -85,8 +86,7 @@ export default function RegisterWithScore({ score, onSuccess }) {
         required
       />
       
-      <input
-        type="password"
+      <PasswordInput
         placeholder="Password (min. 6 characters)"
         className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
         value={password}
