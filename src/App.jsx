@@ -92,7 +92,7 @@ function AppContent() {
   // Legal Pages
   if (screen === "privacy") {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] flex flex-col pt-safe">
         <PrivacyPolicy onBack={() => { setScreen(user ? "menu" : "login"); window.location.hash = ""; }} />
         <Footer onNavigate={handleFooterNavigation} />
       </div>
@@ -101,7 +101,7 @@ function AppContent() {
 
   if (screen === "impressum") {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] flex flex-col pt-safe">
         <Impressum onBack={() => { setScreen(user ? "menu" : "login"); window.location.hash = ""; }} />
         <Footer onNavigate={handleFooterNavigation} />
       </div>
@@ -110,7 +110,7 @@ function AppContent() {
 
   if (screen === "terms") {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] flex flex-col pt-safe">
         <Terms onBack={() => { setScreen(user ? "menu" : "login"); window.location.hash = ""; }} />
         <Footer onNavigate={handleFooterNavigation} />
       </div>
@@ -119,7 +119,7 @@ function AppContent() {
 
   if (!user && screen === "forgot-password") {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] text-white flex flex-col pt-safe">
         <div className="flex-1 flex items-center justify-center p-4">
           <ForgotPassword onBack={() => setScreen("login")} />
         </div>
@@ -131,7 +131,7 @@ function AppContent() {
 
   if (!user && screen === "reset-password" && resetToken) {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] text-white flex flex-col pt-safe">
         <div className="flex-1 flex items-center justify-center p-4">
           <ResetPassword
             token={resetToken}
@@ -147,7 +147,7 @@ function AppContent() {
 
   if (!user) {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col pt-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] text-white flex flex-col pt-safe">
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="space-y-4">
             {resetSuccess && (
@@ -165,20 +165,20 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col pt-safe">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-[#140c2b] via-[#1c1248] to-[#0e1a38] text-white flex flex-col pt-safe">
       {/* Header row — never overlaps content */}
       <div className="flex justify-end items-center gap-2 px-4 py-3 min-h-[56px] shrink-0">
         {(screen === "game" || screen === "daily-challenge") && (
-          <button onClick={() => setScreen("menu")} className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded transition">
+          <button onClick={() => setScreen("menu")} className="bg-white/10 hover:bg-white/20 border border-white/15 px-4 py-1.5 rounded-lg text-sm text-white/90 transition">
             Back to Menu
           </button>
         )}
         {screen === "menu" && (
           <>
-            <button onClick={() => setScreen("settings")} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded transition">
+            <button onClick={() => setScreen("settings")} className="bg-white/10 hover:bg-white/20 border border-white/15 px-3 py-1.5 rounded-lg text-sm text-white/80 transition">
               ⚙️ Settings
             </button>
-            <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">
+            <button onClick={handleLogout} className="bg-red-900/60 hover:bg-red-800/80 border border-red-700/30 px-3 py-1.5 rounded-lg text-sm text-red-200 transition">
               Logout
             </button>
           </>
@@ -188,76 +188,97 @@ function AppContent() {
       <div className="flex-1 flex flex-col items-center justify-center sm:p-4 px-4 pb-safe" style={{paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)'}}>
 
         {screen === "menu" && (
-          <div className="text-center space-y-4">
-            <h1 className="text-3xl font-bold mb-4">🧙‍♂️ Magic Price Duel</h1>
-            <h2 className="text-2xl font-bold mb-4">Hello {user.username}</h2>
+          <div className="w-full max-w-sm mx-auto text-center py-2">
 
-            {/* Achievement Progress Badge */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-lg px-4 py-2 inline-block mb-4">
-              <span className="text-yellow-300">
-                🏆 {achievements.totalUnlocked}/{achievements.totalAchievements} Achievements
+            {/* Title */}
+            <div className="mb-6">
+              <h1 className="text-4xl font-bold tracking-wide text-amber-200 drop-shadow-lg">
+                🧙‍♂️ Magic Price Duel
+              </h1>
+              <div className="flex items-center gap-3 my-3">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent to-amber-500/40" />
+                <span className="text-amber-500/70 text-xs tracking-widest uppercase font-medium">Card Duelist</span>
+                <div className="flex-1 h-px bg-gradient-to-l from-transparent to-amber-500/40" />
+              </div>
+              <p className="text-purple-200 text-lg">
+                Welcome, <span className="text-amber-300 font-semibold">{user.username}</span>
+              </p>
+            </div>
+
+            {/* Achievement Badge */}
+            <div className="inline-flex items-center gap-2 bg-amber-950/50 border border-amber-600/25 rounded-full px-4 py-1.5 mb-5 shadow-inner">
+              <span className="text-amber-400 text-sm font-medium tracking-wide">
+                🏆 {achievements.totalUnlocked} / {achievements.totalAchievements} Achievements
               </span>
             </div>
 
-            <div className="space-x-4">
+            {/* Primary Actions */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
               <button
                 onClick={() => { setShowRegister(false); setScore(0); setGameKey((k) => k + 1); setScreen("game"); }}
-                className="bg-green-600 px-6 py-3 rounded text-white text-lg hover:bg-green-700 transition"
+                className="bg-gradient-to-b from-emerald-700 to-emerald-950 border border-emerald-600/30 rounded-xl py-4 text-white font-semibold text-lg hover:from-emerald-600 hover:to-emerald-900 transition-all shadow-lg active:scale-95"
               >
                 New Game
               </button>
               <button
                 onClick={() => { setShowRegister(false); setScreen("leaderboard"); }}
-                className="bg-purple-600 px-6 py-3 rounded text-white text-lg hover:bg-purple-700 transition"
+                className="bg-gradient-to-b from-violet-700 to-violet-950 border border-violet-500/30 rounded-xl py-4 text-white font-semibold text-lg hover:from-violet-600 hover:to-violet-900 transition-all shadow-lg active:scale-95"
               >
                 Leaderboard
               </button>
             </div>
 
+            {/* Daily Challenge — featured */}
             {!user?.guest && (
-              <div className="mt-2">
-                <button
-                  onClick={() => setScreen("daily-challenge")}
-                  className="bg-yellow-500 hover:bg-yellow-600 px-6 py-3 rounded text-white text-lg transition font-semibold shadow-lg"
-                >
-                  📅 Daily Challenge
-                </button>
-              </div>
+              <button
+                onClick={() => setScreen("daily-challenge")}
+                className="w-full mb-3 bg-gradient-to-b from-amber-700 to-amber-950 border border-amber-500/30 rounded-xl py-4 text-white font-semibold text-lg hover:from-amber-600 hover:to-amber-900 transition-all shadow-lg active:scale-95 tracking-wide"
+              >
+                📅 Daily Challenge
+              </button>
             )}
+
+            {/* Secondary Actions */}
             {!user?.guest && (
-              <div className="mt-2">
+              <div className="grid grid-cols-3 gap-2 mb-4">
                 <button
                   onClick={() => setScreen("stats")}
-                  className="bg-indigo-500 hover:bg-indigo-600 px-6 py-3 rounded text-white text-lg transition shadow-lg"
+                  className="bg-slate-800/80 border border-slate-600/30 rounded-xl py-3 text-slate-200 text-sm font-medium hover:bg-slate-700/80 transition-all active:scale-95"
                 >
                   📊 Stats
                 </button>
-              </div>
-            )}
-            {!user?.guest && (
-              <div className="mt-4">
+                <button
+                  onClick={() => setScreen("achievements")}
+                  className="bg-stone-800/80 border border-amber-700/25 rounded-xl py-3 text-amber-200 text-sm font-medium hover:bg-stone-700/80 transition-all active:scale-95"
+                >
+                  🏆 Trophies
+                </button>
                 <button
                   onClick={() => setShowSuggestionModal(true)}
-                  className="bg-blue-500 px-6 py-3 rounded text-white text-lg hover:bg-blue-600 transition shadow-lg"
+                  className="bg-rose-950/80 border border-rose-700/25 rounded-xl py-3 text-rose-200 text-sm font-medium hover:bg-rose-900/80 transition-all active:scale-95"
                 >
-                  💡 Suggestions
+                  💡 Ideas
                 </button>
               </div>
             )}
-            {/* Achievements Button */}
-            <div className="pt-4">
-              <button
-                onClick={() => setScreen("achievements")}
-                className="bg-yellow-600 hover:bg-yellow-700 px-6 py-3 rounded text-white text-lg transition"
-              >
-                🏆 Achievements
-              </button>
-            </div>
 
+            {/* Guest-only achievements */}
+            {user?.guest && (
+              <div className="mb-4">
+                <button
+                  onClick={() => setScreen("achievements")}
+                  className="bg-gradient-to-b from-amber-800 to-stone-950 border border-amber-600/25 rounded-xl px-8 py-3 text-amber-200 font-medium hover:from-amber-700 transition-all active:scale-95"
+                >
+                  🏆 Achievements
+                </button>
+              </div>
+            )}
+
+            {/* Guest registration */}
             {user?.guest && !showRegister && (
               <button
                 onClick={() => setShowRegister(true)}
-                className="mt-4 bg-blue-400 px-6 py-3 rounded text-white text-lg hover:bg-blue-600 transition"
+                className="w-full bg-gradient-to-b from-indigo-700 to-indigo-950 border border-indigo-500/30 rounded-xl py-3 text-white font-medium hover:from-indigo-600 transition-all active:scale-95"
               >
                 Register & Save Score
               </button>

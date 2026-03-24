@@ -225,15 +225,16 @@ export default function LoginForm({ onForgotPassword }) {
         Play as Guest
       </button>
 
-      <div className="relative flex items-center gap-3 py-1">
-        <div className="flex-1 border-t border-gray-200" />
-        <span className="text-xs text-gray-400 shrink-0">or continue with</span>
-        <div className="flex-1 border-t border-gray-200" />
-      </div>
-
-      <SocialLoginButtons
-        onError={(msg) => setError(`❌ ${msg}`)}
-      />
+      {process.env.REACT_APP_GOOGLE_CLIENT_ID && (
+        <>
+          <div className="relative flex items-center gap-3 py-1">
+            <div className="flex-1 border-t border-gray-200" />
+            <span className="text-xs text-gray-400 shrink-0">or continue with</span>
+            <div className="flex-1 border-t border-gray-200" />
+          </div>
+          <SocialLoginButtons onError={(msg) => setError(`❌ ${msg}`)} />
+        </>
+      )}
     </form>
   );
 }
