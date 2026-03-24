@@ -1,16 +1,11 @@
 import React from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 
-// In a React Native WebView popups are blocked → use redirect flow.
-// In a regular browser → use popup flow (works with COOP: same-origin-allow-popups).
-const isWebView = typeof window !== "undefined" && !!window.ReactNativeWebView;
-
 function GoogleButton({ onError }) {
   const login = useGoogleLogin({
     flow: "implicit",
-    ...(isWebView
-      ? { ux_mode: "redirect", redirect_uri: window.location.origin }
-      : {}),
+    ux_mode: "redirect",
+    redirect_uri: window.location.origin,
     onError: () => onError("Google Login fehlgeschlagen."),
   });
 
