@@ -9,7 +9,7 @@ export default function StreakDisplay({ streak, bestStreak, color, streakBonus }
   return (
     <div className="flex justify-between sm:justify-evenly flex-row items-center w-full sm:max-w-2xl">
       {/* Streak Counter */}
-      <div className={`flex sm:flex-col items-center justify-center gap-2 mb-4 ${color} font-bold text-xl`}>
+      <div className={`flex sm:flex-col items-center justify-center gap-2 mb-1 sm:mb-4 ${color} font-bold text-xl`}>
         <motion.div
           key={streak}
           initial={{ scale: 1 }}
@@ -35,9 +35,9 @@ export default function StreakDisplay({ streak, bestStreak, color, streakBonus }
           animate={{ opacity: 1, y: 0 }}
           className="sm:w-3/4 sm:max-w-[250px] max-w-xl mb-2 px-1"
         >
-          <div className="bg-orange-500 bg-opacity-20 border-2 border-orange-400 rounded-lg p-2 text-center">
-            <span className="text-orange-300 font-bold">
-              🔥 Streak Bonus active: +{streakBonus} Points!
+          <div className="bg-orange-500 bg-opacity-20 border border-orange-400 sm:border-2 rounded-lg px-2 py-1 sm:p-2 text-center">
+            <span className="text-orange-300 font-bold text-xs sm:text-base">
+              🔥 Streak Bonus: +{streakBonus} Pts!
             </span>
           </div>
         </motion.div>

@@ -96,9 +96,9 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setIsOpen(!isOpen)}
-          className="fixed top-2 left-2 z-[46] bg-[#0d1b3e] text-white rounded-full p-2 shadow-lg border border-amber-400/50"
+          className="fixed top-4 left-3 z-[46] bg-[#0d1b3e] text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg border border-amber-400/50"
         >
-          <span className="text-lg">🎮</span>
+          <span className="text-lg leading-none">🎮</span>
           {totalCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
               {totalCount}

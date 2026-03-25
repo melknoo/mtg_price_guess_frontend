@@ -688,9 +688,36 @@ export default function Game({
   return (
     <>
       {/* Score Display */}
-      <div className="sm:mb-1 flex flex-row w-full max-w-2xl justify-between">
+      {/* Mobile: single compact row */}
+      <div className="flex sm:hidden flex-row w-full justify-between items-center mb-1 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="bg-white/10 backdrop-blur-lg rounded-lg px-2 py-1 border border-white/20 shrink-0">
+            <span className="text-amber-300 text-xs font-semibold">🎯 R{currentRound}</span>
+          </div>
+          <div className="relative min-w-0">
+            <span className="font-bold text-lg">Pts: {displayScore.toLocaleString()}</span>
+            <AnimatePresence>
+              {scoreGain && (
+                <motion.span
+                  key={score}
+                  initial={{ opacity: 1, y: 0 }}
+                  animate={{ opacity: 0, y: -16 }}
+                  exit={{}}
+                  transition={{ duration: 1.2, delay: 0.3, ease: 'easeOut' }}
+                  className="absolute left-0 top-full text-green-400 text-xs font-bold pointer-events-none whitespace-nowrap"
+                >
+                  +{scoreGain.toLocaleString()}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+        <LivesDisplay lives={lives} />
+      </div>
+      {/* Desktop: original layout */}
+      <div className="hidden sm:flex sm:mb-1 flex-row w-full max-w-2xl justify-between">
         <div className="sm:w-3/4 flex md:text-left sm:flex-row flex-col">
-          <div className="flex items-right items-center justify-end sm:justify-start gap-4 mb-2">
+          <div className="flex items-center justify-start gap-4 mb-2">
             <div className="bg-white/10 sm:mb-auto backdrop-blur-lg rounded-lg px-4 py-2 border border-white/20">
               <span className="text-amber-300 text-sm font-semibold">🎯 Round {currentRound}</span>
             </div>
@@ -720,7 +747,7 @@ export default function Game({
       </div>
 
       {/* XP / Level-Display */}
-      <div className="w-full max-w-2xl mb-2">
+      <div className="w-full max-w-2xl mb-1 sm:mb-2">
         <div className="flex items-center gap-3">
           {/* Level-Badge mit Glow bei Level-Up */}
           <AnimatePresence mode="wait">
@@ -773,10 +800,10 @@ export default function Game({
 
       {/* Active Filter Display */}
       {getActiveFilterInfo() && (
-        <div className="w-full max-w-xl mb-4">
+        <div className="w-full max-w-xl mb-1 sm:mb-4">
           {getActiveFilterInfo().map((filter, index) => (
-            <div key={index} className="bg-indigo-500/20 border border-indigo-400 rounded-lg p-2 mb-2">
-              <span className="text-indigo-200 text-sm font-semibold">
+            <div key={index} className="bg-indigo-500/20 border border-indigo-400 rounded-lg px-2 py-1 sm:p-2 mb-1 sm:mb-2">
+              <span className="text-indigo-200 text-xs sm:text-sm font-semibold">
                 {filter.icon} {filter.name}: {filter.description}
               </span>
             </div>
@@ -785,17 +812,17 @@ export default function Game({
       )}
 
       {(showPriceHint || showAverage) && (
-        <div className="w-full max-w-xl mb-4">
+        <div className="w-full max-w-xl mb-1 sm:mb-4">
           {showPriceHint && getPriceRange() && (
-            <div className="bg-blue-500/20 border border-blue-400 rounded-lg p-2 mb-2">
-              <span className="text-blue-200 text-sm font-semibold">
+            <div className="bg-blue-500/20 border border-blue-400 rounded-lg px-2 py-1 sm:p-2 mb-1 sm:mb-2">
+              <span className="text-blue-200 text-xs sm:text-sm font-semibold">
                 🔮 Price Range: {formatPrice(getPriceRange().min)} - {formatPrice(getPriceRange().max)}
               </span>
             </div>
           )}
           {showAverage && getAveragePrice() && (
-            <div className="bg-green-500/20 border border-green-400 rounded-lg p-2">
-              <span className="text-green-200 text-sm font-semibold">📊 Average: {formatPrice(getAveragePrice())}</span>
+            <div className="bg-green-500/20 border border-green-400 rounded-lg px-2 py-1 sm:p-2">
+              <span className="text-green-200 text-xs sm:text-sm font-semibold">📊 Average: {formatPrice(getAveragePrice())}</span>
             </div>
           )}
         </div>
@@ -803,14 +830,14 @@ export default function Game({
 
       {/* Heart Regen Progress */}
       {perkSystem.getHeartRegenProgress() && (
-        <div className="w-full max-w-xl mb-4">
-          <div className="bg-pink-500/20 border border-pink-400 rounded-lg p-2">
+        <div className="w-full max-w-xl mb-1 sm:mb-4">
+          <div className="bg-pink-500/20 border border-pink-400 rounded-lg px-2 py-1 sm:p-2">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-pink-200 text-sm font-semibold">
+              <span className="text-pink-200 text-xs sm:text-sm font-semibold">
                 💖 Heart Regen: {perkSystem.getHeartRegenProgress().current}/{perkSystem.getHeartRegenProgress().threshold}
               </span>
             </div>
-            <div className="w-full h-2 bg-gray-700 rounded overflow-hidden">
+            <div className="w-full h-1.5 sm:h-2 bg-gray-700 rounded overflow-hidden">
               <div
                 className="h-full bg-pink-500 transition-all duration-300"
                 style={{ width: `${perkSystem.getHeartRegenProgress().progress}%` }}
@@ -846,7 +873,7 @@ export default function Game({
         </div>
       )}
 
-      <div className="sm:mt-6 mt-auto flex gap-4 text-lg min-h-[80px] items-center pb-2 mb-16 sm:mb-0">
+      <div className="sm:mt-6 mt-auto flex gap-4 text-lg min-h-[50px] sm:min-h-[80px] items-center pb-1 sm:pb-2">
         {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
           <button
             onClick={handleSkipCard}
@@ -910,7 +937,9 @@ export default function Game({
         </GameOverScreen>
       )}
 
-      {message && !gameOver && <p className="mt-4 text-xl transition-all duration-500 pb-8 sm:pb-0">{message}</p>}
+      <div className="w-full min-h-[3.5rem] sm:min-h-0 pb-8 sm:pb-0 flex items-start">
+        {message && !gameOver && <p className="text-base sm:text-xl transition-all duration-500">{message}</p>}
+      </div>
     </>
   );
 }
