@@ -937,8 +937,8 @@ export default function Game({
         </GameOverScreen>
       )}
 
-      <div className="w-full min-h-[3.5rem] sm:min-h-0 pb-8 sm:pb-0 flex items-start">
-        {message && !gameOver && <p className="text-base sm:text-xl transition-all duration-500">{message}</p>}
+      <div className="w-full min-h-[3.5rem] sm:min-h-0 pb-8 sm:pb-0 flex items-start sm:justify-center">
+        {message && !gameOver && <p className="text-base sm:text-xl transition-all duration-500 sm:text-center">{message}</p>}
       </div>
     </>
   );
