@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Magic Price Duel is a Magic: The Gathering card price guessing game. Players see two MTG cards side by side and must pick the more expensive one. The game features a lives system (3 lives), streak tracking, a 10-second timer, a roguelike perk system (every 5 rounds), and 25+ achievements across 6 categories.
+Magic Price Duel is a Magic: The Gathering card price guessing game. Players see two MTG cards side by side and must pick the more expensive one. The game features a lives system (5 lives max), streak tracking, a 10-second timer, a full roguelike progression system (Perks, Relics, Synergies, XP/Levels), and 25+ achievements across 6 categories.
 
 **Live:** Deployed on Vercel (React frontend) + Fly.io (WinterCMS/PHP backend)
 **Language:** UI is in English, some code comments are in German — keep both conventions as-is.
@@ -11,7 +11,7 @@ Magic Price Duel is a Magic: The Gathering card price guessing game. Players see
 
 - **React** (CRA, not Vite) with feature-based architecture
 - **Tailwind CSS** for styling
-- **Framer Motion** for animations
+- **Framer Motion** for animations (`motion.div`, `AnimatePresence`, `createPortal` for tooltips)
 - **Axios** for API calls (centralized client with interceptors)
 - **react-google-recaptcha** for spam prevention
 - **Scryfall** as card data source (via backend proxy)
@@ -24,174 +24,235 @@ src/
 │   └── axios.js                    # Centralized Axios client, interceptors, auth header injection
 ├── features/
 │   ├── auth/
-│   │   ├── api/authApi.js          # Login, register, register-with-score, forgot/reset password
+│   │   ├── api/authApi.js
 │   │   ├── components/             # LoginForm, RegisterWithScore, ForgotPassword, ResetPassword
 │   │   ├── context/AuthContext.jsx  # Auth state provider, token management, user CRUD
-│   │   └── hooks/useAuth.js        # Re-export convenience hook
+│   │   └── hooks/useAuth.js
 │   ├── game/
 │   │   ├── api/
-│   │   │   ├── gameApi.js          # fetchRandomCards (GET /api/random-cards), updateHighscore (POST /api/score)
-│   │   │   └── achievementApi.js   # CRUD for achievements: fetch, unlock, unlock-batch, sync
+│   │   │   ├── gameApi.js          # fetchRandomCards, updateHighscore
+│   │   │   ├── achievementApi.js   # fetch, unlock, unlock-batch, sync
+│   │   │   ├── dailyChallengeApi.js
+│   │   │   └── statsApi.js
 │   │   ├── components/
-│   │   │   ├── Game.jsx            # Main game orchestrator — owns all game state, hooks, and flow
-│   │   │   ├── CardPair.jsx        # Renders two cards side by side with selection borders
+│   │   │   ├── Game.jsx            # Main orchestrator — all game state, hooks, flow
+│   │   │   ├── CardPair.jsx        # Two cards side by side with selection borders
 │   │   │   ├── GameTimer.jsx       # Visual countdown timer bar
-│   │   │   ├── GameOverScreen.jsx  # End screen with score, restart, register prompt
-│   │   │   ├── StreakDisplay.jsx    # Current streak indicator
-│   │   │   ├── LivesDisplay.jsx    # Hearts/lives display
-│   │   │   ├── PerkSelectionModal.jsx  # Modal to pick 1 of 3 perks every 5 rounds
-│   │   │   ├── ActivePerksDisplay.jsx  # Sidebar (desktop) / collapsible (mobile) active perks
-│   │   │   ├── AchievementsDisplay.jsx # Full achievement gallery with category filters
-│   │   │   └── AchievementToast.jsx    # Toast notification for unlocked achievements
+│   │   │   ├── GameOverScreen.jsx  # End screen: score, restart, register prompt
+│   │   │   ├── StreakDisplay.jsx
+│   │   │   ├── LivesDisplay.jsx
+│   │   │   ├── PerkSelectionModal.jsx   # Modal: pick 1 of 3 perks every 5 rounds
+│   │   │   ├── LevelUpModal.jsx         # Modal: level-up reward (perk/relic/upgrade)
+│   │   │   ├── ActivePerksDisplay.jsx   # Sidebar (desktop) / collapsible (mobile)
+│   │   │   ├── SynergyToast.jsx         # Toast when a new synergy activates
+│   │   │   ├── AchievementsDisplay.jsx
+│   │   │   ├── AchievementToast.jsx
+│   │   │   ├── DailyChallengeGame.jsx
+│   │   │   └── StatsDisplay.jsx
 │   │   ├── constants/
-│   │   │   ├── achievementDefinitions.js  # All achievements with conditions, progress functions, rarity
-│   │   │   └── perkDefinitions.js         # All perks, types, rarities, effects, extended variants
+│   │   │   ├── achievementDefinitions.js
+│   │   │   ├── perkDefinitions.js       # Perks, types, rarities, tags, extended variants
+│   │   │   ├── relicDefinitions.js      # Relics with tags, effects, rarities
+│   │   │   └── synergyDefinitions.js    # Synergy combos: requiredTags → effect
 │   │   ├── context/
-│   │   │   └── AchievementContext.jsx  # Global achievement provider with toast system
+│   │   │   └── AchievementContext.jsx
 │   │   ├── hooks/
-│   │   │   ├── useGameTimer.js     # Timer with configurable duration and speed (for slow-time perk)
-│   │   │   ├── useStreak.js        # Streak counter with bonus calculation
-│   │   │   ├── useCardLoader.js    # Card cache management, preloading 20 cards, pair dispensing
-│   │   │   ├── usePerkSystem.js    # Perk state machine: generation, selection, activation, duration, consumption
-│   │   │   ├── useAchievements.js  # Achievement tracking, unlock logic, cloud sync
-│   │   │   └── useGameLogic.js     # (Legacy) Combined game hook — Game.jsx uses individual hooks directly
+│   │   │   ├── useGameTimer.js
+│   │   │   ├── useStreak.js
+│   │   │   ├── useCardLoader.js
+│   │   │   ├── usePerkSystem.js         # Perk lifecycle: generation, selection, duration, consumption
+│   │   │   ├── useRelicSystem.js        # Permanent relics for the entire run
+│   │   │   ├── useSynergyEngine.js      # Tag counting, synergy activation, permanence
+│   │   │   ├── useLevel.js             # XP/Level system with thresholdMultiplier
+│   │   │   ├── useAchievements.js
+│   │   │   └── useGameLogic.js         # Legacy — Game.jsx composes hooks directly
 │   │   └── utils/
-│   │       ├── cardComparison.js   # isChoiceCorrect, getMoreExpensiveCard, formatPrice, createErrorMessage
-│   │       └── scoreCalculator.js  # calculateTimeBonus, calculateStreakBonus, formatScoreMessage
+│   │       ├── cardComparison.js
+│   │       └── scoreCalculator.js
 │   ├── leaderboard/
-│   │   ├── api/leaderboardApi.js
-│   │   └── components/Leaderboard.jsx
 │   ├── suggestions/
-│   │   ├── api/suggestionApi.js
-│   │   └── components/SuggestionModal.jsx
 │   ├── legal/
-│   │   └── components/            # PrivacyPolicy, Impressum, Terms, CookieConsent
 │   └── account/
-│       └── components/AccountSettings.jsx
 ├── shared/
 │   ├── components/
-│   │   ├── Button.jsx
-│   │   └── Footer.jsx
 │   └── utils/
 │       └── constants.js           # GAME_CONFIG, SCORE_CONFIG, STORAGE_KEYS, SCREENS
-└── App.jsx                        # Root: screen routing (hash-based), AchievementProvider wrapper
+└── App.jsx
 ```
 
-## Architecture & Patterns
+## Roguelike System
 
-### State Management
-- **No Redux/Zustand** — pure React hooks + Context API
-- `AuthContext` handles user state, tokens (localStorage), and auth API calls
-- `AchievementContext` wraps the app for global achievement tracking and toasts
-- Game state lives in `Game.jsx` using individual custom hooks
-- **Use refs for immediate state reads** (e.g., achievement tracking to prevent duplicates)
+### Overview
 
-### Custom Hooks — Core Game Loop
-The game flow is orchestrated through 4 primary hooks composed in `Game.jsx`:
+Every 5 rounds: `PerkSelectionModal` offers 3 perks.
+On level-up: `LevelUpModal` offers 3–4 options (perk / relic / upgrade to existing perk).
 
-1. **`useCardLoader`** — Preloads 20 cards, dispenses pairs, auto-refills cache when < 2 cards remain
-2. **`useGameTimer`** — Tick-based (100ms interval), supports `duration` override (time_bonus perk) and `speed` multiplier (slow_time perk)
-3. **`useStreak`** — Tracks current streak, calculates bonus (every 5 streak = +5 points)
-4. **`usePerkSystem`** — Full perk lifecycle: weighted random generation → modal selection → activation → duration tracking → consumption/expiry
+**Three layers:**
+1. **Perks** — temporary (duration-based) or permanent buffs. Defined in `perkDefinitions.js`.
+2. **Relics** — permanent for the entire run. Defined in `relicDefinitions.js`.
+3. **Synergies** — auto-activate when tag thresholds are met. Defined in `synergyDefinitions.js`.
 
-### Perk System Details
+### Tag System
+
+Every perk and relic has a `tags` array (e.g. `['speed', 'defense']`). Tags: `speed`, `defense`, `score`, `streak`, `xp`, `luck`.
+
+`useSynergyEngine` counts all tags across active relics + perks. When counts meet `requiredTags` thresholds, a synergy activates.
+
+**Important:** Upgraded perks (e.g. Time Buffer → Time Buffer+) store `upgradeCount` on the merged perk entry. `useSynergyEngine` multiplies that perk's tag contribution by `upgradeCount` so the upgrade counts as a second tag source for synergy activation.
+
+### Synergy Permanence
+
+Once a synergy activates, it's stored in `permanentSynergies` state inside `useSynergyEngine` and **never deactivates** for the rest of the run — even if the contributing perks expire. This prevents synergies from flickering when perks run out.
+
+### Active Synergies Applied in Game.jsx
+
+| Synergy | Effect |
+|---------|--------|
+| Speed Demon (`double_time_bonus`) | Timer bonus doubled via `getTimerDuration()` |
+| Scholar (`reduced_xp_threshold`) | `addXP(amount, 0.8)` — 20% less XP needed per level |
+| Hot Streak (`exponential_streak_bonus`) | Streak bonus = `STREAK_BONUS_POINTS * (2^blocks - 1)` |
+| Gold Rush (`permanent_score_mult`) | Score multiplied permanently |
+| Fortune (`extra_pick_option`) | `LevelUpModal` shows 4 options instead of 3 |
+| Fortress (`improved_regen`) | Independent heart regen counter (threshold = 8), separate from Heart Regeneration perk |
+| Berserker (`low_hp_bonus`) | 2× XP + 2× Score at 1 life |
+
+### Hook: `useLevel`
+
+```js
+const { xp, level, xpToNextLevel, showLevelUp, addXP, dismissLevelUp, reset } = useLevel();
+// thresholdMultiplier: Scholar synergy passes 0.8
+addXP(amount, thresholdMultiplier = 1);
+```
+XP curve: `50 + level * 25` per level. Supports multi-level-up in one call.
+
+### Hook: `useRelicSystem`
+
+```js
+const { activeRelics, addRelic, hasRelic, getRelicValue, getRelicsByTag, reset } = useRelicSystem();
+```
+Relics are permanent — no duration decrement. No duplicates by ID.
+
+### Hook: `useSynergyEngine`
+
+```js
+const { activeSynergies, hasSynergy, getSynergyValue, reset } = useSynergyEngine(activeRelics, activePerks, onNewSynergy);
+```
+`getSynergyValue(effect)` returns the `value` of the first synergy with that effect, or `null`.
+
+### LevelUpModal
+
+`generateOptions(level, ownedRelicIds, activePerks, activeSynergies, hasFortune)` returns 3 (or 4 if Fortune active) options — each is a perk, relic, or upgrade to an existing perk (`category: 'upgrade'`).
+
+Upgrade options use `basePerkId` / `isExtended` to find the matching base perk in `activePerks`.
+
+Shows a synergy-prediction badge per option: which synergies would activate if you picked that option.
+
+## ActivePerksDisplay
+
+Sidebar (desktop, scrollable full-height) / collapsible panel (mobile).
+
+Shows Perks, Relics, Synergies in separate sections with:
+- **Tag chips** colored by type (speed=blue, defense=green, score=yellow, streak=orange, xp=purple, luck=pink)
+- **Counter display** for items with progress (`round_heal`, `heart_regen`, `improved_regen`)
+- **Portal-based tooltips** (via `createPortal` to `document.body`) — avoids overflow clipping from scrollable sidebar. Position computed via `getBoundingClientRect()`, flips upward if card is in bottom 35% of viewport.
+- **Flash animation** (`flashingRelics` Set): golden burst + scale punch when a relic triggers
+- **Tick animation** (`tickingRelics` Set): subtle glow + small scale bump each counter increment
+
+### Counter Logic (`getCounterInfo`)
+
+```js
+// round_heal (Card Counter): currentRound % item.value / item.value
+// heart_regen (Heart Regeneration perk): from heartRegenProgress prop
+// improved_regen (Fortress synergy): from fortressRegenCount prop (independent counter in Game.jsx)
+```
+
+## Relic Flash / Tick System (Game.jsx)
+
+```js
+const [flashingRelics, setFlashingRelics] = useState(new Set()); // 1.2s
+const [tickingRelics, setTickingRelics] = useState(new Set());   // 0.6s
+const [fortressRegenCount, setFortressRegenCount] = useState(0);
+
+flashRelic(id); // golden burst animation
+tickRelic(id);  // subtle tick animation
+```
+
+Flash triggers: `momentum`, `price_sense`, `quick_learner`, `combo_master` (every 3 streak), `iron_will`, `treasure_hunter`, `card_counter` (every 10 rounds), `heart_regeneration` (on regen).
+
+Tick triggers: `card_counter` (every non-trigger round), `heart_regeneration` + `fortress` (every correct answer when perk is active).
+
+## Perk System Details
+
 - Perks trigger every 5 rounds via `perkSystem.triggerPerkSelection()`
-- 3 random perks offered, weighted by rarity (Common: 60, Rare: 30, Epic: 10)
-- Perk types: `OFFENSIVE` (points/multipliers), `DEFENSIVE` (shields/lives), `UTILITY` (hints/skip/slow)
-- Extended variants (`+` suffix) exist with bonus duration
-- Permanent perks have `duration: -1`, consumable perks have `consumable: true`
-- `hasPerk(id)` checks base AND extended variants
+- Weighted random generation: Common 60, Rare 30, Epic 10
+- Extended variants (`basePerkId` + `isExtended: true`) merge into existing perk, extending duration by `bonusDuration` and incrementing `upgradeCount`
+- `upgradeCount` is read by `useSynergyEngine` to count tags multiple times per upgraded perk
 - `getPerkValue(effect)` returns the value of the first active perk with that effect
-- Durations decrement in `handleChoice` after each answer via `decrementPerkDurations()`
 
-### Card Data Format
-Cards from the backend arrive as:
-```js
-{ id, name, set, price, image }
-```
-Transformed in `gameApi.js` to:
-```js
-{ id, name, set, prices: { eur: number }, image_uris: { normal: string } }
-```
-All price comparisons use `parseFloat(card.prices.eur)`.
+## Score Calculation
 
-### Score Calculation
 ```
-timeBonus = Math.ceil(timeLeft * 1)       // 0-10 points based on speed
-streakBonus = floor(streak / 5) * 5       // +5 per 5-streak
-finalPoints = applyPerkEffects(timeBonus + streakBonus)
+timeBonus     = ceil(timeLeft * 1)                        // 0–10 pts
+streakBonus   = floor(streak / STREAK_BONUS_DIVISOR) * STREAK_BONUS_POINTS
+// Hot Streak: STREAK_BONUS_POINTS * (2^blocks - 1) — exponential
+finalPoints   = applyPerkEffects(base + timeBonus + streakBonus)
+// Gold Rush multiplies final score
+// Berserker doubles XP + Score at 1 life
 ```
-Perk effects applied: `point_multiplier` (×2), `flat_bonus` (+20), `perfect_bonus` (+50 if answered within 1s).
 
 ## Backend API Endpoints
 
-All requests go through `apiClient` (Axios) to `REACT_APP_API_URL`:
-
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| GET | `/api/random-cards?count=20` | Fetch random MTG cards with prices |
-| POST | `/api/score` | Submit highscore `{ score }` |
-| GET | `/api/leaderboard` | Get leaderboard data |
-| POST | `/api/suggestions` | Submit suggestion `{ text }` |
-| GET | `/api/achievements` | Get user's unlocked achievements |
-| POST | `/api/achievements/unlock` | Unlock single achievement `{ achievement_id }` |
-| POST | `/api/achievements/unlock-batch` | Unlock multiple `{ achievement_ids }` |
-| POST | `/api/achievements/sync` | Sync local achievements after registration |
-| POST | `/auth/login` | Login `{ username, password, recaptchaToken? }` |
-| POST | `/auth/register` | Register `{ username, email, password, recaptchaToken }` |
-| POST | `/auth/register-with-score` | Register + save score `{ username, email, password, score, recaptchaToken }` |
-| GET | `/auth/me` | Get current user |
-| POST | `/auth/logout` | Logout |
-| POST | `/auth/forgot-password` | Request reset `{ email }` |
-| POST | `/auth/reset-password` | Reset password `{ token, password }` |
+| GET | `/api/random-cards?count=20` | Fetch random MTG cards |
+| POST | `/api/score` | Submit highscore |
+| GET | `/api/leaderboard` | Leaderboard |
+| POST | `/api/suggestions` | Submit suggestion |
+| GET/POST | `/api/achievements/*` | Achievement sync |
+| POST | `/auth/login` | Login |
+| POST | `/auth/register` | Register |
+| POST | `/auth/register-with-score` | Register + save score |
+| GET | `/auth/me` | Current user |
 
 ## Key Game Flow
 
-1. **Init:** `preloadCards()` → `setNextPair()` → wait for both images to load → `timer.start()`
-2. **Each round:** Player picks a card (click/keyboard) → `handleChoice(index)` → timer stops → prices revealed → score updated → show result message
-3. **Next pair:** `handleNextPair()` → increment round → if round % 5 === 0, show perk selection → else `setNextPair()`
-4. **Wrong answer:** Lose 1 life (unless `second_chance` perk active) → reset streak → if 0 lives → game over
-5. **Game over:** Show `GameOverScreen` → offer restart or register-with-score (for guests)
-6. **Achievements:** Tracked via `useAchievementContext()` calls throughout game flow (trackCorrectAnswer, trackScore, trackRound, etc.)
+1. **Init:** `preloadCards()` → `setNextPair()` → images load → `timer.start()`
+2. **Each round:** Player picks → `handleChoice(index)` → timer stops → prices revealed → score/XP/streaks updated
+3. **XP gain:** `level.addXP(amount, scholarMult)` — triggers `level.showLevelUp = true`
+4. **Level up:** `LevelUpModal` shown → player picks reward → `handleLevelUpSelect(pick)` — routes to `addRelic`, `selectPerk`, or perk upgrade
+5. **Next pair:** `handleNextPair()` → round++ → if round % 5 === 0 → `PerkSelectionModal` → else next card
+6. **Card Counter:** every 10 rounds → +1 life, `flashRelic('card_counter')`
+7. **Wrong answer:** -1 life → if 0 → game over
 
 ## Keyboard Controls
 - `1` / `A` — Select left card
 - `2` / `D` — Select right card
-- `Space` / `Enter` — Continue to next pair (after answer)
-- `S` — Skip card (if skip perk available)
+- `Space` / `Enter` — Continue
+- `S` — Skip card (if skip perk active)
 
-## Routing
-- Hash-based: `#/privacy`, `#/impressum`, `#/terms`
-- Screen state managed via `useState("menu")` in `AppContent`
-- Reset password via query param: `?token=xxx`
+## Console Logging
+- `[LevelUp] CATEGORY name (id) [tags]` — on level-up selection
+- `[Perk] name (id) [tags]` — on perk selection
+- `[Synergy ACTIVATED] name` — when a new synergy fires
 
-## Environment Variables
-- `REACT_APP_API_URL` — Backend URL (default: `http://localhost:3001`)
-- `REACT_APP_RECAPTCHA_SITE_KEY` — Google reCAPTCHA v2 site key
+## Common Pitfalls
 
-## Common Pitfalls & Important Notes
-
-1. **`useGameLogic.js` is legacy** — `Game.jsx` composes hooks directly. Don't refactor Game.jsx to use useGameLogic without updating perk system integration.
-2. **Perk timing is critical** — `decrementPerkDurations()` must be called AFTER the answer is processed, not before. Perks must activate immediately when selected (not next round).
-3. **Achievement tracking uses refs internally** to prevent duplicate unlocks in React strict mode. Don't convert these to state.
-4. **Card cache exhaustion** — `useCardLoader.setNextPair()` auto-refetches when < 2 cards remain. Don't manually manage cache outside this hook.
-5. **Timer dependency on perks** — `getTimerDuration()` and `getTimerSpeed()` are recalculated each render. The timer hook receives these as props and updates dynamically.
-6. **Guest users** exist with `{ username: "Gast", highscore: 0, guest: true }`. Always check `user?.guest` before making auth-required API calls.
-7. **Auth interceptor** — 401 responses automatically clear token and redirect to `/`. Don't add redundant auth error handling.
-8. **Mobile responsiveness** — `ActivePerksDisplay` has separate desktop (sidebar) and mobile (collapsible) layouts. `AchievementsDisplay` uses dropdown on mobile, button bar on desktop. Always test both.
-9. **Prices are in EUR** — All card prices use `prices.eur`. `formatPrice()` from `cardComparison.js` handles display formatting.
-10. **Impressum.jsx exports as `PrivacyPolicy`** — This is a known bug in the export name. Don't rename without updating all imports.
+1. **`useGameLogic.js` is legacy** — `Game.jsx` composes hooks directly. Don't refactor.
+2. **Synergies are permanent once activated** — `permanentSynergies` in `useSynergyEngine` ensures they never deactivate. Don't replace with purely reactive logic.
+3. **`upgradeCount` must flow through** — When a perk is upgraded (merged), `upgradeCount` increments. `useSynergyEngine` uses it to count tags multiple times. Don't flatten perks during merge.
+4. **Portal tooltips** — `DesktopPerkCard` renders its tooltip via `createPortal(content, document.body)` and positions with `position: fixed`. This is necessary because `overflow-y: auto` on the scrollable sidebar would clip absolute-positioned children. Don't revert to CSS group-hover tooltips inside the scroll container.
+5. **Independent regen counters** — Heart Regeneration perk and Fortress synergy have SEPARATE counters. Fortress uses `fortressRegenCount` in Game.jsx, NOT the perk system's counter. Each gives a heart independently.
+6. **`getTimerDuration` depends on `synergyEngine`** — Speed Demon multiplier is applied here. Make sure `synergyEngine` is in the dependency array.
+7. **Fortune synergy** — `generateOptions` in `LevelUpModal` checks `hasFortune` to generate a 4th slot. The grid changes to `md:grid-cols-4`.
+8. **Perk timing** — `decrementPerkDurations()` must be called AFTER answer processing. Perks activate immediately on selection.
+9. **Achievement tracking uses refs** — prevents duplicate unlocks in React strict mode. Don't convert to state.
+10. **Guest users** — `{ guest: true }`. Always check before auth-required API calls.
+11. **Prices in EUR** — all comparisons use `parseFloat(card.prices.eur)`.
 
 ## Code Style
-- Functional components only, no class components
-- `useCallback` for functions passed as props or used in dependency arrays
-- German comments are fine, keep them — UI strings are English
-- Tailwind for all styling, no CSS modules or styled-components
-- Framer Motion for animations — use `motion.div` with `initial`/`animate`/`exit`
-- Error boundaries: not yet implemented — errors in hooks will crash the app
-
-## Testing
-- No test suite currently. When adding tests:
-  - Unit test utility functions (`cardComparison.js`, `scoreCalculator.js`) first
-  - Mock `apiClient` for hook tests
-  - Use React Testing Library for component tests
+- Functional components only
+- `useCallback` for functions passed as props or in dependency arrays
+- German comments are fine; UI strings are English
+- Tailwind for all styling
+- Framer Motion for animations (`motion.div`, `AnimatePresence`, `initial`/`animate`/`exit`)
+- No CSS modules, no styled-components

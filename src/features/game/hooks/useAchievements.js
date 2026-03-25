@@ -31,7 +31,13 @@ export const useAchievements = (user) => {
     comebackStreak: 0,
     biggestDoublePoints: 0,
     wonWithOnLife: false,
-    isAfterLifeLoss: false
+    isAfterLifeLoss: false,
+    // Roguelike Stats
+    relicsCollected: 0,
+    synergiesActivated: 0,
+    maxSimultaneousSynergies: 0,
+    level: 1,
+    glassCannonHighScore: 0,
   });
 
   const processingRef = useRef(false);
@@ -251,15 +257,55 @@ export const useAchievements = (user) => {
     });
   }, [checkAchievements]);
 
+  const trackRelicCollected = useCallback(() => {
+    setGameStats(prev => {
+      const newStats = { ...prev, relicsCollected: prev.relicsCollected + 1 };
+      setTimeout(() => checkAchievements(newStats), 0);
+      return newStats;
+    });
+  }, [checkAchievements]);
+
+  const trackSynergyActivated = useCallback((activeSynergyCount) => {
+    setGameStats(prev => {
+      const newStats = {
+        ...prev,
+        synergiesActivated: prev.synergiesActivated + 1,
+        maxSimultaneousSynergies: Math.max(prev.maxSimultaneousSynergies, activeSynergyCount),
+      };
+      setTimeout(() => checkAchievements(newStats), 0);
+      return newStats;
+    });
+  }, [checkAchievements]);
+
+  const trackLevel = useCallback((newLevel) => {
+    setGameStats(prev => {
+      if (newLevel <= prev.level) return prev;
+      const newStats = { ...prev, level: newLevel };
+      setTimeout(() => checkAchievements(newStats), 0);
+      return newStats;
+    });
+  }, [checkAchievements]);
+
+  const trackGlassCannonScore = useCallback((score) => {
+    setGameStats(prev => {
+      if (score <= prev.glassCannonHighScore) return prev;
+      const newStats = { ...prev, glassCannonHighScore: score };
+      setTimeout(() => checkAchievements(newStats), 0);
+      return newStats;
+    });
+  }, [checkAchievements]);
+
   const resetGameStats = useCallback(() => {
     sessionUnlockedRef.current = new Set();
-    
+
     setGameStats({
       currentStreak: 0, currentScore: 0, currentRound: 0,
       perksCollected: 0, shieldSaves: 0, fastestAnswer: Infinity,
       quickAnswers: 0, perfectStart: false, correctFromStart: 0,
       lastSecondWins: 0, comebackStreak: 0, biggestDoublePoints: 0,
-      wonWithOnLife: false, isAfterLifeLoss: false
+      wonWithOnLife: false, isAfterLifeLoss: false,
+      relicsCollected: 0, synergiesActivated: 0, maxSimultaneousSynergies: 0,
+      level: 1, glassCannonHighScore: 0,
     });
   }, []);
 
@@ -296,13 +342,14 @@ export const useAchievements = (user) => {
   return {
     unlockedAchievements, currentToast, gameStats,
     isLoading, isSyncing,
-    
+
     trackCorrectAnswer, trackWrongAnswer, trackShieldSave,
     trackPerkCollected, trackScore, trackRound, updateStats,
-    
+    trackRelicCollected, trackSynergyActivated, trackLevel, trackGlassCannonScore,
+
     resetGameStats, dismissToast, getProgress, isUnlocked,
     getAllWithStatus, clearAllAchievements, syncLocalToServer,
-    
+
     totalUnlocked: unlockedAchievements.length,
     totalAchievements: getAllAchievements().length
   };

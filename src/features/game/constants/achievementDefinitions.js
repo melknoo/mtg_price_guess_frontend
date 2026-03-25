@@ -306,6 +306,85 @@ export const ACHIEVEMENTS = {
     condition: (stats) => stats.wonWithOnLife === true,
     progress: (stats) => stats.wonWithOnLife ? 1 : 0,
     secret: true
+  },
+
+  // === ROGUELIKE ACHIEVEMENTS ===
+  FIRST_RELIC: {
+    id: 'first_relic',
+    name: 'Relic Hunter',
+    description: 'Collect your first relic',
+    icon: '⭐',
+    category: ACHIEVEMENT_CATEGORIES.PERKS,
+    rarity: ACHIEVEMENT_RARITY.UNCOMMON,
+    condition: (stats) => stats.relicsCollected >= 1,
+    progress: (stats) => Math.min(stats.relicsCollected / 1, 1),
+    secret: false
+  },
+  RELICS_5: {
+    id: 'relics_5',
+    name: 'Relic Hoarder',
+    description: 'Collect 5 relics in one game',
+    icon: '🗝️',
+    category: ACHIEVEMENT_CATEGORIES.PERKS,
+    rarity: ACHIEVEMENT_RARITY.RARE,
+    condition: (stats) => stats.relicsCollected >= 5,
+    progress: (stats) => Math.min(stats.relicsCollected / 5, 1),
+    secret: false
+  },
+  FIRST_SYNERGY: {
+    id: 'first_synergy',
+    name: 'Synergy!',
+    description: 'Activate your first synergy',
+    icon: '🔗',
+    category: ACHIEVEMENT_CATEGORIES.SPECIAL,
+    rarity: ACHIEVEMENT_RARITY.RARE,
+    condition: (stats) => stats.synergiesActivated >= 1,
+    progress: (stats) => Math.min(stats.synergiesActivated / 1, 1),
+    secret: false
+  },
+  LEVEL_10: {
+    id: 'level_10',
+    name: 'Veteran',
+    description: 'Reach level 10 in one game',
+    icon: '📈',
+    category: ACHIEVEMENT_CATEGORIES.SPECIAL,
+    rarity: ACHIEVEMENT_RARITY.RARE,
+    condition: (stats) => stats.level >= 10,
+    progress: (stats) => Math.min(stats.level / 10, 1),
+    secret: false
+  },
+  LEVEL_25: {
+    id: 'level_25',
+    name: 'Grandmaster',
+    description: 'Reach level 25 in one game',
+    icon: '👑',
+    category: ACHIEVEMENT_CATEGORIES.SPECIAL,
+    rarity: ACHIEVEMENT_RARITY.LEGENDARY,
+    condition: (stats) => stats.level >= 25,
+    progress: (stats) => Math.min(stats.level / 25, 1),
+    secret: false
+  },
+  GLASS_CANNON_1000: {
+    id: 'glass_cannon_1000',
+    name: 'Living Dangerously',
+    description: 'Score 1000+ with Glass Cannon active',
+    icon: '💥',
+    category: ACHIEVEMENT_CATEGORIES.SPECIAL,
+    rarity: ACHIEVEMENT_RARITY.EPIC,
+    condition: (stats) => stats.glassCannonHighScore >= 1000,
+    progress: (stats) => Math.min(stats.glassCannonHighScore / 1000, 1),
+    secret: true
+  },
+  ALL_SYNERGIES: {
+    id: 'all_synergies',
+    name: 'Master Synergist',
+    description: 'Have 3 synergies active at once',
+    icon: '🌟',
+    category: ACHIEVEMENT_CATEGORIES.SPECIAL,
+    rarity: ACHIEVEMENT_RARITY.LEGENDARY,
+    condition: (stats) => stats.maxSimultaneousSynergies >= 3,
+    progress: (stats) => Math.min(stats.maxSimultaneousSynergies / 3, 1),
+    secret: false
   }
 };
 

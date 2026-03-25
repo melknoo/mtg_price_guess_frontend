@@ -73,28 +73,28 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-start justify-center z-50 overflow-y-auto"
                     >
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className="max-w-5xl w-full relative"
+                            className="max-w-5xl w-full relative p-3 sm:p-6 my-auto"
                         >
                             <button
                                 onClick={() => setIsMinimized(true)}
-                                className="absolute -top-7 left-0 bg-black/70 text-white px-3 py-1 text-sm sm:text-2xl rounded-full border border-white/20 shadow-lg hover:bg-black/60 transition"
+                                className="absolute top-0 left-3 sm:left-0 sm:-top-7 bg-black/70 text-white px-3 py-1 text-sm rounded-full border border-white/20 shadow-lg hover:bg-black/60 transition"
                             >
                                 Minimize
                             </button>
 
                             {/* Header */}
-                            <div className="text-center mb-2 sm:mb-8">
+                            <div className="text-center mb-2 sm:mb-8 mt-8 sm:mt-0">
                                 <motion.h2
                                     initial={{ y: -20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                     transition={{ delay: 0.1 }}
-                                    className="sm:text-4xl text-2xl font-bold text-white mb-2"
+                                    className="text-xl sm:text-4xl font-bold text-white mb-1"
                                 >
                                     ✨ Choose Your Bonus!
                                 </motion.h2>
@@ -102,86 +102,100 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                     initial={{ y: -20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                     transition={{ delay: 0.2 }}
-                                    className="text-gray-300 text-lg"
+                                    className="text-gray-300 text-sm sm:text-lg"
                                 >
                                     You've mastered {PERK_CONFIG.ROUNDS_BETWEEN_PERKS} rounds! Time for an upgrade.
                                 </motion.p>
                             </div>
 
                             {/* Perk Cards */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-6">
                                 {perks.map((perk, index) => (
                                     <motion.div
                                         key={perk.id}
-                                        initial={{ y: 50, opacity: 0 }}
+                                        initial={{ y: 30, opacity: 0 }}
                                         animate={{ y: 0, opacity: 1 }}
-                                        transition={{ delay: 0.1 * index }}
-                                        whileHover={{ scale: 1.05, y: -10 }}
-                                        whileTap={{ scale: 0.95 }}
+                                        transition={{ delay: 0.08 * index }}
+                                        whileHover={{ scale: 1.02, y: -4 }}
+                                        whileTap={{ scale: 0.97 }}
                                         onClick={() => onSelect(perk)}
                                         className={`
-                    relative cursor-pointer
+                    relative cursor-pointer group
                     bg-gradient-to-br ${getRarityColor(perk.rarity)}
-                    border-4 rounded-2xl p-6
-                    shadow-2xl hover:shadow-3xl
-                    transition-all duration-300
-                    group
+                    border-2 sm:border-4 rounded-xl sm:rounded-2xl p-3 sm:p-6
+                    shadow-2xl transition-all duration-300
                   `}
                                     >
-                                        {/* Rarity Badge */}
-                                        <div className="absolute top-4 right-4">
-                                            <span className={`
-                      ${getRarityBadgeColor(perk.rarity)}
-                      px-3 py-1 rounded-full text-xs font-bold uppercase
-                    `}>
-                                                {getRarityLabel(perk.rarity)}
-                                            </span>
+                                        {/* Mobile: horizontal layout */}
+                                        <div className="flex items-start gap-3 md:hidden">
+                                            <div className="text-4xl shrink-0 mt-0.5">{perk.icon}</div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex flex-wrap gap-1 mb-1">
+                                                    <span className={`${getRarityBadgeColor(perk.rarity)} px-1.5 py-0.5 rounded-full text-xs font-bold uppercase`}>
+                                                        {getRarityLabel(perk.rarity)}
+                                                    </span>
+                                                </div>
+                                                <h3 className="text-sm font-bold text-white leading-tight">{perk.name}</h3>
+                                                <p className="text-gray-200 text-xs mt-0.5 leading-snug">{perk.description}</p>
+                                                <div className="mt-1">
+                                                    {perk.duration > 0 && (
+                                                        <span className="text-yellow-300 text-xs">⏱️ {perk.duration} {perk.duration === 1 ? 'Round' : 'Rounds'}</span>
+                                                    )}
+                                                    {perk.duration === -1 && (
+                                                        <span className="text-green-300 text-xs">♾️ Permanent</span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        {/* Icon */}
-                                        <div className="flex justify-center sm:flex-col mb-1 sm:mb-4">
-                                            <div className="text-center sm:mb-4">
+                                        {/* Desktop: vertical layout (original) */}
+                                        <div className="hidden md:block">
+                                            {/* Rarity Badge */}
+                                            <div className="absolute top-4 right-4">
+                                                <span className={`${getRarityBadgeColor(perk.rarity)} px-3 py-1 rounded-full text-xs font-bold uppercase`}>
+                                                    {getRarityLabel(perk.rarity)}
+                                                </span>
+                                            </div>
+
+                                            {/* Icon + Name */}
+                                            <div className="flex flex-col items-center mt-2 mb-4">
                                                 <motion.div
                                                     whileHover={{ scale: 1.2 }}
                                                     transition={{ duration: 0.5 }}
-                                                    className="sm:text-7xl text-2xl inline-block"
+                                                    className="text-7xl mb-3 inline-block"
                                                 >
                                                     {perk.icon}
                                                 </motion.div>
+                                                <h3 className="text-2xl font-bold text-white text-center">
+                                                    {perk.name}
+                                                </h3>
                                             </div>
 
-                                            {/* Name */}
-                                            <h3 className="text-2xl font-bold text-white text-center sm:mb-3">
-                                                {perk.name}
-                                            </h3>
+                                            {/* Description */}
+                                            <p className="text-gray-200 text-center text-sm leading-relaxed mb-4">
+                                                {perk.description}
+                                            </p>
+
+                                            {/* Duration Info */}
+                                            {perk.duration > 0 && (
+                                                <div className="bg-black/30 rounded-lg p-2 text-center">
+                                                    <span className="text-yellow-300 text-xs font-semibold">
+                                                        ⏱️ {perk.duration} {perk.duration === 1 ? 'Round' : 'Rounds'}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {perk.duration === -1 && (
+                                                <div className="bg-black/30 rounded-lg p-2 text-center">
+                                                    <span className="text-green-300 text-xs font-semibold">
+                                                        ♾️ Permanent (this game)
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
 
-
-                                        {/* Description */}
-                                        <p className="text-gray-200 text-center text-sm leading-relaxed mb-4">
-                                            {perk.description}
-                                        </p>
-
-                                        {/* Duration Info */}
-                                        {perk.duration > 0 && (
-                                            <div className="bg-black/30 rounded-lg p-2 text-center">
-                                                <span className="text-yellow-300 text-xs font-semibold">
-                                                    ⏱️ {perk.duration} {perk.duration === 1 ? 'Round' : 'Rounds'}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        {perk.duration === -1 && (
-                                            <div className="bg-black/30 rounded-lg p-2 text-center">
-                                                <span className="text-green-300 text-xs font-semibold">
-                                                    ♾️ Permanent (this game)
-                                                </span>
-                                            </div>
-                                        )}
-
                                         {/* Hover Glow Effect */}
-                                        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                            <div className="absolute inset-0 rounded-2xl bg-white/10" />
+                                        <div className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                            <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white/10" />
                                         </div>
                                     </motion.div>
                                 ))}
@@ -192,7 +206,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.5 }}
-                                className="text-center text-gray-400 text-sm mt-2 sm:mt-8"
+                                className="text-center text-gray-400 text-xs sm:text-sm mt-3 sm:mt-8"
                             >
                                 💡 Tip: Choose wisely! Some perks can be stacked.
                             </motion.p>

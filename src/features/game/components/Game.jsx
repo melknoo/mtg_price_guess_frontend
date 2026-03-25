@@ -5,6 +5,9 @@ import { useGameTimer } from "../hooks/useGameTimer";
 import { useStreak } from "../hooks/useStreak";
 import { useCardLoader } from "../hooks/useCardLoader";
 import { usePerkSystem } from "../hooks/usePerkSystem";
+import { useLevel } from "../hooks/useLevel";
+import { useRelicSystem } from "../hooks/useRelicSystem";
+import { useSynergyEngine } from "../hooks/useSynergyEngine";
 import { updateHighscore } from "../api/gameApi";
 import { saveGameSession } from "../api/statsApi";
 import {
@@ -17,13 +20,16 @@ import {
   calculateTimeBonus,
   formatScoreMessage,
 } from "../utils/scoreCalculator";
-import { GAME_CONFIG } from "../../../shared/utils/constants";
+import { GAME_CONFIG, SCORE_CONFIG } from "../../../shared/utils/constants";
+import { motion, AnimatePresence } from "framer-motion";
 import GameTimer from "./GameTimer";
 import StreakDisplay from "./StreakDisplay";
 import LivesDisplay from "./LivesDisplay";
 import CardPair from "./CardPair";
 import GameOverScreen from "./GameOverScreen";
 import PerkSelectionModal from "./PerkSelectionModal";
+import LevelUpModal from "./LevelUpModal";
+import SynergyToast from "./SynergyToast";
 import ActivePerksDisplay from "./ActivePerksDisplay";
 import RegisterWithScore from "../../auth/components/RegisterWithScore";
 
@@ -48,19 +54,108 @@ export default function Game({
   const [message, setMessage] = useState("");
   const [imagesLoaded, setImagesLoaded] = useState([false, false]);
   const [currentRound, setCurrentRound] = useState(1);
+  // Roguelike State
+  const [comboMultiplier, setComboMultiplier] = useState(1);   // Combo Master Relic
+  const [ironWillActive, setIronWillActive] = useState(false); // Iron Will Relic
+  const [synergyToast, setSynergyToast] = useState(null);      // aktuelle Synergy-Notification
+  const bestComboMultiplierRef = useRef(1);                    // Für Game-Over Summary
+  const [flashingRelics, setFlashingRelics] = useState(new Set()); // Relic-Trigger-Animation
+  const [tickingRelics, setTickingRelics] = useState(new Set());  // Subtler Tick-Animation
+  const [fortressRegenCount, setFortressRegenCount] = useState(0); // Fortress unabhängiger Zähler
+
+  // Animated score counter
+  const [displayScore, setDisplayScore] = useState(0);
+  const [scoreGain, setScoreGain] = useState(null);
+  const displayScoreRef = useRef(0);
+  const scoreAnimRef = useRef(null);
+  const scoreGainTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (score === 0) {
+      if (scoreAnimRef.current) cancelAnimationFrame(scoreAnimRef.current);
+      displayScoreRef.current = 0;
+      setDisplayScore(0);
+      setScoreGain(null);
+      return;
+    }
+    const start = displayScoreRef.current;
+    const end = score;
+    const delta = end - start;
+    if (delta <= 0) return;
+
+    setScoreGain(delta);
+    if (scoreGainTimerRef.current) clearTimeout(scoreGainTimerRef.current);
+    scoreGainTimerRef.current = setTimeout(() => setScoreGain(null), 1600);
+
+    if (scoreAnimRef.current) cancelAnimationFrame(scoreAnimRef.current);
+    const duration = Math.min(Math.max(delta * 1.5, 300), 700);
+    const startTime = performance.now();
+    const animate = (now) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + delta * eased);
+      displayScoreRef.current = current;
+      setDisplayScore(current);
+      if (progress < 1) {
+        scoreAnimRef.current = requestAnimationFrame(animate);
+      } else {
+        displayScoreRef.current = end;
+        setDisplayScore(end);
+      }
+    };
+    scoreAnimRef.current = requestAnimationFrame(animate);
+    return () => { if (scoreAnimRef.current) cancelAnimationFrame(scoreAnimRef.current); };
+  }, [score]);
 
   // Custom Hooks
   const cardLoader = useCardLoader();
   const streak = useStreak();
   const perkSystem = usePerkSystem();
+  const level = useLevel();
+  const relicSystem = useRelicSystem();
+
+  // Blinkt ein Relic kurz auf (1.2s) — visuelles Feedback wenn es triggert
+  const flashRelic = useCallback((id) => {
+    setFlashingRelics(prev => new Set([...prev, id]));
+    setTimeout(() => {
+      setFlashingRelics(prev => { const next = new Set(prev); next.delete(id); return next; });
+    }, 1200);
+  }, []);
+
+  const tickRelic = useCallback((id) => {
+    setTickingRelics(prev => new Set([...prev, id]));
+    setTimeout(() => {
+      setTickingRelics(prev => { const next = new Set(prev); next.delete(id); return next; });
+    }, 600);
+  }, []);
+
+  // Synergy-Callback — stabil via useCallback
+  const handleNewSynergy = useCallback((synergy) => {
+    console.log('[Synergy ACTIVATED]', synergy.name, '— permanent for this run');
+    setSynergyToast(synergy);
+    setTimeout(() => setSynergyToast(null), 4000);
+    achievements.trackSynergyActivated(
+      // activeSynergies.length ist hier nicht direkt verfügbar, wird im Engine-Effect getrackt
+      1 // Dummy — trackSynergyActivated zählt selbst hoch und prüft max
+    );
+  }, [achievements]);
+
+  const synergyEngine = useSynergyEngine(
+    relicSystem.activeRelics,
+    perkSystem.activePerks,
+    handleNewSynergy
+  );
 
   // Timer mit Perk-Modifikationen
   const getTimerDuration = useCallback(() => {
     let duration = GAME_CONFIG.TIMER_DURATION;
-    const timeBufferValue = perkSystem.getPerkValue("time_bonus");
-    if (timeBufferValue) duration += timeBufferValue;
+    const timeBufferValue = perkSystem.getPerkValue("time_bonus") ?? 0;
+    const meditationBonus = relicSystem.getRelicValue("permanent_time_bonus") ?? 0;
+    // Speed Demon Synergy: verdoppelt alle Timer-Boni (nicht die Basis-Zeit)
+    const timeMult = synergyEngine.getSynergyValue('double_time_bonus') ?? 1;
+    duration += (timeBufferValue + meditationBonus) * timeMult;
     return duration;
-  }, [perkSystem]);
+  }, [perkSystem, relicSystem, synergyEngine]);
 
   const getTimerSpeed = useCallback(() => {
     const slowTimeValue = perkSystem.getPerkValue("slow_time");
@@ -76,13 +171,16 @@ export default function Game({
 
   const timer = useGameTimer({
     onTimeUp: () => handleChoiceRef.current?.(-1),
-    enabled: !showPrices && selectedCard === null,
+    // Timer pausiert bei Perk-Auswahl UND Level-Up (analog zu showPerkSelection)
+    enabled: !showPrices && selectedCard === null && !level.showLevelUp,
     duration: getTimerDuration(),
     speed: getTimerSpeed(),
   });
 
   const applyPerkEffects = useCallback((basePoints, timeLeft) => {
     let finalPoints = basePoints;
+
+    // --- Bestehende Perk-Effekte (unverändert) ---
     const multiplier = perkSystem.getPerkValue("point_multiplier");
     if (multiplier) finalPoints *= multiplier;
     const flatBonus = perkSystem.getPerkValue("flat_bonus");
@@ -92,8 +190,43 @@ export default function Game({
       const perfectBonus = perkSystem.getPerkValue("perfect_bonus");
       if (perfectBonus) finalPoints += perfectBonus;
     }
+
+    // --- Relic-Effekte ---
+    // Glass Cannon: 2x Score
+    if (relicSystem.hasRelic('glass_cannon')) {
+      finalPoints *= relicSystem.getRelicValue('glass_cannon');
+    }
+    // Treasure Hunter: +25% auf den Perk-Bonus-Anteil
+    if (relicSystem.hasRelic('treasure_hunter')) {
+      const perkBonusOnly = finalPoints - basePoints;
+      if (perkBonusOnly > 0) {
+        finalPoints += perkBonusOnly * (relicSystem.getRelicValue('perk_bonus_amplifier') - 1);
+      }
+    }
+    // Iron Will: 3x Score nach einem Fehler (einmalig)
+    if (ironWillActive && relicSystem.hasRelic('iron_will')) {
+      finalPoints *= relicSystem.getRelicValue('comeback_bonus');
+    }
+    // Combo Master: dynamischer Multiplikator (wird in handleChoice gesetzt)
+    if (comboMultiplier > 1) {
+      finalPoints *= comboMultiplier;
+    }
+
+    // --- Synergy-Effekte ---
+    // Gold Rush: permanenter 1.5x Multiplikator
+    if (synergyEngine.hasSynergy('gold_rush')) {
+      finalPoints *= synergyEngine.getSynergyValue('permanent_score_mult');
+    }
+    // Berserker: 2x Score + 2x XP wenn nur 1 Leben
+    if (synergyEngine.hasSynergy('berserker') && lives === 1) {
+      finalPoints *= synergyEngine.getSynergyValue('low_hp_bonus');
+    }
+
+    // Level-Bonus: +1 Punkt pro Level
+    finalPoints += level.level;
+
     return Math.floor(finalPoints);
-  }, [perkSystem, getTimerDuration]);
+  }, [perkSystem, getTimerDuration, relicSystem, ironWillActive, comboMultiplier, synergyEngine, lives, level]);
 
   const handleChoice = useCallback(
     async (chosenIndex) => {
@@ -111,17 +244,82 @@ export default function Game({
         correctCountRef.current++;
         const timeBonus = calculateTimeBonus(timer.timeLeft);
         const customThreshold = perkSystem.getPerkValue("streak_threshold");
-        const streakBonus = customThreshold
+        let streakBonus = customThreshold
           ? streak.streak >= customThreshold
             ? streak.calculateStreakBonus()
             : 0
           : streak.calculateStreakBonus();
+
+        // Hot Streak Synergy: exponentieller Bonus — jeder 5er-Block verdoppelt den vorherigen
+        if (synergyEngine.hasSynergy('hot_streak') && streakBonus > 0) {
+          const blocks = Math.floor(streak.streak / SCORE_CONFIG.STREAK_BONUS_DIVISOR);
+          streakBonus = SCORE_CONFIG.STREAK_BONUS_POINTS * (Math.pow(2, blocks) - 1);
+        }
 
         const basePoints = timeBonus + streakBonus;
         const hadDoublePoints = !!perkSystem.getPerkValue("point_multiplier");
         const totalPoints = applyPerkEffects(basePoints, timer.timeLeft);
 
         streak.incrementStreak();
+
+        // --- XP-Vergabe ---
+        let xpGained = 10; // Richtige Antwort: Basis-XP
+        const currentDuration = getTimerDuration();
+        if (timer.timeLeft >= currentDuration - 1) xpGained += 10; // Perfekte Antwort
+        if (timer.timeLeft > currentDuration - 3) xpGained += 5;   // Schnelle Antwort
+        const newStreakValue = streak.streak + 1;
+        if (newStreakValue % 5 === 0 && newStreakValue > 0) xpGained += 15; // Streak-Milestone
+
+        // MOMENTUM Relic: +2 XP pro Streak-Stufe
+        if (relicSystem.hasRelic('momentum')) {
+          xpGained += newStreakValue * relicSystem.getRelicValue('streak_xp_scaling');
+          flashRelic('momentum');
+        }
+        // PRICE_SENSE Relic: 1.5x XP bei >€10 Preisdifferenz
+        if (relicSystem.hasRelic('price_sense') && cardLoader.currentPair.length === 2) {
+          const prices = cardLoader.currentPair.map(c => parseFloat(c.prices?.eur || 0));
+          const diff = Math.abs(prices[0] - prices[1]);
+          if (diff > relicSystem.getRelicValue('price_diff_xp_bonus') || diff > 10) {
+            xpGained = Math.floor(xpGained * relicSystem.getRelicValue('price_diff_xp_bonus'));
+            flashRelic('price_sense');
+          }
+        }
+        // QUICK_LEARNER Relic: +50% XP für Antworten unter 3 Sekunden
+        if (relicSystem.hasRelic('quick_learner') && timer.timeLeft > currentDuration - 3) {
+          xpGained = Math.floor(xpGained * relicSystem.getRelicValue('speed_xp_bonus'));
+          flashRelic('quick_learner');
+        }
+        // Berserker Synergy: 2x XP bei 1 Leben
+        if (synergyEngine.hasSynergy('berserker') && lives === 1) {
+          xpGained *= synergyEngine.getSynergyValue('low_hp_bonus');
+        }
+
+        // Combo Master: Multiplikator aktualisieren
+        if (relicSystem.hasRelic('combo_master')) {
+          const milestones = Math.floor(newStreakValue / 3);
+          const newMultiplier = 1 + milestones * relicSystem.getRelicValue('streak_multiplier_stack');
+          setComboMultiplier(newMultiplier);
+          if (newMultiplier > bestComboMultiplierRef.current) {
+            bestComboMultiplierRef.current = newMultiplier;
+          }
+          if (newStreakValue % 3 === 0) flashRelic('combo_master');
+        }
+
+        // Iron Will zurücksetzen nach Verwendung
+        if (ironWillActive) {
+          if (relicSystem.hasRelic('iron_will')) flashRelic('iron_will');
+          setIronWillActive(false);
+        }
+
+        // Treasure Hunter: flashen wenn Perk-Boni vorhanden
+        if (relicSystem.hasRelic('treasure_hunter') && totalPoints > basePoints) {
+          flashRelic('treasure_hunter');
+        }
+
+        // Scholar-Synergy: XP-Schwelle 20% niedriger
+        const scholarMult = synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1;
+        level.addXP(xpGained, scholarMult);
+        achievements.trackLevel(level.level);
 
         const newScore = score + totalPoints;
         setScore(newScore);
@@ -133,15 +331,36 @@ export default function Game({
           totalPoints
         );
         achievements.trackScore(newScore);
+        if (relicSystem.hasRelic('glass_cannon')) achievements.trackGlassCannonScore(newScore);
 
         let scoreMessage = formatScoreMessage(timeBonus, streakBonus);
         if (totalPoints > basePoints) {
           scoreMessage += ` 🎁 Perk Bonus: +${totalPoints - basePoints}`;
         }
+        // Heart Regeneration Perk — eigener Zähler in usePerkSystem
         const regenResult = perkSystem.trackCorrectAnswer();
-        if (regenResult.shouldRegenerate && lives < GAME_CONFIG.INITIAL_LIVES) {
+        if (regenResult.shouldRegenerate) {
           setLives(prev => Math.min(prev + 1, GAME_CONFIG.INITIAL_LIVES));
           scoreMessage += ` 💖 Life regenerated!`;
+          flashRelic('heart_regeneration');
+        } else if (perkSystem.hasPerk('heart_regeneration')) {
+          tickRelic('heart_regeneration');
+        }
+
+        // Fortress Synergy — unabhängiger Zähler
+        if (synergyEngine.hasSynergy('fortress')) {
+          const fortressThreshold = synergyEngine.getSynergyValue('improved_regen') ?? 8;
+          setFortressRegenCount(prev => {
+            const next = prev + 1;
+            if (next >= fortressThreshold) {
+              setLives(l => Math.min(l + 1, GAME_CONFIG.INITIAL_LIVES));
+              scoreMessage += ` 🏰 Fortress Life!`;
+              flashRelic('fortress');
+              return 0;
+            }
+            tickRelic('fortress');
+            return next;
+          });
         }
         setMessage(scoreMessage);
 
@@ -166,6 +385,10 @@ export default function Game({
           wrongCountRef.current++;
           streak.resetStreak();
           achievements.trackWrongAnswer();
+          // Iron Will: nächste richtige Antwort gibt 3x Score
+          if (relicSystem.hasRelic('iron_will')) setIronWillActive(true);
+          // Combo Master Reset bei Fehler
+          if (relicSystem.hasRelic('combo_master')) setComboMultiplier(1);
 
           const remainingLives = lives - 1;
           setLives(remainingLives);
@@ -193,7 +416,7 @@ export default function Game({
 
       perkSystem.decrementPerkDurations();
     },
-    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards]
+    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive]
   );
 
   // Update handleChoiceRef when handleChoice changes
@@ -254,14 +477,26 @@ export default function Game({
     setCurrentRound(nextRound);
     achievements.trackRound(nextRound);
 
+    // Card Counter Relic: alle 10 Runden +1 Leben (max 5)
+    const cardCounterInterval = relicSystem.getRelicValue('round_heal');
+    if (cardCounterInterval) {
+      if (nextRound % cardCounterInterval === 0) {
+        setLives(prev => Math.min(prev + 1, GAME_CONFIG.INITIAL_LIVES));
+        flashRelic('card_counter');
+      } else {
+        tickRelic('card_counter');
+      }
+    }
+
     if (nextRound > 0 && nextRound % 5 === 0) {
       perkSystem.triggerPerkSelection();
     } else {
       cardLoader.setNextPair();
     }
-  }, [currentRound, achievements, perkSystem, cardLoader]);
+  }, [currentRound, achievements, perkSystem, cardLoader, relicSystem, setLives, flashRelic, tickRelic]);
 
   const handlePerkSelect = useCallback(async (perk) => {
+    console.log('[Perk]', perk.name, `(${perk.id})`, perk.tags ?? []);
     // Wenn es ein Filter-Perk ist, lade sofort neue Karten mit dem neuen Filter
     if (perk.type === 'filter') {
       // Berechne die neuen Filter BEVOR selectPerk aufgerufen wird
@@ -306,6 +541,31 @@ export default function Game({
     }
   }, [perkSystem, achievements, cardLoader]);
 
+  // Level-Up-Pick: Relic → relicSystem, Item (Perk) → perkSystem, Upgrade → perkSystem
+  // WICHTIG: Kein cardLoader.setNextPair() hier!
+  // Der Spieler klickt danach ganz normal "Next" → handleNextPair läuft sauber durch
+  // (Round-Counter, Achievements, Perk-Selektion alle korrekt).
+  // Verhindert auch dass beide Modals gleichzeitig aktiv sind.
+  const handleLevelUpSelect = useCallback((pick) => {
+    console.log('[LevelUp]', pick.category.toUpperCase(), pick.name, `(${pick.id})`, pick.tags ?? []);
+    if (pick.category === 'relic') {
+      relicSystem.addRelic(pick);
+      achievements.trackRelicCollected();
+      // Glass Cannon: sofort auf 1 Leben reduzieren
+      if (pick.effect === 'glass_cannon') {
+        setLives(1);
+      }
+    } else if (pick.category === 'item') {
+      // selectPerk setzt intern showPerkSelection=false — hier kein Problem,
+      // da PerkSelectionModal sowieso nicht offen ist
+      perkSystem.selectPerk(pick);
+      achievements.trackPerkCollected();
+    } else if (pick.category === 'upgrade') {
+      perkSystem.selectPerk(pick);
+    }
+    level.dismissLevelUp();
+  }, [relicSystem, perkSystem, level, achievements, setLives]);
+
   const handleSkipCard = useCallback(() => {
     if (perkSystem.hasPerk("skip_card")) {
       perkSystem.consumePerk("skip_card");
@@ -322,7 +582,7 @@ export default function Game({
   // Keyboard Controls
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (perkSystem.showPerkSelection) return;
+      if (perkSystem.showPerkSelection || level.showLevelUp) return;
       if (gameOver) return;
 
       const key = e.key.toLowerCase();
@@ -366,11 +626,18 @@ export default function Game({
     timer.reset();
     cardLoader.reset();
     perkSystem.reset();
+    level.reset();
+    relicSystem.reset();
+    synergyEngine.reset();
+    setComboMultiplier(1);
+    setIronWillActive(false);
+    setFortressRegenCount(0);
+    bestComboMultiplierRef.current = 1;
     achievements.resetGameStats();
 
     await cardLoader.preloadCards();
     await cardLoader.setNextPair();
-  }, [setScore, streak, timer, cardLoader, perkSystem, achievements]);
+  }, [setScore, streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, achievements]);
 
   const handleImageLoad = useCallback((index) => {
     setImagesLoaded((prev) => {
@@ -430,13 +697,72 @@ export default function Game({
           </div>
           <div className="flex flex-col sm:ml-3">
             <p className="mb-2 text-lg">Your Highscore: {user.highscore}</p>
-            <p className="mb-2 font-bold text-2xl">Points: {score}</p>
+            <div className="relative mb-2">
+              <p className="font-bold text-2xl">Points: {displayScore.toLocaleString()}</p>
+              <AnimatePresence>
+                {scoreGain && (
+                  <motion.span
+                    key={score}
+                    initial={{ opacity: 1, y: 0 }}
+                    animate={{ opacity: 0, y: -18 }}
+                    exit={{}}
+                    transition={{ duration: 1.2, delay: 0.3, ease: 'easeOut' }}
+                    className="absolute left-0 top-full text-green-400 text-sm font-bold pointer-events-none"
+                  >
+                    +{scoreGain.toLocaleString()}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
         <LivesDisplay lives={lives} />
       </div>
 
-      <ActivePerksDisplay perks={perkSystem.activePerks} />
+      {/* XP / Level-Display */}
+      <div className="w-full max-w-2xl mb-2">
+        <div className="flex items-center gap-3">
+          {/* Level-Badge mit Glow bei Level-Up */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={level.level}
+              initial={{ scale: 1.4, boxShadow: "0 0 16px #fbbf24" }}
+              animate={{ scale: 1, boxShadow: "0 0 0px transparent" }}
+              transition={{ duration: 0.6 }}
+              className="bg-amber-500/20 border border-amber-400/50 rounded-lg px-3 py-1 shrink-0"
+            >
+              <span className="text-amber-300 text-sm font-bold">⭐ Level {level.level}</span>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* XP-Fortschrittsbalken */}
+          <div className="flex-1">
+            <div className="flex justify-between text-xs text-gray-400 mb-1">
+              <span>XP</span>
+              <span>{level.xp} / {level.xpToNextLevel}</span>
+            </div>
+            <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full"
+                initial={false}
+                animate={{ width: `${(level.xp / level.xpToNextLevel) * 100}%` }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ActivePerksDisplay
+        perks={perkSystem.activePerks}
+        relics={relicSystem.activeRelics}
+        synergies={synergyEngine.activeSynergies}
+        flashingRelics={flashingRelics}
+        tickingRelics={tickingRelics}
+        currentRound={currentRound}
+        heartRegenProgress={perkSystem.getHeartRegenProgress()}
+        fortressRegenCount={fortressRegenCount}
+      />
 
       <StreakDisplay
         streak={streak.streak}
@@ -534,8 +860,8 @@ export default function Game({
         {selectedCard !== null && !gameOver && (
           <button
             onClick={handleNextPair}
-            disabled={perkSystem.showPerkSelection}
-            className={`text-2xl min-w-[250px] font-semibold text-white px-6 py-6 rounded transition ${perkSystem.showPerkSelection ? "bg-amber-600/50 cursor-not-allowed" : "bg-amber-600 hover:bg-amber-500"
+            disabled={perkSystem.showPerkSelection || level.showLevelUp}
+            className={`text-2xl min-w-[250px] font-semibold text-white px-6 py-6 rounded transition ${(perkSystem.showPerkSelection || level.showLevelUp) ? "bg-amber-600/50 cursor-not-allowed" : "bg-amber-600 hover:bg-amber-500"
               }`}
           >
             Next
@@ -543,7 +869,18 @@ export default function Game({
         )}
       </div>
 
+      <LevelUpModal
+        show={level.showLevelUp}
+        newLevel={level.level}
+        activeRelics={relicSystem.activeRelics}
+        activePerks={perkSystem.activePerks}
+        activeSynergies={synergyEngine.activeSynergies}
+        onSelect={handleLevelUpSelect}
+      />
+
       <PerkSelectionModal perks={perkSystem.availablePerks} onSelect={handlePerkSelect} show={perkSystem.showPerkSelection} />
+
+      <SynergyToast synergy={synergyToast} onDismiss={() => setSynergyToast(null)} />
 
       {gameOver && (
         <GameOverScreen
@@ -554,6 +891,11 @@ export default function Game({
           showRegister={showRegister}
           onShowRegister={() => setShowRegister(true)}
           isGuest={user?.guest}
+          score={score}
+          level={level.level}
+          relics={relicSystem.activeRelics}
+          synergies={synergyEngine.activeSynergies}
+          bestComboMultiplier={bestComboMultiplierRef.current}
         >
           {user?.guest && showRegister && (
             <RegisterWithScore

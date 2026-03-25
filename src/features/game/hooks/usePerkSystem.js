@@ -125,14 +125,16 @@ export const usePerkSystem = () => {
         // Perk with same effect exists - extend duration
         const updated = [...prev];
         const bonusDuration = perk.bonusDuration || perk.duration;
-        
+
         if (updated[existingIndex].duration > 0 || perk.duration > 0) {
           updated[existingIndex] = {
             ...updated[existingIndex],
             remainingDuration: updated[existingIndex].remainingDuration + bonusDuration,
+            // Track upgrade count so synergy engine counts tags multiple times
+            upgradeCount: (updated[existingIndex].upgradeCount || 1) + 1,
             // Update name to show it's extended
-            name: updated[existingIndex].name.includes('+') 
-              ? updated[existingIndex].name 
+            name: updated[existingIndex].name.includes('+')
+              ? updated[existingIndex].name
               : updated[existingIndex].name + '+'
           };
         }
