@@ -60,25 +60,25 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
   return (
     <>
       {/* Desktop: Fixed Sidebar (scrollable, full height) */}
-      <div className="hidden md:flex fixed left-0 top-4 bottom-4 z-40 flex-col">
-        <div className="bg-white/10 backdrop-blur-sm rounded-r-lg p-3 shadow-2xl border-r-4 border-purple-500 flex flex-col h-full">
-          <h3 className="text-xs font-semibold text-gray-300 mb-3 text-center whitespace-nowrap shrink-0">
-            🎮 Boni
+      <div className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col">
+        <div className="bg-[#0d1b3e]/95 backdrop-blur-sm p-2 shadow-2xl border-r-2 border-amber-400/40 flex flex-col h-full">
+          <h3 className="text-[10px] font-bold text-amber-300/70 mb-2 text-center whitespace-nowrap shrink-0 uppercase tracking-widest">
+            Boni
           </h3>
-          <div className="flex flex-col gap-3 overflow-y-auto pr-0.5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
+          <div className="flex flex-col gap-2 overflow-y-auto pr-0.5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
             <AnimatePresence>
               {perks.map((perk) => (
-                <DesktopPerkCard key={perk.id} item={perk} borderColor="border-purple-400" gradientColor="from-purple-600 to-indigo-600" ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />
+                <DesktopPerkCard key={perk.id} item={perk} borderColor="border-blue-400/60" gradientColor="from-blue-900/80 to-indigo-900/80" ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />
               ))}
               {relics.map((relic) => (
-                <DesktopPerkCard key={relic.id} item={relic} borderColor="border-amber-400" gradientColor="from-amber-600 to-yellow-700" badge="⭐" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} />
+                <DesktopPerkCard key={relic.id} item={relic} borderColor="border-amber-400/60" gradientColor="from-amber-900/80 to-yellow-900/80" badge="⭐" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} />
               ))}
               {synergies.map((syn) => (
                 <DesktopPerkCard
                   key={syn.id}
                   item={syn}
-                  borderColor="border-teal-400"
-                  gradientColor="from-teal-600 to-cyan-700"
+                  borderColor="border-teal-400/60"
+                  gradientColor="from-teal-900/80 to-cyan-900/80"
                   badge="🔗"
                   contributors={getContributors(syn, relics, perks)}
                   ticking={tickingRelics.has(syn.id)}
@@ -90,93 +90,108 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
         </div>
       </div>
 
-      {/* Mobile: Collapsible Top-Left Corner */}
-      <div className="md:hidden fixed top-8 left-4 z-40">
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, x: -20 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.8, x: -20 }}
-              className="absolute top-5 left-5 bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-2xl border-2 border-purple-500 mb-2 min-w-[300px]"
-            >
-              <h3 className="text-sm font-semibold text-gray-800 mb-2">
-                🎮 Aktive Boni
-              </h3>
-              <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
-                {perks.map((perk) => (
-                  <MobilePerkCard key={perk.id} item={perk} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />
-                ))}
-                {relics.length > 0 && (
-                  <div className="text-xs text-amber-300 font-bold mt-1 mb-0.5">⭐ Relics</div>
-                )}
-                {relics.map((relic) => (
-                  <MobilePerkCard key={relic.id} item={relic} borderColor="border-amber-400" gradientColor="from-amber-600 to-yellow-700" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} />
-                ))}
-                {synergies.length > 0 && (
-                  <div className="text-xs text-teal-300 font-bold mt-1 mb-0.5">🔗 Synergies</div>
-                )}
-                {synergies.map((syn) => {
-                  const contributors = getContributors(syn, relics, perks);
-                  const isExpanded = expandedSynergyId === syn.id;
-                  return (
-                    <div key={syn.id}>
-                      <MobilePerkCard
-                        item={syn}
-                        borderColor="border-teal-400"
-                        gradientColor="from-teal-600 to-cyan-700"
-                        onTap={contributors.length > 0 ? () => setExpandedSynergyId(isExpanded ? null : syn.id) : undefined}
-                        tapHint={contributors.length > 0}
-                        ticking={tickingRelics.has(syn.id)}
-                        counterInfo={getCounterInfo(syn, currentRound, heartRegenProgress, fortressRegenCount)}
-                      />
-                      <AnimatePresence>
-                        {isExpanded && contributors.length > 0 && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="bg-teal-900/60 rounded-b-lg px-2 pb-2 border-x-2 border-b-2 border-teal-400 -mt-0.5">
-                              <div className="text-xs text-teal-300 font-semibold pt-1.5 mb-1">Aktiviert durch:</div>
-                              {contributors.map(c => (
-                                <div key={c.id} className="flex items-center gap-1.5 text-xs text-gray-200 py-0.5">
-                                  <span>{c.icon}</span>
-                                  <span>{c.name}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Toggle Button */}
+      {/* Mobile: Bottom Sheet */}
+      <div className="md:hidden">
+        {/* Toggle Button — top left */}
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-full p-3 shadow-lg border-2 border-purple-400 relative"
+          className="fixed top-2 left-2 z-[46] bg-[#0d1b3e] text-white rounded-full p-2 shadow-lg border border-amber-400/50"
         >
-          <span className="text-2xl">🎮</span>
+          <span className="text-lg">🎮</span>
           {totalCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
               {totalCount}
             </span>
           )}
         </motion.button>
+
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsOpen(false)}
+                className="fixed inset-0 bg-black/60 z-[44]"
+              />
+              {/* Sheet */}
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="fixed bottom-0 left-0 right-0 z-[45] bg-[#0d1b3e] border-t border-amber-400/40 rounded-t-2xl shadow-2xl flex flex-col max-h-[70vh]"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
+                  <h3 className="text-xs font-bold text-amber-300 uppercase tracking-widest">Active Bonuses ({totalCount})</h3>
+                  <button onClick={() => setIsOpen(false)} className="text-gray-400 text-lg leading-none px-1">✕</button>
+                </div>
+                {/* Scrollable content */}
+                <div className="overflow-y-auto p-3 flex flex-col gap-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
+                  {perks.map((perk) => (
+                    <MobilePerkCard key={perk.id} item={perk} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />
+                  ))}
+                  {relics.length > 0 && (
+                    <div className="text-xs text-amber-300/70 font-bold uppercase tracking-wider mt-1 mb-0.5">⭐ Relics</div>
+                  )}
+                  {relics.map((relic) => (
+                    <MobilePerkCard key={relic.id} item={relic} borderColor="border-amber-400/60" gradientColor="from-amber-900/80 to-yellow-900/80" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} />
+                  ))}
+                  {synergies.length > 0 && (
+                    <div className="text-xs text-teal-300/70 font-bold uppercase tracking-wider mt-1 mb-0.5">🔗 Synergies</div>
+                  )}
+                  {synergies.map((syn) => {
+                    const contributors = getContributors(syn, relics, perks);
+                    const isExpanded = expandedSynergyId === syn.id;
+                    return (
+                      <div key={syn.id}>
+                        <MobilePerkCard
+                          item={syn}
+                          borderColor="border-teal-400/60"
+                          gradientColor="from-teal-900/80 to-cyan-900/80"
+                          onTap={contributors.length > 0 ? () => setExpandedSynergyId(isExpanded ? null : syn.id) : undefined}
+                          tapHint={contributors.length > 0}
+                          ticking={tickingRelics.has(syn.id)}
+                          counterInfo={getCounterInfo(syn, currentRound, heartRegenProgress, fortressRegenCount)}
+                        />
+                        <AnimatePresence>
+                          {isExpanded && contributors.length > 0 && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="bg-teal-900/40 rounded-b-lg px-2 pb-2 border-x border-b border-teal-400/40 -mt-0.5">
+                                <div className="text-xs text-teal-300 font-semibold pt-1.5 mb-1">Aktiviert durch:</div>
+                                {contributors.map(c => (
+                                  <div key={c.id} className="flex items-center gap-1.5 text-xs text-gray-200 py-0.5">
+                                    <span>{c.icon}</span>
+                                    <span>{c.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );
 }
 
-function DesktopPerkCard({ item, borderColor = "border-purple-400", gradientColor = "from-purple-600 to-indigo-600", badge, contributors, triggered, ticking, counterInfo }) {
+function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", badge, contributors, triggered, ticking, counterInfo }) {
   const cardRef = useRef(null);
   const [tooltipStyle, setTooltipStyle] = useState(null);
 
@@ -238,7 +253,7 @@ function DesktopPerkCard({ item, borderColor = "border-purple-400", gradientColo
       <motion.div
         animate={triggered ? { scale: [1, 1.18, 0.96, 1] } : ticking ? { scale: [1, 1.06, 1] } : {}}
         transition={{ duration: triggered ? 0.4 : 0.25, ease: 'easeInOut' }}
-        className={`relative bg-gradient-to-br ${gradientColor} rounded-lg p-2 border-2 ${borderColor} shadow-lg min-w-[80px] overflow-hidden`}
+        className={`relative bg-gradient-to-br ${gradientColor} rounded-lg p-2 border ${borderColor} shadow-md min-w-[80px] overflow-hidden`}
       >
         {/* Heller Inner-Flash */}
         <AnimatePresence>
@@ -314,7 +329,7 @@ function DesktopPerkCard({ item, borderColor = "border-purple-400", gradientColo
   );
 }
 
-function MobilePerkCard({ item, borderColor = "border-purple-400", gradientColor = "from-purple-600 to-indigo-600", onTap, tapHint, triggered, ticking, counterInfo }) {
+function MobilePerkCard({ item, borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", onTap, tapHint, triggered, ticking, counterInfo }) {
 
   return (
     <div className="relative">

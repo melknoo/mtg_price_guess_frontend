@@ -846,7 +846,7 @@ export default function Game({
         </div>
       )}
 
-      <div className="sm:mt-6 mt-auto flex gap-4 text-lg min-h-[80px] items-center pb-2">
+      <div className="sm:mt-6 mt-auto flex gap-4 text-lg min-h-[80px] items-center pb-2 mb-16 sm:mb-0">
         {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
           <button
             onClick={handleSkipCard}
@@ -861,7 +861,7 @@ export default function Game({
           <button
             onClick={handleNextPair}
             disabled={perkSystem.showPerkSelection || level.showLevelUp}
-            className={`text-2xl min-w-[250px] font-semibold text-white px-6 py-6 rounded transition ${(perkSystem.showPerkSelection || level.showLevelUp) ? "bg-amber-600/50 cursor-not-allowed" : "bg-amber-600 hover:bg-amber-500"
+            className={`text-lg sm:text-2xl w-full sm:w-auto sm:min-w-[250px] font-semibold text-white px-4 py-3 sm:px-6 sm:py-6 rounded transition ${(perkSystem.showPerkSelection || level.showLevelUp) ? "bg-amber-600/50 cursor-not-allowed" : "bg-amber-600 hover:bg-amber-500"
               }`}
           >
             Next
@@ -910,7 +910,7 @@ export default function Game({
         </GameOverScreen>
       )}
 
-      {message && !gameOver && <p className="mt-6 text-xl transition-all duration-500">{message}</p>}
+      {message && !gameOver && <p className="mt-4 text-xl transition-all duration-500 pb-8 sm:pb-0">{message}</p>}
     </>
   );
 }
