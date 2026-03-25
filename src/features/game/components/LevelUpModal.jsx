@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RELICS, RELIC_RARITY_WEIGHTS, RELIC_RARITY } from '../constants/relicDefinitions';
+import { RELICS, RELIC_RARITY_WEIGHTS } from '../constants/relicDefinitions';
 import { PERKS, PERK_RARITY, getExtendedVersion } from '../constants/perkDefinitions';
 import { SYNERGIES } from '../constants/synergyDefinitions';
 
