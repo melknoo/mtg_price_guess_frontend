@@ -108,15 +108,15 @@ export const usePerkSystem = () => {
     setShowPerkSelection(true);
   }, [generateRandomPerks]);
 
-  const selectPerk = useCallback((perk) => {
+  const selectPerk = useCallback((perk, { keepOpen = false, hasEternalFlame = false, hasUpgradeMaster = false } = {}) => {
     setActivePerks(prev => {
       // Check if this is an extended perk and base perk is active
       const basePerkId = getBasePerkId(perk.id);
       const isExtended = isExtendedPerk(perk.id);
-      
+
       // Find if base perk (or same effect perk) is already active
-      const existingIndex = prev.findIndex(p => 
-        p.id === perk.id || 
+      const existingIndex = prev.findIndex(p =>
+        p.id === perk.id ||
         p.id === basePerkId ||
         (isExtended && p.effect === perk.effect)
       );
@@ -127,12 +127,12 @@ export const usePerkSystem = () => {
         const bonusDuration = perk.bonusDuration || perk.duration;
 
         if (updated[existingIndex].duration > 0 || perk.duration > 0) {
+          // Upgrade Master: +2 upgradeCount instead of +1
+          const upgradeIncrement = hasUpgradeMaster ? 2 : 1;
           updated[existingIndex] = {
             ...updated[existingIndex],
             remainingDuration: updated[existingIndex].remainingDuration + bonusDuration,
-            // Track upgrade count so synergy engine counts tags multiple times
-            upgradeCount: (updated[existingIndex].upgradeCount || 1) + 1,
-            // Update name to show it's extended
+            upgradeCount: (updated[existingIndex].upgradeCount || 1) + upgradeIncrement,
             name: updated[existingIndex].name.includes('+')
               ? updated[existingIndex].name
               : updated[existingIndex].name + '+'
@@ -141,21 +141,24 @@ export const usePerkSystem = () => {
         return updated;
       } else {
         // New perk - add it
+        // Eternal Flame: +3 rounds to duration-based perks
+        const durationBonus = (hasEternalFlame && perk.duration > 0) ? 3 : 0;
+
         // For filter perks, replace existing filter of same type
         if (perk.type === PERK_TYPES.FILTER) {
-          const filtered = prev.filter(p => 
+          const filtered = prev.filter(p =>
             !(p.type === PERK_TYPES.FILTER && p.filterType === perk.filterType)
           );
           return [...filtered, {
             ...perk,
-            remainingDuration: perk.duration,
+            remainingDuration: perk.duration > 0 ? perk.duration + durationBonus : perk.duration,
             activatedAt: roundsPlayed
           }];
         }
-        
+
         return [...prev, {
           ...perk,
-          remainingDuration: perk.duration,
+          remainingDuration: perk.duration > 0 ? perk.duration + durationBonus : perk.duration,
           activatedAt: roundsPlayed
         }];
       }
@@ -172,21 +175,29 @@ export const usePerkSystem = () => {
       });
     }
 
-    setShowPerkSelection(false);
-    setAvailablePerks([]);
+    if (!keepOpen) {
+      setShowPerkSelection(false);
+      setAvailablePerks([]);
+    }
   }, [roundsPlayed]);
 
-  const decrementPerkDurations = useCallback(() => {
+  const decrementPerkDurations = useCallback((hasRecycler = false) => {
     setActivePerks(prev => {
-      return prev
-        .map(perk => {
-          if (perk.duration === -1) return perk;
-          return {
-            ...perk,
-            remainingDuration: perk.remainingDuration - 1
-          };
-        })
-        .filter(perk => perk.remainingDuration > 0 || perk.duration === -1);
+      return prev.reduce((acc, perk) => {
+        if (perk.duration === -1) {
+          acc.push(perk);
+          return acc;
+        }
+        const newRemaining = perk.remainingDuration - 1;
+        if (newRemaining > 0) {
+          acc.push({ ...perk, remainingDuration: newRemaining });
+        } else if (hasRecycler && Math.random() < 0.3) {
+          // Perk Recycler: 30% chance to renew expired perk
+          acc.push({ ...perk, remainingDuration: perk.duration });
+        }
+        // else: perk expired
+        return acc;
+      }, []);
     });
   }, []);
 

@@ -57,6 +57,7 @@ export default function Game({
   // Roguelike State
   const [comboMultiplier, setComboMultiplier] = useState(1);   // Combo Master Relic
   const [ironWillActive, setIronWillActive] = useState(false); // Iron Will Relic
+  const [nextRoundDouble, setNextRoundDouble] = useState(false); // Perfectionist Echo Relic
   const [synergyToast, setSynergyToast] = useState(null);      // aktuelle Synergy-Notification
   const bestComboMultiplierRef = useRef(1);                    // Für Game-Over Summary
   const [flashingRelics, setFlashingRelics] = useState(new Set()); // Relic-Trigger-Animation
@@ -180,7 +181,7 @@ export default function Game({
   const applyPerkEffects = useCallback((basePoints, timeLeft) => {
     let finalPoints = basePoints;
 
-    // --- Bestehende Perk-Effekte (unverändert) ---
+    // --- Perk-Effekte ---
     const multiplier = perkSystem.getPerkValue("point_multiplier");
     if (multiplier) finalPoints *= multiplier;
     const flatBonus = perkSystem.getPerkValue("flat_bonus");
@@ -192,32 +193,26 @@ export default function Game({
     }
 
     // --- Relic-Effekte ---
-    // Glass Cannon: 2x Score
     if (relicSystem.hasRelic('glass_cannon')) {
       finalPoints *= relicSystem.getRelicValue('glass_cannon');
     }
-    // Treasure Hunter: +25% auf den Perk-Bonus-Anteil
     if (relicSystem.hasRelic('treasure_hunter')) {
       const perkBonusOnly = finalPoints - basePoints;
       if (perkBonusOnly > 0) {
         finalPoints += perkBonusOnly * (relicSystem.getRelicValue('perk_bonus_amplifier') - 1);
       }
     }
-    // Iron Will: 3x Score nach einem Fehler (einmalig)
     if (ironWillActive && relicSystem.hasRelic('iron_will')) {
       finalPoints *= relicSystem.getRelicValue('comeback_bonus');
     }
-    // Combo Master: dynamischer Multiplikator (wird in handleChoice gesetzt)
     if (comboMultiplier > 1) {
       finalPoints *= comboMultiplier;
     }
 
     // --- Synergy-Effekte ---
-    // Gold Rush: permanenter 1.5x Multiplikator
     if (synergyEngine.hasSynergy('gold_rush')) {
       finalPoints *= synergyEngine.getSynergyValue('permanent_score_mult');
     }
-    // Berserker: 2x Score + 2x XP wenn nur 1 Leben
     if (synergyEngine.hasSynergy('berserker') && lives === 1) {
       finalPoints *= synergyEngine.getSynergyValue('low_hp_bonus');
     }
@@ -225,8 +220,100 @@ export default function Game({
     // Level-Bonus: +1 Punkt pro Level
     finalPoints += level.level;
 
+    // === META-RELIC EFFEKTE ===
+
+    // Amplifier: Relic-Boni 50% stärker (wirkt auf alles was bisher multipliziert wurde)
+    if (relicSystem.hasRelic('amplifier')) {
+      const amplifiedExtra = (finalPoints - basePoints) * (relicSystem.getRelicValue('mult_amplifier') - 1);
+      finalPoints += amplifiedExtra;
+    }
+
+    // Alchemist: Flat-Boni → Multiplikator
+    if (relicSystem.hasRelic('alchemist')) {
+      const totalFlat = flatBonus || 0;
+      if (totalFlat > 0) {
+        finalPoints *= 1 + (totalFlat * relicSystem.getRelicValue('flat_to_mult'));
+      }
+    }
+
+    // Risk & Reward: weniger Restzeit = höherer Multiplikator
+    if (relicSystem.hasRelic('risk_reward')) {
+      const maxTime = currentDuration;
+      if (maxTime > 0) {
+        const timeUsed = Math.max(0, maxTime - timeLeft);
+        const riskFactor = 1 + (timeUsed / maxTime) * (relicSystem.getRelicValue('time_risk_mult') - 1);
+        finalPoints *= riskFactor;
+      }
+    }
+
+    // Snowball: +0.1× pro gespielte Runde (× 3 mit Infinite Engine Synergy)
+    if (relicSystem.hasRelic('snowball')) {
+      const snowballMult = relicSystem.getRelicValue('round_scaling_mult');
+      const finalMult = synergyEngine.hasSynergy('infinite_engine')
+        ? snowballMult * (synergyEngine.getSynergyValue('triple_snowball') ?? 3)
+        : snowballMult;
+      finalPoints *= 1 + (currentRound * finalMult);
+    }
+
+    // Collector Bonus: +15 flat pro aktivem Relic
+    if (relicSystem.hasRelic('collector_bonus')) {
+      finalPoints += relicSystem.activeRelics.length * relicSystem.getRelicValue('per_relic_flat_bonus');
+    }
+
+    // Tag Master: +0.1× pro einzigartigen Tag
+    if (relicSystem.hasRelic('tag_master')) {
+      const uniqueTags = new Set();
+      [...relicSystem.activeRelics, ...perkSystem.activePerks].forEach(item => {
+        (item.tags || []).forEach(tag => uniqueTags.add(tag));
+      });
+      finalPoints *= 1 + (uniqueTags.size * relicSystem.getRelicValue('unique_tag_mult'));
+    }
+
+    // Synergy Chain: +0.25× pro aktive Synergy
+    if (relicSystem.hasRelic('synergy_chain')) {
+      finalPoints *= 1 + (synergyEngine.activeSynergies.length * relicSystem.getRelicValue('per_synergy_mult'));
+    }
+
+    // Perk Mastery: +0.15× pro aktiven Perk
+    if (relicSystem.hasRelic('perk_mastery')) {
+      finalPoints *= 1 + (perkSystem.activePerks.length * relicSystem.getRelicValue('per_perk_mult'));
+    }
+
+    // Level Power: +2% pro Level
+    if (relicSystem.hasRelic('level_power')) {
+      finalPoints *= 1 + (level.level * relicSystem.getRelicValue('level_scaling'));
+    }
+
+    // Overkill: Score über Threshold → überschüssige Punkte verdoppelt
+    if (relicSystem.hasRelic('overkill')) {
+      const threshold = relicSystem.getRelicValue('overkill_bonus');
+      if (finalPoints > threshold) {
+        finalPoints = threshold + (finalPoints - threshold) * 2;
+      }
+    }
+
+    // Last Stand: Bei 1 Leben alle Multiplikatoren nochmal
+    if (relicSystem.hasRelic('last_stand') && lives === 1) {
+      finalPoints *= relicSystem.getRelicValue('last_stand_double');
+    }
+
+    // Chain Reaction: Iron Will oder Combo aktiv → +50% Bonus
+    if (relicSystem.hasRelic('chain_reaction') && (ironWillActive || comboMultiplier > 1.15)) {
+      finalPoints *= relicSystem.getRelicValue('chain_reaction');
+    }
+
+    // Synergy Amplifier: +10% pro aktive Synergy
+    if (relicSystem.hasRelic('synergy_amp') && synergyEngine.activeSynergies.length > 0) {
+      finalPoints *= 1 + (synergyEngine.activeSynergies.length * relicSystem.getRelicValue('synergy_multiplier'));
+    }
+
+    // Echo: Relic-Boni werden verdoppelt (alles über basePoints nochmal addiert)
+    if (relicSystem.hasRelic('echo')) {
+      finalPoints += (finalPoints - basePoints);
+    }
+
     return Math.floor(finalPoints);
-  }, [perkSystem, getTimerDuration, relicSystem, ironWillActive, comboMultiplier, synergyEngine, lives, level]);
+  }, [perkSystem, getTimerDuration, relicSystem, ironWillActive, comboMultiplier, synergyEngine, lives, level, currentRound]);
 
   const handleChoice = useCallback(
     async (chosenIndex) => {
@@ -258,7 +345,14 @@ export default function Game({
 
         const basePoints = timeBonus + streakBonus;
         const hadDoublePoints = !!perkSystem.getPerkValue("point_multiplier");
-        const totalPoints = applyPerkEffects(basePoints, timer.timeLeft);
+        let totalPoints = applyPerkEffects(basePoints, timer.timeLeft);
+
+        // Perfectionist Echo: nächste-Runde-Verdopplung anwenden
+        if (nextRoundDouble) {
+          totalPoints *= relicSystem.getRelicValue('perfect_next_double') ?? 2;
+          setNextRoundDouble(false);
+          flashRelic('perfectionist_echo');
+        }
 
         streak.incrementStreak();
 
@@ -315,6 +409,43 @@ export default function Game({
         if (relicSystem.hasRelic('treasure_hunter') && totalPoints > basePoints) {
           flashRelic('treasure_hunter');
         }
+
+        // XP Converter: überschüssige XP nach Level-Up → Score
+        if (relicSystem.hasRelic('xp_converter')) {
+          const scholarMult = synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1;
+          const effectiveThreshold = Math.floor(level.xpToNextLevel * scholarMult);
+          const overflow = Math.max(0, level.xp + xpGained - effectiveThreshold);
+          if (overflow > 0) {
+            totalPoints += overflow * (relicSystem.getRelicValue('xp_to_score') ?? 2);
+            flashRelic('xp_converter');
+          }
+        }
+
+        // Jackpot Synergy: jede 10. richtige Antwort → ×10 Score
+        if (synergyEngine.hasSynergy('jackpot') && correctCountRef.current % 10 === 0) {
+          totalPoints *= synergyEngine.getSynergyValue('jackpot') ?? 10;
+        }
+
+        // Perfectionist Echo trigger: perfekte Antwort setzt nextRoundDouble
+        if (relicSystem.hasRelic('perfectionist_echo') && timer.timeLeft >= getTimerDuration() - 1) {
+          setNextRoundDouble(true);
+          tickRelic('perfectionist_echo');
+        }
+
+        // Meta-Relic visual flashes
+        if (relicSystem.hasRelic('snowball')) flashRelic('snowball');
+        if (relicSystem.hasRelic('risk_reward')) tickRelic('risk_reward');
+        if (relicSystem.hasRelic('echo') && totalPoints > basePoints) flashRelic('echo');
+        if (relicSystem.hasRelic('amplifier') && totalPoints > basePoints) tickRelic('amplifier');
+        if (relicSystem.hasRelic('collector_bonus')) tickRelic('collector_bonus');
+        if (relicSystem.hasRelic('synergy_chain') && synergyEngine.activeSynergies.length > 0) flashRelic('synergy_chain');
+        if (relicSystem.hasRelic('perk_mastery') && perkSystem.activePerks.length > 0) tickRelic('perk_mastery');
+        if (relicSystem.hasRelic('tag_master')) tickRelic('tag_master');
+        if (relicSystem.hasRelic('level_power')) tickRelic('level_power');
+        if (relicSystem.hasRelic('overkill') && totalPoints > 100) flashRelic('overkill');
+        if (relicSystem.hasRelic('last_stand') && lives === 1) flashRelic('last_stand');
+        if (relicSystem.hasRelic('chain_reaction') && (ironWillActive || comboMultiplier > 1.15)) flashRelic('chain_reaction');
+        if (relicSystem.hasRelic('synergy_amp') && synergyEngine.activeSynergies.length > 0) tickRelic('synergy_amp');
 
         // Scholar-Synergy: XP-Schwelle 20% niedriger
         const scholarMult = synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1;
@@ -383,12 +514,21 @@ export default function Game({
           achievements.trackShieldSave();
         } else {
           wrongCountRef.current++;
-          streak.resetStreak();
+          // Unstoppable (Synergy) → Streak Shield (Relic) → Normal Reset
+          if (synergyEngine.hasSynergy('unstoppable')) {
+            // Streak bleibt unberührt
+          } else if (relicSystem.hasRelic('streak_shield')) {
+            const preserved = Math.floor(streak.streak * (relicSystem.getRelicValue('streak_preservation') ?? 0.5));
+            streak.setStreakValue(preserved);
+            flashRelic('streak_shield');
+          } else {
+            streak.resetStreak();
+          }
           achievements.trackWrongAnswer();
           // Iron Will: nächste richtige Antwort gibt 3x Score
           if (relicSystem.hasRelic('iron_will')) setIronWillActive(true);
-          // Combo Master Reset bei Fehler
-          if (relicSystem.hasRelic('combo_master')) setComboMultiplier(1);
+          // Combo Master Reset bei Fehler (außer Unstoppable)
+          if (relicSystem.hasRelic('combo_master') && !synergyEngine.hasSynergy('unstoppable')) setComboMultiplier(1);
 
           const remainingLives = lives - 1;
           setLives(remainingLives);
@@ -414,9 +554,9 @@ export default function Game({
         }
       }
 
-      perkSystem.decrementPerkDurations();
+      perkSystem.decrementPerkDurations(relicSystem.hasRelic('perk_recycler'));
     },
-    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, flashRelic, tickRelic]
+    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic]
   );
 
   // Update handleChoiceRef when handleChoice changes
@@ -495,51 +635,34 @@ export default function Game({
     }
   }, [currentRound, achievements, perkSystem, cardLoader, relicSystem, setLives, flashRelic, tickRelic]);
 
-  const handlePerkSelect = useCallback(async (perk) => {
+  const handlePerkSelect = useCallback(async (perk, keepOpen = false) => {
     console.log('[Perk]', perk.name, `(${perk.id})`, perk.tags ?? []);
-    // Wenn es ein Filter-Perk ist, lade sofort neue Karten mit dem neuen Filter
+    const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
+    const hasUpgradeMaster = relicSystem.hasRelic('upgrade_master');
+
     if (perk.type === 'filter') {
-      // Berechne die neuen Filter BEVOR selectPerk aufgerufen wird
       const currentFilterPerks = perkSystem.getActiveFilterPerks();
-      
-      // Filtere alte Perks des gleichen Filtertyps raus (nur ein Filter pro Typ)
-      const otherFilterPerks = currentFilterPerks.filter(
-        p => p.filterType !== perk.filterType
-      );
-      
-      // Füge das neue Perk hinzu
+      const otherFilterPerks = currentFilterPerks.filter(p => p.filterType !== perk.filterType);
       const allFilterPerks = [...otherFilterPerks, perk];
-      
-      // Baue Filter-Objekt manuell auf
       const filters = {};
       allFilterPerks.forEach(filterPerk => {
-        if (filterPerk.filterType === 'color') {
-          filters.color = filterPerk.value;
-        } else if (filterPerk.filterType === 'cmc') {
-          filters.cmc = filterPerk.value;
-        } else if (filterPerk.filterType === 'border_color') {
-          filters.border_color = filterPerk.value;
-        } else if (filterPerk.filterType === 'rarity') {
-          filters.rarity = filterPerk.value;
-        }
+        if (filterPerk.filterType === 'color') filters.color = filterPerk.value;
+        else if (filterPerk.filterType === 'cmc') filters.cmc = filterPerk.value;
+        else if (filterPerk.filterType === 'border_color') filters.border_color = filterPerk.value;
+        else if (filterPerk.filterType === 'rarity') filters.rarity = filterPerk.value;
       });
-      
-      // Lade neue Karten direkt mit den Filtern
       const newCards = await cardLoader.preloadCards(filters);
-      
-      // Jetzt erst das Perk zum State hinzufügen
-      perkSystem.selectPerk(perk);
+      perkSystem.selectPerk(perk, { keepOpen, hasEternalFlame, hasUpgradeMaster });
       achievements.trackPerkCollected();
-      
-      // Verwende die frisch geladenen gefilterten Karten direkt
       await cardLoader.setNextPair(false, newCards);
     } else {
-      // Normale Perks ohne Filter
-      perkSystem.selectPerk(perk);
+      perkSystem.selectPerk(perk, { keepOpen, hasEternalFlame, hasUpgradeMaster });
       achievements.trackPerkCollected();
-      await cardLoader.setNextPair();
+      if (!keepOpen) {
+        await cardLoader.setNextPair();
+      }
     }
-  }, [perkSystem, achievements, cardLoader]);
+  }, [perkSystem, achievements, cardLoader, relicSystem]);
 
   // Level-Up-Pick: Relic → relicSystem, Item (Perk) → perkSystem, Upgrade → perkSystem
   // WICHTIG: Kein cardLoader.setNextPair() hier!
@@ -548,20 +671,17 @@ export default function Game({
   // Verhindert auch dass beide Modals gleichzeitig aktiv sind.
   const handleLevelUpSelect = useCallback((pick) => {
     console.log('[LevelUp]', pick.category.toUpperCase(), pick.name, `(${pick.id})`, pick.tags ?? []);
+    const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
+    const hasUpgradeMaster = relicSystem.hasRelic('upgrade_master');
     if (pick.category === 'relic') {
       relicSystem.addRelic(pick);
       achievements.trackRelicCollected();
-      // Glass Cannon: sofort auf 1 Leben reduzieren
-      if (pick.effect === 'glass_cannon') {
-        setLives(1);
-      }
+      if (pick.effect === 'glass_cannon') setLives(1);
     } else if (pick.category === 'item') {
-      // selectPerk setzt intern showPerkSelection=false — hier kein Problem,
-      // da PerkSelectionModal sowieso nicht offen ist
-      perkSystem.selectPerk(pick);
+      perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
       achievements.trackPerkCollected();
     } else if (pick.category === 'upgrade') {
-      perkSystem.selectPerk(pick);
+      perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
     }
     level.dismissLevelUp();
   }, [relicSystem, perkSystem, level, achievements, setLives]);
@@ -631,6 +751,7 @@ export default function Game({
     synergyEngine.reset();
     setComboMultiplier(1);
     setIronWillActive(false);
+    setNextRoundDouble(false);
     setFortressRegenCount(0);
     bestComboMultiplierRef.current = 1;
     achievements.resetGameStats();
@@ -905,7 +1026,7 @@ export default function Game({
         onSelect={handleLevelUpSelect}
       />
 
-      <PerkSelectionModal perks={perkSystem.availablePerks} onSelect={handlePerkSelect} show={perkSystem.showPerkSelection} />
+      <PerkSelectionModal perks={perkSystem.availablePerks} onSelect={handlePerkSelect} show={perkSystem.showPerkSelection} hasDoubleDip={relicSystem.hasRelic('double_dip')} />
 
       <SynergyToast synergy={synergyToast} onDismiss={() => setSynergyToast(null)} />
 

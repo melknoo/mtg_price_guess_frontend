@@ -2,15 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PERK_RARITY, PERK_CONFIG } from '../constants/perkDefinitions';
 
-export default function PerkSelectionModal({ perks, onSelect, show }) {
+export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip = false }) {
     const [isMinimized, setIsMinimized] = useState(false);
+    const [picksLeft, setPicksLeft] = useState(1);
 
     useEffect(() => {
-        // Whenever the modal is triggered again, ensure it starts expanded
         if (show) {
             setIsMinimized(false);
+            setPicksLeft(hasDoubleDip ? 2 : 1);
         }
-    }, [show]);
+    }, [show, hasDoubleDip]);
+
+    const handlePerkClick = (perk) => {
+        const newPicksLeft = picksLeft - 1;
+        setPicksLeft(newPicksLeft);
+        onSelect(perk, newPicksLeft > 0);
+    };
 
     if (!show || !perks || perks.length === 0) return null;
 
@@ -106,6 +113,16 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                 >
                                     You've mastered {PERK_CONFIG.ROUNDS_BETWEEN_PERKS} rounds! Time for an upgrade.
                                 </motion.p>
+                                {hasDoubleDip && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: 0.3 }}
+                                        className="mt-2 inline-flex items-center gap-2 bg-amber-500/20 border border-amber-400/50 rounded-full px-4 py-1"
+                                    >
+                                        <span className="text-amber-300 font-bold text-sm">✌️ Double Dip — {picksLeft} pick{picksLeft !== 1 ? 's' : ''} remaining</span>
+                                    </motion.div>
+                                )}
                             </div>
 
                             {/* Perk Cards */}
@@ -118,7 +135,7 @@ export default function PerkSelectionModal({ perks, onSelect, show }) {
                                         transition={{ delay: 0.08 * index }}
                                         whileHover={{ scale: 1.02, y: -4 }}
                                         whileTap={{ scale: 0.97 }}
-                                        onClick={() => onSelect(perk)}
+                                        onClick={() => handlePerkClick(perk)}
                                         className={`
                     relative cursor-pointer group
                     bg-gradient-to-br ${getRarityColor(perk.rarity)}

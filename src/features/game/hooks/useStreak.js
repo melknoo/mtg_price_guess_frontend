@@ -35,6 +35,10 @@ export const useStreak = () => {
     return Math.floor(streak / SCORE_CONFIG.STREAK_BONUS_DIVISOR) * SCORE_CONFIG.STREAK_BONUS_POINTS;
   }, [streak]);
 
+  const setStreakValue = useCallback((value) => {
+    setStreak(Math.max(0, Math.floor(value)));
+  }, []);
+
   const reset = useCallback(() => {
     setStreak(0);
     setBestStreak(0);
@@ -54,6 +58,7 @@ export const useStreak = () => {
     showStreakBonus,
     incrementStreak,
     resetStreak,
+    setStreakValue,
     calculateStreakBonus,
     getStreakColor,
     reset,
