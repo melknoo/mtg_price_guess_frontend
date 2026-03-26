@@ -83,8 +83,14 @@ function ScoreTooltip({ message, breakdown }) {
       <p className="text-xs font-bold text-gray-300 mb-2 border-b border-gray-600 pb-1">Score Breakdown</p>
       {breakdown.items.map((item, i) => (
         <div key={i} className="flex justify-between items-center text-xs py-0.5">
-          <span className={item.delta === 0 ? 'text-gray-500' : 'text-gray-300'}>{item.icon} {item.label}</span>
-          <span className={item.delta === 0 ? 'text-gray-500' : 'text-green-400 font-semibold'}>
+          <span className={item.delta === 0 ? 'text-gray-500' : 'text-gray-300'}>
+            {item.isMult
+              ? <span className="text-blue-400 font-bold mr-0.5">×</span>
+              : <span className="text-green-500/60 mr-0.5">+</span>
+            }
+            {item.icon} {item.label}
+          </span>
+          <span className={item.delta === 0 ? 'text-gray-500' : item.isMult ? 'text-blue-300 font-semibold' : 'text-green-400 font-semibold'}>
             {item.delta === 0 ? '—' : `+${item.delta}`}
           </span>
         </div>
@@ -289,9 +295,9 @@ export default function Game({
     const breakdown = [];
     let fakeBonus = 0; // Tracking für Cheater: Bonus der durch gefakte Bedingungen entstand
 
-    const snap = (label, icon, before) => {
+    const snap = (label, icon, before, isMult = false) => {
       const delta = Math.round(finalPoints - before);
-      if (Math.abs(delta) >= 1) breakdown.push({ label, icon, delta });
+      if (Math.abs(delta) >= 1) breakdown.push({ label, icon, delta, isMult });
     };
 
     // Hermit: alle Synergy-Checks deaktiviert, dafür Relic-Boni ×2 am Ende
@@ -303,7 +309,7 @@ export default function Game({
     // --- Perk-Effekte ---
     const multiplierPerk = perkSystem.activePerks.find(p => p.effect === 'point_multiplier');
     const multiplier = multiplierPerk?.value ?? null;
-    if (multiplier) { const b = finalPoints; finalPoints *= multiplier; snap(multiplierPerk.name, multiplierPerk.icon, b); }
+    if (multiplier) { const b = finalPoints; finalPoints *= multiplier; snap(multiplierPerk.name, multiplierPerk.icon, b, true); }
     const flatPerk = perkSystem.activePerks.find(p => p.effect === 'flat_bonus');
     const flatBonus = flatPerk?.value ?? null;
     if (flatBonus) { const b = finalPoints; finalPoints += flatBonus; snap(flatPerk.name, flatPerk.icon, b); }
@@ -319,7 +325,7 @@ export default function Game({
 
     // --- Relic-Effekte ---
     if (relicSystem.hasRelic('glass_cannon')) {
-      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('glass_cannon'); snap('Glass Cannon', '💥', b);
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('glass_cannon'); snap('Glass Cannon', '💥', b, true);
     }
     if (relicSystem.hasRelic('treasure_hunter')) {
       const perkBonusOnly = finalPoints - basePoints;
@@ -330,20 +336,20 @@ export default function Game({
       }
     }
     if (ironWillActive && relicSystem.hasRelic('iron_will')) {
-      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('comeback_bonus'); snap('Iron Will', '🛡️', b);
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('comeback_bonus'); snap('Iron Will', '🛡️', b, true);
     }
     if (comboMultiplier > 1) {
-      const b = finalPoints; finalPoints *= comboMultiplier; snap(`Combo ×${comboMultiplier.toFixed(2)}`, '🔗', b);
+      const b = finalPoints; finalPoints *= comboMultiplier; snap(`Combo ×${comboMultiplier.toFixed(2)}`, '🔗', b, true);
     }
 
     // --- Synergy-Effekte (Hermit deaktiviert diese) ---
     if (!hermitActive && synergyEngine.hasSynergy('gold_rush')) {
-      const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('permanent_score_mult'); snap('Gold Rush', '💎💎', b);
+      const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('permanent_score_mult'); snap('Gold Rush', '💎💎', b, true);
     }
     // Berserker: effectiveLives — Deaths Mask macht es permanent aktiv
     const effectiveLives = relicSystem.hasRelic('deaths_mask') ? 1 : lives;
     if (!hermitActive && synergyEngine.hasSynergy('berserker') && effectiveLives === 1) {
-      const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('low_hp_bonus'); snap('Berserker', '😤', b);
+      const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('low_hp_bonus'); snap('Berserker', '😤', b, true);
       if (lives !== 1) fakeBonus += finalPoints - b; // Deaths Mask triggered this
     }
 
@@ -357,11 +363,11 @@ export default function Game({
       snap('Amplifier', '📡', b);
     }
 
-    // Alchemist: Flat-Boni → Multiplikator
+    // Alchemist: Flat-Boni (Perks) → Multiplikator
     if (relicSystem.hasRelic('alchemist')) {
       const totalFlat = flatBonus || 0;
       if (totalFlat > 0) {
-        const b = finalPoints; finalPoints *= 1 + (totalFlat * relicSystem.getRelicValue('flat_to_mult')); snap('Alchemist', '⚗️', b);
+        const b = finalPoints; finalPoints *= 1 + (totalFlat * relicSystem.getRelicValue('flat_to_mult')); snap('Alchemist', '⚗️', b, true);
       }
     }
 
@@ -373,7 +379,7 @@ export default function Game({
         const timeUsed = Math.max(0, maxTime - timeLeft);
         const riskFactor = 1 + (timeUsed / maxTime) * (relicSystem.getRelicValue('time_risk_mult') - 1);
         finalPoints *= riskFactor;
-        snap('Risk & Reward', '🎲', b);
+        snap('Risk & Reward', '🎲', b, true);
       }
     }
 
@@ -385,7 +391,7 @@ export default function Game({
         ? snowballMult * (synergyEngine.getSynergyValue('triple_snowball') ?? 3)
         : snowballMult;
       finalPoints *= 1 + (currentRound * finalMult);
-      snap((!hermitActive && synergyEngine.hasSynergy('infinite_engine')) ? 'Snowball ∞' : 'Snowball', '☃️', b);
+      snap((!hermitActive && synergyEngine.hasSynergy('infinite_engine')) ? 'Snowball ∞' : 'Snowball', '☃️', b, true);
     }
 
     // Collector Bonus: +15 flat pro aktivem Relic
@@ -403,28 +409,28 @@ export default function Game({
         (item.tags || []).forEach(tag => uniqueTags.add(tag));
       });
       finalPoints *= 1 + (uniqueTags.size * relicSystem.getRelicValue('unique_tag_mult'));
-      snap('Tag Master', '🏷️', b);
+      snap('Tag Master', '🏷️', b, true);
     }
 
     // Synergy Chain: +0.25× pro aktive Synergy
     if (relicSystem.hasRelic('synergy_chain')) {
       const b = finalPoints;
       const synCount = hermitActive ? 0 : synergyEngine.activeSynergies.length;
-      if (synCount > 0) { finalPoints *= 1 + (synCount * relicSystem.getRelicValue('per_synergy_mult')); snap('Synergy Chain', '⛓️', b); }
+      if (synCount > 0) { finalPoints *= 1 + (synCount * relicSystem.getRelicValue('per_synergy_mult')); snap('Synergy Chain', '⛓️', b, true); }
     }
 
     // Perk Mastery: +0.15× pro aktiven Perk
     if (relicSystem.hasRelic('perk_mastery')) {
       const b = finalPoints;
       finalPoints *= 1 + (perkSystem.activePerks.length * relicSystem.getRelicValue('per_perk_mult'));
-      snap('Perk Mastery', '🎓', b);
+      snap('Perk Mastery', '🎓', b, true);
     }
 
     // Level Power: +2% pro Level
     if (relicSystem.hasRelic('level_power')) {
       const b = finalPoints;
       finalPoints *= 1 + (level.level * relicSystem.getRelicValue('level_scaling'));
-      snap('Level Power', '📈', b);
+      snap('Level Power', '📈', b, true);
     }
 
     // Overkill: Score über Threshold → überschüssige Punkte verdoppelt
@@ -439,33 +445,41 @@ export default function Game({
 
     // Last Stand: effectiveLives — Deaths Mask macht es permanent aktiv
     if (relicSystem.hasRelic('last_stand') && effectiveLives === 1) {
-      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('last_stand_double'); snap('Last Stand', '⚔️', b);
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('last_stand_double'); snap('Last Stand', '⚔️', b, true);
       if (lives !== 1) fakeBonus += finalPoints - b; // Deaths Mask triggered this
     }
 
     // Chain Reaction: Iron Will oder Combo aktiv → +50% Bonus
     if (relicSystem.hasRelic('chain_reaction') && (ironWillActive || comboMultiplier > 1.15)) {
-      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('chain_reaction'); snap('Chain Reaction', '💥⚡', b);
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('chain_reaction'); snap('Chain Reaction', '💥⚡', b, true);
     }
 
     // Synergy Amplifier: +10% pro aktive Synergy (kein Hermit-Block, da Relic-basiert)
     if (relicSystem.hasRelic('synergy_amp') && !hermitActive && synergyEngine.activeSynergies.length > 0) {
       const b = finalPoints;
       finalPoints *= 1 + (synergyEngine.activeSynergies.length * relicSystem.getRelicValue('synergy_multiplier'));
-      snap('Synergy Amp', '🔗📡', b);
+      snap('Synergy Amp', '🔗📡', b, true);
     }
 
     // Mirror: Bei mind. 2 Multiplikatoren → +30% auf Gesamt
     if (relicSystem.hasRelic('mirror')) {
-      const multCount = [multiplier, comboMultiplier > 1, ironWillActive, effectiveLives === 1 && relicSystem.hasRelic('last_stand')].filter(Boolean).length;
+      const multCount = [
+        multiplier,
+        comboMultiplier > 1,
+        ironWillActive && relicSystem.hasRelic('iron_will'),
+        effectiveLives === 1 && relicSystem.hasRelic('last_stand'),
+        !hermitActive && synergyEngine.hasSynergy('gold_rush'),
+        !hermitActive && synergyEngine.hasSynergy('berserker') && effectiveLives === 1,
+        relicSystem.hasRelic('glass_cannon'),
+      ].filter(Boolean).length;
       if (multCount >= 2) {
-        const b = finalPoints; finalPoints *= relicSystem.getRelicValue('equalize_multipliers'); snap('Mirror', '🪞', b);
+        const b = finalPoints; finalPoints *= relicSystem.getRelicValue('equalize_multipliers'); snap('Mirror', '🪞', b, true);
       }
     }
 
     // Masochist Synergy: permanenter Damage-Multiplikator
     if (masochistMult > 0) {
-      const b = finalPoints; finalPoints *= 1 + masochistMult; snap('Masochist', '🩸🩸', b);
+      const b = finalPoints; finalPoints *= 1 + masochistMult; snap('Masochist', '🩸🩸', b, true);
     }
 
     // Sacrifice Reward Synergy: +50% pro Sacrifice-Relic
@@ -474,7 +488,7 @@ export default function Game({
       if (sacrificeRelics > 0) {
         const b = finalPoints;
         finalPoints *= 1 + (sacrificeRelics * (synergyEngine.getSynergyValue('per_sacrifice_mult') ?? 0.5));
-        snap('Sacrifice Reward', '🔥💀', b);
+        snap('Sacrifice Reward', '🔥💀', b, true);
       }
     }
 
