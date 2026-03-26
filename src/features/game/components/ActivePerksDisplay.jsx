@@ -106,8 +106,8 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
 
   return (
     <>
-      {/* Desktop: Fixed Sidebar (scrollable, full height) */}
-      <div className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col">
+      {/* Desktop: Fixed Sidebar (scrollable, full height) — z-[55] keeps it above modal backdrop (z-50) */}
+      <div className="hidden md:flex fixed left-0 top-0 bottom-0 z-[55] flex-col">
         <div className="bg-[#0d1b3e]/95 backdrop-blur-sm p-2 shadow-2xl border-r-2 border-amber-400/40 flex flex-col h-full">
           <h3 className="text-[10px] font-bold text-amber-300/70 mb-2 text-center whitespace-nowrap shrink-0 uppercase tracking-widest">
             Boni
