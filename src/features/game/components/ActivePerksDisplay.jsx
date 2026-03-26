@@ -268,10 +268,10 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: -100, opacity: 0 }}
-      whileHover={{ x: 10, scale: 1.05 }}
+      whileHover={{ filter: 'brightness(1.3)' }}
       onHoverStart={handleMouseEnter}
       onHoverEnd={handleMouseLeave}
-      className="relative"
+      className="relative cursor-pointer"
     >
       {/* Expandierender Glow-Ring (Trigger) */}
       <AnimatePresence>
