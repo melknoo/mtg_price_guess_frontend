@@ -18,6 +18,7 @@ import SuggestionModal from "./features/suggestions/components/SuggestionModal";
 import { submitSuggestion } from "./features/suggestions/api/suggestionApi";
 import AchievementsDisplay from "./features/game/components/AchievementsDisplay";
 import StatsDisplay from "./features/game/components/StatsDisplay";
+import CodexPage from "./features/game/components/CodexPage";
 
 function AppContent() {
   const { user, logout, refreshUser, setUser } = useAuth();
@@ -250,7 +251,7 @@ function AppContent() {
 
             {/* Secondary Actions */}
             {!user?.guest && (
-              <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="grid grid-cols-2 gap-2 mb-2">
                 <button
                   onClick={() => setScreen("stats")}
                   className="bg-slate-600/70 hover:bg-slate-500/70 border border-slate-400/30 rounded-xl py-3 text-white text-sm font-medium transition-all active:scale-95"
@@ -262,6 +263,16 @@ function AppContent() {
                   className="bg-amber-700/70 hover:bg-amber-600/70 border border-amber-500/30 rounded-xl py-3 text-white text-sm font-medium transition-all active:scale-95"
                 >
                   🏆 Trophies
+                </button>
+              </div>
+            )}
+            {!user?.guest && (
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <button
+                  onClick={() => setScreen("codex")}
+                  className="bg-indigo-700/70 hover:bg-indigo-600/70 border border-indigo-500/30 rounded-xl py-3 text-white text-sm font-medium transition-all active:scale-95"
+                >
+                  📖 Codex
                 </button>
                 <button
                   onClick={() => setShowSuggestionModal(true)}
@@ -318,6 +329,12 @@ function AppContent() {
           <StatsDisplay onBack={() => setScreen("menu")} />
         )}
 
+        {screen === "codex" && (
+          <div className="w-full flex-1 min-h-0 flex flex-col pt-2 pb-4" style={{ maxHeight: 'calc(100dvh - 72px)' }}>
+            <CodexPage onBack={() => setScreen("menu")} />
+          </div>
+        )}
+
         {screen === "game" && (
           <Game
             key={gameKey}
@@ -334,7 +351,7 @@ function AppContent() {
         )}
       </div>
 
-      {screen !== "game" && screen !== "daily-challenge" && screen !== "stats" && <Footer onNavigate={handleFooterNavigation} />}
+      {screen !== "game" && screen !== "daily-challenge" && screen !== "stats" && screen !== "codex" && <Footer onNavigate={handleFooterNavigation} />}
       <CookieConsent />
       <SuggestionModal
         isOpen={showSuggestionModal}
