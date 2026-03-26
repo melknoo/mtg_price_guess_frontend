@@ -7,6 +7,8 @@ export const PERK_TAGS = {
     DEFENSE: 'defense',
     XP: 'xp',
     LUCK: 'luck',
+    FAKE: 'fake',
+    SACRIFICE: 'sacrifice',
 };
 
 export const PERK_TYPES = {

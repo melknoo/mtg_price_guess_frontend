@@ -13,12 +13,14 @@ function getContributors(synergy, relics, perks) {
 }
 
 const TAG_STYLES = {
-  speed:   { bg: 'bg-blue-500/40',   text: 'text-blue-200',   label: 'speed' },
-  defense: { bg: 'bg-green-500/40',  text: 'text-green-200',  label: 'def' },
-  score:   { bg: 'bg-yellow-500/40', text: 'text-yellow-200', label: 'score' },
-  streak:  { bg: 'bg-orange-500/40', text: 'text-orange-200', label: 'streak' },
-  xp:      { bg: 'bg-purple-500/40', text: 'text-purple-200', label: 'xp' },
-  luck:    { bg: 'bg-pink-500/40',   text: 'text-pink-200',   label: 'luck' },
+  speed:     { bg: 'bg-blue-500/40',   text: 'text-blue-200',   label: 'speed' },
+  defense:   { bg: 'bg-green-500/40',  text: 'text-green-200',  label: 'def' },
+  score:     { bg: 'bg-yellow-500/40', text: 'text-yellow-200', label: 'score' },
+  streak:    { bg: 'bg-orange-500/40', text: 'text-orange-200', label: 'streak' },
+  xp:        { bg: 'bg-purple-500/40', text: 'text-purple-200', label: 'xp' },
+  luck:      { bg: 'bg-pink-500/40',   text: 'text-pink-200',   label: 'luck' },
+  fake:      { bg: 'bg-cyan-500/40',   text: 'text-cyan-200',   label: 'fake' },
+  sacrifice: { bg: 'bg-red-500/40',    text: 'text-red-200',    label: 'sacr' },
 };
 
 function TagChips({ tags, small = false }) {

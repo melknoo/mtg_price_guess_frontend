@@ -6,8 +6,10 @@ export const useRelicSystem = () => {
 
   const addRelic = useCallback((relic) => {
     setActiveRelics(prev => {
-      // Kein Duplikat desselben Relics
       if (prev.some(r => r.id === relic.id)) return prev;
+      // Minimalist: max. 3 Relics (außer Minimalist selbst kann immer hinzugefügt werden)
+      const hasMinimalist = prev.some(r => r.effect === 'max_relics_triple');
+      if (hasMinimalist && relic.effect !== 'max_relics_triple' && prev.length >= 3) return prev;
       return [...prev, relic];
     });
   }, []);
@@ -26,6 +28,10 @@ export const useRelicSystem = () => {
     return activeRelics.filter(r => r.tags?.includes(tag));
   }, [activeRelics]);
 
+  const consumeRelic = useCallback((id) => {
+    setActiveRelics(prev => prev.filter(r => r.id !== id));
+  }, []);
+
   const reset = useCallback(() => {
     setActiveRelics([]);
   }, []);
@@ -36,6 +42,7 @@ export const useRelicSystem = () => {
     hasRelic,
     getRelicValue,
     getRelicsByTag,
+    consumeRelic,
     reset,
   };
 };

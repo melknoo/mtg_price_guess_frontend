@@ -10,16 +10,20 @@ export const useSynergyEngine = (activeRelics, activePerks, onNewSynergy) => {
 
   // Zählt alle Tags aus aktiven Relics + Perks zusammen
   // upgradeCount sorgt dafür, dass upgegradete Perks mehrfach zählen
+  // Phantom Power (fake_double_tags): Fake-Items zählen doppelt, sobald die Synergy permanent ist
   const tagCounts = useMemo(() => {
     const counts = {};
+    const hasPhantomPower = permanentSynergies.some(s => s.effect === 'fake_double_tags');
     [...activeRelics, ...activePerks].forEach(item => {
       const weight = item.upgradeCount || 1;
+      const isFakeItem = (item.tags || []).includes('fake');
+      const finalWeight = (hasPhantomPower && isFakeItem) ? weight * 2 : weight;
       (item.tags || []).forEach(tag => {
-        counts[tag] = (counts[tag] || 0) + weight;
+        counts[tag] = (counts[tag] || 0) + finalWeight;
       });
     });
     return counts;
-  }, [activeRelics, activePerks]);
+  }, [activeRelics, activePerks, permanentSynergies]);
 
   // Matcht tagCounts gegen alle SYNERGIES — liefert aktuell erfüllte Synergien
   const currentSynergies = useMemo(() => {
