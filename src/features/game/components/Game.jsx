@@ -18,7 +18,6 @@ import {
 } from "../utils/cardComparison";
 import {
   calculateTimeBonus,
-  formatScoreMessage,
 } from "../utils/scoreCalculator";
 import { GAME_CONFIG, SCORE_CONFIG } from "../../../shared/utils/constants";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,6 +31,38 @@ import LevelUpModal from "./LevelUpModal";
 import SynergyToast from "./SynergyToast";
 import ActivePerksDisplay from "./ActivePerksDisplay";
 import RegisterWithScore from "../../auth/components/RegisterWithScore";
+
+function ScoreTooltip({ message, breakdown }) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  return (
+    <div
+      className="relative group cursor-help"
+      onClick={() => setShowTooltip(s => !s)}
+    >
+      <p className="text-base sm:text-xl font-semibold text-green-400 transition-all duration-500 sm:text-center underline decoration-dotted decoration-gray-500">
+        {message}
+      </p>
+      <div
+        className={`absolute bottom-full left-0 mb-2 w-64 bg-gray-900/95 border border-gray-600 rounded-xl p-3 z-50 shadow-2xl transition-opacity duration-150 pointer-events-none
+          ${showTooltip ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+      >
+        <p className="text-xs font-bold text-gray-300 mb-2 border-b border-gray-600 pb-1">Score Breakdown</p>
+        {breakdown.items.map((item, i) => (
+          <div key={i} className="flex justify-between items-center text-xs py-0.5">
+            <span className={item.delta === 0 ? 'text-gray-500' : 'text-gray-300'}>{item.icon} {item.label}</span>
+            <span className={item.delta === 0 ? 'text-gray-500' : 'text-green-400 font-semibold'}>
+              {item.delta === 0 ? '—' : `+${item.delta}`}
+            </span>
+          </div>
+        ))}
+        <div className="flex justify-between items-center text-sm font-bold mt-2 pt-2 border-t border-gray-600">
+          <span className="text-white">Total</span>
+          <span className="text-green-400">+{breakdown.total}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Game({
   score,
@@ -52,6 +83,7 @@ export default function Game({
   const [correctIndex, setCorrectIndex] = useState(null);
   const [showPrices, setShowPrices] = useState(false);
   const [message, setMessage] = useState("");
+  const [scoreBreakdown, setScoreBreakdown] = useState(null);
   const [imagesLoaded, setImagesLoaded] = useState([false, false]);
   const [currentRound, setCurrentRound] = useState(1);
   // Roguelike State
@@ -180,59 +212,68 @@ export default function Game({
 
   const applyPerkEffects = useCallback((basePoints, timeLeft) => {
     let finalPoints = basePoints;
+    const breakdown = [];
+
+    const snap = (label, icon, before) => {
+      const delta = Math.round(finalPoints - before);
+      if (Math.abs(delta) >= 1) breakdown.push({ label, icon, delta });
+    };
 
     // --- Perk-Effekte ---
-    const multiplier = perkSystem.getPerkValue("point_multiplier");
-    if (multiplier) finalPoints *= multiplier;
-    const flatBonus = perkSystem.getPerkValue("flat_bonus");
-    if (flatBonus) finalPoints += flatBonus;
+    const multiplierPerk = perkSystem.activePerks.find(p => p.effect === 'point_multiplier');
+    const multiplier = multiplierPerk?.value ?? null;
+    if (multiplier) { const b = finalPoints; finalPoints *= multiplier; snap(multiplierPerk.name, multiplierPerk.icon, b); }
+    const flatPerk = perkSystem.activePerks.find(p => p.effect === 'flat_bonus');
+    const flatBonus = flatPerk?.value ?? null;
+    if (flatBonus) { const b = finalPoints; finalPoints += flatBonus; snap(flatPerk.name, flatPerk.icon, b); }
     const currentDuration = getTimerDuration();
     if (timeLeft >= currentDuration - 1) {
-      const perfectBonus = perkSystem.getPerkValue("perfect_bonus");
-      if (perfectBonus) finalPoints += perfectBonus;
+      const perfectPerk = perkSystem.activePerks.find(p => p.effect === 'perfect_bonus');
+      const perfectBonus = perfectPerk?.value ?? null;
+      if (perfectBonus) { const b = finalPoints; finalPoints += perfectBonus; snap(perfectPerk.name, perfectPerk.icon, b); }
     }
 
     // --- Relic-Effekte ---
     if (relicSystem.hasRelic('glass_cannon')) {
-      finalPoints *= relicSystem.getRelicValue('glass_cannon');
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('glass_cannon'); snap('Glass Cannon', '💥', b);
     }
     if (relicSystem.hasRelic('treasure_hunter')) {
       const perkBonusOnly = finalPoints - basePoints;
       if (perkBonusOnly > 0) {
+        const b = finalPoints;
         finalPoints += perkBonusOnly * (relicSystem.getRelicValue('perk_bonus_amplifier') - 1);
+        snap('Treasure Hunter', '🗝️', b);
       }
     }
     if (ironWillActive && relicSystem.hasRelic('iron_will')) {
-      finalPoints *= relicSystem.getRelicValue('comeback_bonus');
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('comeback_bonus'); snap('Iron Will', '🛡️', b);
     }
     if (comboMultiplier > 1) {
-      finalPoints *= comboMultiplier;
+      const b = finalPoints; finalPoints *= comboMultiplier; snap(`Combo ×${comboMultiplier.toFixed(2)}`, '🔗', b);
     }
 
     // --- Synergy-Effekte ---
     if (synergyEngine.hasSynergy('gold_rush')) {
-      finalPoints *= synergyEngine.getSynergyValue('permanent_score_mult');
+      const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('permanent_score_mult'); snap('Gold Rush', '💎💎', b);
     }
     if (synergyEngine.hasSynergy('berserker') && lives === 1) {
-      finalPoints *= synergyEngine.getSynergyValue('low_hp_bonus');
+      const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('low_hp_bonus'); snap('Berserker', '😤', b);
     }
-
-    // Level-Bonus: +1 Punkt pro Level
-    finalPoints += level.level;
 
     // === META-RELIC EFFEKTE ===
 
     // Amplifier: Relic-Boni 50% stärker (wirkt auf alles was bisher multipliziert wurde)
     if (relicSystem.hasRelic('amplifier')) {
-      const amplifiedExtra = (finalPoints - basePoints) * (relicSystem.getRelicValue('mult_amplifier') - 1);
-      finalPoints += amplifiedExtra;
+      const b = finalPoints;
+      finalPoints += (finalPoints - basePoints) * (relicSystem.getRelicValue('mult_amplifier') - 1);
+      snap('Amplifier', '📡', b);
     }
 
     // Alchemist: Flat-Boni → Multiplikator
     if (relicSystem.hasRelic('alchemist')) {
       const totalFlat = flatBonus || 0;
       if (totalFlat > 0) {
-        finalPoints *= 1 + (totalFlat * relicSystem.getRelicValue('flat_to_mult'));
+        const b = finalPoints; finalPoints *= 1 + (totalFlat * relicSystem.getRelicValue('flat_to_mult')); snap('Alchemist', '⚗️', b);
       }
     }
 
@@ -240,79 +281,97 @@ export default function Game({
     if (relicSystem.hasRelic('risk_reward')) {
       const maxTime = currentDuration;
       if (maxTime > 0) {
+        const b = finalPoints;
         const timeUsed = Math.max(0, maxTime - timeLeft);
         const riskFactor = 1 + (timeUsed / maxTime) * (relicSystem.getRelicValue('time_risk_mult') - 1);
         finalPoints *= riskFactor;
+        snap('Risk & Reward', '🎲', b);
       }
     }
 
     // Snowball: +0.1× pro gespielte Runde (× 3 mit Infinite Engine Synergy)
     if (relicSystem.hasRelic('snowball')) {
+      const b = finalPoints;
       const snowballMult = relicSystem.getRelicValue('round_scaling_mult');
       const finalMult = synergyEngine.hasSynergy('infinite_engine')
         ? snowballMult * (synergyEngine.getSynergyValue('triple_snowball') ?? 3)
         : snowballMult;
       finalPoints *= 1 + (currentRound * finalMult);
+      snap(synergyEngine.hasSynergy('infinite_engine') ? 'Snowball ∞' : 'Snowball', '☃️', b);
     }
 
     // Collector Bonus: +15 flat pro aktivem Relic
     if (relicSystem.hasRelic('collector_bonus')) {
+      const b = finalPoints;
       finalPoints += relicSystem.activeRelics.length * relicSystem.getRelicValue('per_relic_flat_bonus');
+      snap('Collector Bonus', '🏛️', b);
     }
 
     // Tag Master: +0.1× pro einzigartigen Tag
     if (relicSystem.hasRelic('tag_master')) {
+      const b = finalPoints;
       const uniqueTags = new Set();
       [...relicSystem.activeRelics, ...perkSystem.activePerks].forEach(item => {
         (item.tags || []).forEach(tag => uniqueTags.add(tag));
       });
       finalPoints *= 1 + (uniqueTags.size * relicSystem.getRelicValue('unique_tag_mult'));
+      snap('Tag Master', '🏷️', b);
     }
 
     // Synergy Chain: +0.25× pro aktive Synergy
     if (relicSystem.hasRelic('synergy_chain')) {
+      const b = finalPoints;
       finalPoints *= 1 + (synergyEngine.activeSynergies.length * relicSystem.getRelicValue('per_synergy_mult'));
+      snap('Synergy Chain', '⛓️', b);
     }
 
     // Perk Mastery: +0.15× pro aktiven Perk
     if (relicSystem.hasRelic('perk_mastery')) {
+      const b = finalPoints;
       finalPoints *= 1 + (perkSystem.activePerks.length * relicSystem.getRelicValue('per_perk_mult'));
+      snap('Perk Mastery', '🎓', b);
     }
 
     // Level Power: +2% pro Level
     if (relicSystem.hasRelic('level_power')) {
+      const b = finalPoints;
       finalPoints *= 1 + (level.level * relicSystem.getRelicValue('level_scaling'));
+      snap('Level Power', '📈', b);
     }
 
     // Overkill: Score über Threshold → überschüssige Punkte verdoppelt
     if (relicSystem.hasRelic('overkill')) {
       const threshold = relicSystem.getRelicValue('overkill_bonus');
       if (finalPoints > threshold) {
+        const b = finalPoints;
         finalPoints = threshold + (finalPoints - threshold) * 2;
+        snap('Overkill', '💀', b);
       }
     }
 
     // Last Stand: Bei 1 Leben alle Multiplikatoren nochmal
     if (relicSystem.hasRelic('last_stand') && lives === 1) {
-      finalPoints *= relicSystem.getRelicValue('last_stand_double');
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('last_stand_double'); snap('Last Stand', '⚔️', b);
     }
 
     // Chain Reaction: Iron Will oder Combo aktiv → +50% Bonus
     if (relicSystem.hasRelic('chain_reaction') && (ironWillActive || comboMultiplier > 1.15)) {
-      finalPoints *= relicSystem.getRelicValue('chain_reaction');
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('chain_reaction'); snap('Chain Reaction', '💥⚡', b);
     }
 
     // Synergy Amplifier: +10% pro aktive Synergy
     if (relicSystem.hasRelic('synergy_amp') && synergyEngine.activeSynergies.length > 0) {
+      const b = finalPoints;
       finalPoints *= 1 + (synergyEngine.activeSynergies.length * relicSystem.getRelicValue('synergy_multiplier'));
+      snap('Synergy Amp', '🔗📡', b);
     }
 
     // Echo: Relic-Boni werden verdoppelt (alles über basePoints nochmal addiert)
     if (relicSystem.hasRelic('echo')) {
-      finalPoints += (finalPoints - basePoints);
+      const b = finalPoints; finalPoints += (finalPoints - basePoints); snap('Echo', '🔁', b);
     }
 
-    return Math.floor(finalPoints);
+    return { total: Math.floor(finalPoints), breakdown };
   }, [perkSystem, getTimerDuration, relicSystem, ironWillActive, comboMultiplier, synergyEngine, lives, level, currentRound]);
 
   const handleChoice = useCallback(
@@ -345,11 +404,15 @@ export default function Game({
 
         const basePoints = timeBonus + streakBonus;
         const hadDoublePoints = !!perkSystem.getPerkValue("point_multiplier");
-        let totalPoints = applyPerkEffects(basePoints, timer.timeLeft);
+        const { total: applied, breakdown: perkBreakdown } = applyPerkEffects(basePoints, timer.timeLeft);
+        let totalPoints = applied;
+        const extraBreakdown = [];
 
         // Perfectionist Echo: nächste-Runde-Verdopplung anwenden
         if (nextRoundDouble) {
+          const _nrd = totalPoints;
           totalPoints *= relicSystem.getRelicValue('perfect_next_double') ?? 2;
+          extraBreakdown.push({ label: 'Perfectionist Echo', icon: '✨🔁', delta: Math.round(totalPoints - _nrd) });
           setNextRoundDouble(false);
           flashRelic('perfectionist_echo');
         }
@@ -416,14 +479,18 @@ export default function Game({
           const effectiveThreshold = Math.floor(level.xpToNextLevel * scholarMult);
           const overflow = Math.max(0, level.xp + xpGained - effectiveThreshold);
           if (overflow > 0) {
-            totalPoints += overflow * (relicSystem.getRelicValue('xp_to_score') ?? 2);
+            const xpBonus = overflow * (relicSystem.getRelicValue('xp_to_score') ?? 2);
+            totalPoints += xpBonus;
+            extraBreakdown.push({ label: 'XP Converter', icon: '💱', delta: xpBonus });
             flashRelic('xp_converter');
           }
         }
 
         // Jackpot Synergy: jede 10. richtige Antwort → ×10 Score
         if (synergyEngine.hasSynergy('jackpot') && correctCountRef.current % 10 === 0) {
+          const _jp = totalPoints;
           totalPoints *= synergyEngine.getSynergyValue('jackpot') ?? 10;
+          extraBreakdown.push({ label: 'Jackpot!', icon: '🎰🎰', delta: Math.round(totalPoints - _jp) });
         }
 
         // Perfectionist Echo trigger: perfekte Antwort setzt nextRoundDouble
@@ -464,15 +531,18 @@ export default function Game({
         achievements.trackScore(newScore);
         if (relicSystem.hasRelic('glass_cannon')) achievements.trackGlassCannonScore(newScore);
 
-        let scoreMessage = formatScoreMessage(timeBonus, streakBonus);
-        if (totalPoints > basePoints) {
-          scoreMessage += ` 🎁 Perk Bonus: +${totalPoints - basePoints}`;
-        }
+        // Build and store score breakdown for hover tooltip
+        const baseBreakdown = [];
+        if (timeBonus > 0) baseBreakdown.push({ label: 'Zeit-Bonus', icon: '⏱️', delta: timeBonus });
+        if (streak.streak > 0) baseBreakdown.push({ label: `Streak ${streak.streak}x`, icon: '🔥', delta: streakBonus });
+        setScoreBreakdown({ total: totalPoints, items: [...baseBreakdown, ...perkBreakdown, ...extraBreakdown] });
+
+        let scoreMessage = `+${totalPoints} pts`;
         // Heart Regeneration Perk — eigener Zähler in usePerkSystem
         const regenResult = perkSystem.trackCorrectAnswer();
         if (regenResult.shouldRegenerate) {
           setLives(prev => Math.min(prev + 1, GAME_CONFIG.INITIAL_LIVES));
-          scoreMessage += ` 💖 Life regenerated!`;
+          scoreMessage += ` 💖`;
           flashRelic('heart_regeneration');
         } else if (perkSystem.hasPerk('heart_regeneration')) {
           tickRelic('heart_regeneration');
@@ -485,7 +555,7 @@ export default function Game({
             const next = prev + 1;
             if (next >= fortressThreshold) {
               setLives(l => Math.min(l + 1, GAME_CONFIG.INITIAL_LIVES));
-              scoreMessage += ` 🏰 Fortress Life!`;
+              scoreMessage += ` 🏰`;
               flashRelic('fortress');
               return 0;
             }
@@ -508,6 +578,7 @@ export default function Game({
           }
         }
       } else {
+        setScoreBreakdown(null);
         if (perkSystem.hasPerk("second_chance")) {
           perkSystem.consumePerk("second_chance");
           setMessage("💚 Second Chance activated! Life saved!");
@@ -613,6 +684,7 @@ export default function Game({
 
   const handleNextPair = useCallback(() => {
     setMessage("");
+    setScoreBreakdown(null);
     const nextRound = currentRound + 1;
     setCurrentRound(nextRound);
     achievements.trackRound(nextRound);
@@ -735,6 +807,7 @@ export default function Game({
   const handleRestart = useCallback(async () => {
     setScore(0);
     setMessage("");
+    setScoreBreakdown(null);
     setGameOver(false);
     setSelectedCard(null);
     setCorrectIndex(null);
@@ -910,6 +983,7 @@ export default function Game({
         currentRound={currentRound}
         heartRegenProgress={perkSystem.getHeartRegenProgress()}
         fortressRegenCount={fortressRegenCount}
+        level={level.level}
       />
 
       <StreakDisplay
@@ -1059,7 +1133,13 @@ export default function Game({
       )}
 
       <div className="w-full min-h-[3.5rem] sm:min-h-0 pb-8 sm:pb-0 flex items-start sm:justify-center">
-        {message && !gameOver && <p className="text-base sm:text-xl transition-all duration-500 sm:text-center">{message}</p>}
+        {message && !gameOver && (
+          scoreBreakdown ? (
+            <ScoreTooltip message={message} breakdown={scoreBreakdown} />
+          ) : (
+            <p className="text-base sm:text-xl transition-all duration-500 sm:text-center">{message}</p>
+          )
+        )}
       </div>
     </>
   );

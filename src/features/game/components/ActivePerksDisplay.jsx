@@ -37,6 +37,39 @@ function TagChips({ tags, small = false }) {
   );
 }
 
+function getDynamicSuffix(item, ctx) {
+  const { relicsCount = 0, perksCount = 0, synergiesCount = 0, uniqueTagCount = 0, level = 1, currentRound = 0 } = ctx || {};
+  switch (item.effect) {
+    case 'per_relic_flat_bonus': {
+      const total = relicsCount * (item.value ?? 15);
+      return `= +${total} aktuell`;
+    }
+    case 'unique_tag_mult': {
+      const mult = 1 + (uniqueTagCount * (item.value ?? 0.1));
+      return `= ×${mult.toFixed(2)} (${uniqueTagCount} Tags)`;
+    }
+    case 'per_synergy_mult':
+    case 'synergy_multiplier': {
+      const mult = 1 + (synergiesCount * (item.value ?? 0.1));
+      return `= ×${mult.toFixed(2)} (${synergiesCount} Synergien)`;
+    }
+    case 'per_perk_mult': {
+      const mult = 1 + (perksCount * (item.value ?? 0.15));
+      return `= ×${mult.toFixed(2)} (${perksCount} Perks)`;
+    }
+    case 'level_scaling': {
+      const mult = 1 + (level * (item.value ?? 0.02));
+      return `= ×${mult.toFixed(2)} (Lvl ${level})`;
+    }
+    case 'round_scaling_mult': {
+      const mult = 1 + (currentRound * (item.value ?? 0.1));
+      return `= ×${mult.toFixed(2)} (Runde ${currentRound})`;
+    }
+    default:
+      return null;
+  }
+}
+
 function getCounterInfo(item, currentRound, heartRegenProgress, fortressRegenCount) {
   if (item.effect === 'round_heal') {
     return { current: currentRound % item.value, max: item.value };
@@ -50,9 +83,23 @@ function getCounterInfo(item, currentRound, heartRegenProgress, fortressRegenCou
   return null;
 }
 
-export default function ActivePerksDisplay({ perks, relics = [], synergies = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0 }) {
+export default function ActivePerksDisplay({ perks, relics = [], synergies = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSynergyId, setExpandedSynergyId] = useState(null);
+
+  const uniqueTagCount = (() => {
+    const tags = new Set();
+    [...(perks || []), ...relics].forEach(item => (item.tags || []).forEach(t => tags.add(t)));
+    return tags.size;
+  })();
+  const ctx = {
+    relicsCount: relics.length,
+    perksCount: perks?.length ?? 0,
+    synergiesCount: synergies.length,
+    uniqueTagCount,
+    level,
+    currentRound,
+  };
 
   const totalCount = (perks?.length ?? 0) + relics.length + synergies.length;
   if (totalCount === 0) return null;
@@ -71,7 +118,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                 <DesktopPerkCard key={perk.id} item={perk} borderColor="border-blue-400/60" gradientColor="from-blue-900/80 to-indigo-900/80" ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />
               ))}
               {relics.map((relic) => (
-                <DesktopPerkCard key={relic.id} item={relic} borderColor="border-amber-400/60" gradientColor="from-amber-900/80 to-yellow-900/80" badge="⭐" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} />
+                <DesktopPerkCard key={relic.id} item={relic} borderColor="border-amber-400/60" gradientColor="from-amber-900/80 to-yellow-900/80" badge="⭐" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />
               ))}
               {synergies.map((syn) => (
                 <DesktopPerkCard
@@ -139,7 +186,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                     <div className="text-xs text-amber-300/70 font-bold uppercase tracking-wider mt-1 mb-0.5">⭐ Relics</div>
                   )}
                   {relics.map((relic) => (
-                    <MobilePerkCard key={relic.id} item={relic} borderColor="border-amber-400/60" gradientColor="from-amber-900/80 to-yellow-900/80" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} />
+                    <MobilePerkCard key={relic.id} item={relic} borderColor="border-amber-400/60" gradientColor="from-amber-900/80 to-yellow-900/80" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />
                   ))}
                   {synergies.length > 0 && (
                     <div className="text-xs text-teal-300/70 font-bold uppercase tracking-wider mt-1 mb-0.5">🔗 Synergies</div>
@@ -191,7 +238,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
   );
 }
 
-function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", badge, contributors, triggered, ticking, counterInfo }) {
+function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", badge, contributors, triggered, ticking, counterInfo, ctx }) {
   const cardRef = useRef(null);
   const [tooltipStyle, setTooltipStyle] = useState(null);
 
@@ -292,6 +339,9 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
             {badge && <div className="text-xs font-bold mb-1 opacity-70">{badge}</div>}
             <div className="font-bold mb-1">{item.name}</div>
             <div className="text-gray-300 text-xs">{item.description}</div>
+            {getDynamicSuffix(item, ctx) && (
+              <div className="text-amber-300 text-xs font-semibold mt-1">{getDynamicSuffix(item, ctx)}</div>
+            )}
             {item.remainingDuration > 0 && (
               <div className="text-yellow-300 text-xs mt-2">
                 ⏱️ {item.remainingDuration} {item.remainingDuration === 1 ? 'Runde' : 'Runden'}
@@ -329,7 +379,7 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
   );
 }
 
-function MobilePerkCard({ item, borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", onTap, tapHint, triggered, ticking, counterInfo }) {
+function MobilePerkCard({ item, borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", onTap, tapHint, triggered, ticking, counterInfo, ctx }) {
 
   return (
     <div className="relative">
@@ -383,7 +433,12 @@ function MobilePerkCard({ item, borderColor = "border-blue-400/60", gradientColo
               {item.name}
               {tapHint && <span className="text-teal-300 text-xs opacity-70">▼</span>}
             </div>
-            <div className="text-gray-200 text-xs mt-0.5">{item.description}</div>
+            <div className="text-gray-200 text-xs mt-0.5">
+              {item.description}
+              {getDynamicSuffix(item, ctx) && (
+                <span className="text-amber-300 font-semibold ml-1">{getDynamicSuffix(item, ctx)}</span>
+              )}
+            </div>
             {item.remainingDuration > 0 && (
               <div className="text-yellow-300 text-xs font-bold mt-1">
                 ⏱️ {item.remainingDuration} {item.remainingDuration === 1 ? 'Runde' : 'Runden'}

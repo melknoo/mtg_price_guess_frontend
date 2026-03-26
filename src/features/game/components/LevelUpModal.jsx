@@ -109,6 +109,16 @@ function getNewSynergiesForOption(option, activeRelics, activePerks, activeSyner
   });
 }
 
+// Berechnet dynamischen Bonus-Hinweis für bestimmte Relics
+function getOptionDynamicHint(option, activeRelicsCount) {
+  if (option.effect === 'per_relic_flat_bonus') {
+    // +1 because picking this relic adds itself
+    const total = (activeRelicsCount + 1) * (option.value ?? 15);
+    return `Nach Wahl: +${total} Score/Runde`;
+  }
+  return null;
+}
+
 // --- Styling-Helfer pro Kategorie ---
 const CATEGORY_STYLES = {
   relic: {
@@ -257,6 +267,9 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                           <h3 className="text-sm font-bold text-white leading-tight">{option.name}</h3>
                         )}
                         <p className="text-gray-200 text-xs mt-0.5 leading-snug">{option.description}</p>
+                        {getOptionDynamicHint(option, (activeRelics ?? []).length) && (
+                          <p className="text-amber-300 text-xs font-semibold mt-0.5">{getOptionDynamicHint(option, (activeRelics ?? []).length)}</p>
+                        )}
                         <div className="mt-1">
                           {option.category === 'item' && option.duration > 0 && (
                             <span className="text-yellow-300 text-xs">⏱️ {option.duration} Runden</span>
@@ -308,7 +321,10 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                           <h3 className="text-xl font-bold text-white text-center">{option.name}</h3>
                         )}
                       </div>
-                      <p className="text-gray-200 text-center text-sm leading-relaxed mb-4">{option.description}</p>
+                      <p className="text-gray-200 text-center text-sm leading-relaxed mb-1">{option.description}</p>
+                      {getOptionDynamicHint(option, (activeRelics ?? []).length) && (
+                        <p className="text-amber-300 text-center text-xs font-semibold mb-4">{getOptionDynamicHint(option, (activeRelics ?? []).length)}</p>
+                      )}
                       {option.category === 'item' && option.duration > 0 && (
                         <div className="bg-black/30 rounded-lg p-2 text-center">
                           <span className="text-yellow-300 text-xs font-semibold">⏱️ {option.duration} {option.duration === 1 ? 'Runde' : 'Runden'}</span>

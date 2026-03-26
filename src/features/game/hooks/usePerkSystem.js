@@ -22,6 +22,11 @@ export const usePerkSystem = () => {
       })
     );
 
+    // Exclude base perks when their extended version is already active
+    activePerks.forEach(p => {
+      if (p.basePerkId) excludedIds.add(p.basePerkId);
+    });
+
     // Exclude active consumable perks
     const activeConsumableIds = new Set(
       activePerks
@@ -115,10 +120,12 @@ export const usePerkSystem = () => {
       const isExtended = isExtendedPerk(perk.id);
 
       // Find if base perk (or same effect perk) is already active
+      // Also check: existing perk is an extended version of the incoming base perk
       const existingIndex = prev.findIndex(p =>
         p.id === perk.id ||
         p.id === basePerkId ||
-        (isExtended && p.effect === perk.effect)
+        (isExtended && p.effect === perk.effect) ||
+        getBasePerkId(p.id) === perk.id
       );
 
       if (existingIndex >= 0) {
@@ -129,9 +136,20 @@ export const usePerkSystem = () => {
         if (updated[existingIndex].duration > 0 || perk.duration > 0) {
           // Upgrade Master: +2 upgradeCount instead of +1
           const upgradeIncrement = hasUpgradeMaster ? 2 : 1;
+          // Use at least the new perk's full duration (prevents +2 when picking fresh extended perk)
+          const newRemaining = Math.max(
+            updated[existingIndex].remainingDuration + bonusDuration,
+            perk.duration > 0 ? perk.duration : 0
+          );
+          // For slow_time lower value = better (slower timer); for everything else higher = better
+          const newValue = perk.effect === 'slow_time'
+            ? Math.min(updated[existingIndex].value ?? 1, perk.value ?? 1)
+            : Math.max(updated[existingIndex].value ?? 0, perk.value ?? 0);
           updated[existingIndex] = {
             ...updated[existingIndex],
-            remainingDuration: updated[existingIndex].remainingDuration + bonusDuration,
+            value: newValue,
+            description: newValue === perk.value ? perk.description : updated[existingIndex].description,
+            remainingDuration: newRemaining,
             upgradeCount: (updated[existingIndex].upgradeCount || 1) + upgradeIncrement,
             name: updated[existingIndex].name.includes('+')
               ? updated[existingIndex].name
