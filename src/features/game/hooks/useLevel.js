@@ -45,6 +45,14 @@ export const useLevel = () => {
     setShowLevelUp(false);
   }, []);
 
+  const setLevelDirect = useCallback((newLevel) => {
+    const lvl = Math.max(1, Math.floor(newLevel));
+    setLevel(lvl);
+    setXp(0);
+    setXpToNextLevel(getXpToNextLevel(lvl));
+    setShowLevelUp(false);
+  }, []);
+
   const reset = useCallback(() => {
     setXp(0);
     setLevel(1);
@@ -59,6 +67,7 @@ export const useLevel = () => {
     showLevelUp,
     addXP,
     dismissLevelUp,
+    setLevelDirect,
     reset,
   };
 };

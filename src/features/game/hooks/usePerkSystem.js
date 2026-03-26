@@ -281,6 +281,11 @@ export const usePerkSystem = () => {
     };
   }, [correctAnswersForRegen, activePerks]);
 
+  const clearPerks = useCallback(() => {
+    setActivePerks([]);
+    setSelectedPermanentPerks([]);
+  }, []);
+
   const reset = useCallback(() => {
     setActivePerks([]);
     setRoundsPlayed(0);
@@ -306,6 +311,7 @@ export const usePerkSystem = () => {
     trackCorrectAnswer,
     getHeartRegenProgress,
     correctAnswersForRegen,
+    clearPerks,
     reset,
   };
 };

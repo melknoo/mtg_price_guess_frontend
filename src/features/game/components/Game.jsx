@@ -31,6 +31,7 @@ import LevelUpModal from "./LevelUpModal";
 import SynergyToast from "./SynergyToast";
 import ActivePerksDisplay from "./ActivePerksDisplay";
 import RegisterWithScore from "../../auth/components/RegisterWithScore";
+import DebugPanel from "./DebugPanel";
 
 function FilterDisplay({ filters }) {
   const [expanded, setExpanded] = useState(false);
@@ -75,32 +76,45 @@ function FilterDisplay({ filters }) {
 }
 
 function ScoreTooltip({ message, breakdown }) {
-  const [showTooltip, setShowTooltip] = useState(false);
-  return (
-    <div
-      className="relative group cursor-help"
-      onClick={() => setShowTooltip(s => !s)}
-    >
-      <p className="text-base sm:text-xl font-semibold text-green-400 transition-all duration-500 sm:text-center underline decoration-dotted decoration-gray-500">
-        {message}
-      </p>
-      <div
-        className={`absolute bottom-full left-0 mb-2 w-64 bg-gray-900/95 border border-gray-600 rounded-xl p-3 z-50 shadow-2xl transition-opacity duration-150 pointer-events-none
-          ${showTooltip ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-      >
-        <p className="text-xs font-bold text-gray-300 mb-2 border-b border-gray-600 pb-1">Score Breakdown</p>
-        {breakdown.items.map((item, i) => (
-          <div key={i} className="flex justify-between items-center text-xs py-0.5">
-            <span className={item.delta === 0 ? 'text-gray-500' : 'text-gray-300'}>{item.icon} {item.label}</span>
-            <span className={item.delta === 0 ? 'text-gray-500' : 'text-green-400 font-semibold'}>
-              {item.delta === 0 ? '—' : `+${item.delta}`}
-            </span>
-          </div>
-        ))}
-        <div className="flex justify-between items-center text-sm font-bold mt-2 pt-2 border-t border-gray-600">
-          <span className="text-white">Total</span>
-          <span className="text-green-400">+{breakdown.total}</span>
+  const [open, setOpen] = useState(false);
+
+  const panel = (
+    <div className="w-64 bg-gray-900/95 border border-gray-600 rounded-xl p-3 shadow-2xl">
+      <p className="text-xs font-bold text-gray-300 mb-2 border-b border-gray-600 pb-1">Score Breakdown</p>
+      {breakdown.items.map((item, i) => (
+        <div key={i} className="flex justify-between items-center text-xs py-0.5">
+          <span className={item.delta === 0 ? 'text-gray-500' : 'text-gray-300'}>{item.icon} {item.label}</span>
+          <span className={item.delta === 0 ? 'text-gray-500' : 'text-green-400 font-semibold'}>
+            {item.delta === 0 ? '—' : `+${item.delta}`}
+          </span>
         </div>
+      ))}
+      <div className="flex justify-between items-center text-sm font-bold mt-2 pt-2 border-t border-gray-600">
+        <span className="text-white">Total</span>
+        <span className="text-green-400">+{breakdown.total}</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="relative group">
+      {/* Tappable chip — sieht auf mobile wie ein Button aus */}
+      <button
+        onClick={() => setOpen(s => !s)}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-150 active:scale-95
+          ${open
+            ? 'bg-green-500/20 border-green-400/60 shadow-sm shadow-green-500/20'
+            : 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20 hover:border-green-400/50'
+          }`}
+      >
+        <span className="text-green-400 font-bold text-sm sm:text-base leading-none">{message}</span>
+        <span className={`text-green-500/70 text-xs transition-transform duration-150 ${open ? 'rotate-180' : ''}`}>▾</span>
+      </button>
+
+      {/* Panel: on mobile click-toggle, on desktop also hover */}
+      <div className={`absolute bottom-full left-0 mb-2 z-50 transition-all duration-150 pointer-events-none
+        ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0'}`}>
+        {panel}
       </div>
     </div>
   );
@@ -1290,7 +1304,7 @@ export default function Game({
         </div>
       )}
 
-      <div className="sm:mt-6 mt-auto flex gap-4 items-center pb-1 sm:pb-2">
+      <div className="sm:mt-6 mt-auto w-full flex gap-4 items-center justify-center pb-1 sm:pb-2">
         {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
           <button
             onClick={handleSkipCard}
@@ -1362,7 +1376,7 @@ export default function Game({
         </GameOverScreen>
       )}
 
-      <div className="w-full min-h-[2rem] sm:min-h-0 pb-4 sm:pb-0 flex items-start sm:justify-center">
+      <div className="w-full min-h-[2.5rem] sm:min-h-0 pt-1 pb-2 sm:pb-0 flex items-center sm:justify-center">
         {message && !gameOver && (
           scoreBreakdown ? (
             <ScoreTooltip message={message} breakdown={scoreBreakdown} />
@@ -1371,6 +1385,24 @@ export default function Game({
           )
         )}
       </div>
+
+      {process.env.NODE_ENV === 'development' && (
+        <DebugPanel
+          relicSystem={relicSystem}
+          perkSystem={perkSystem}
+          synergyEngine={synergyEngine}
+          level={level}
+          lives={lives}
+          setLives={setLives}
+          streak={streak}
+          score={score}
+          setScore={setScore}
+          currentRound={currentRound}
+          setCurrentRound={setCurrentRound}
+          applyPerkEffects={applyPerkEffects}
+          timer={timer}
+        />
+      )}
     </>
   );
 }
