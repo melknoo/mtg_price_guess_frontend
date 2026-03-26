@@ -32,6 +32,48 @@ import SynergyToast from "./SynergyToast";
 import ActivePerksDisplay from "./ActivePerksDisplay";
 import RegisterWithScore from "../../auth/components/RegisterWithScore";
 
+function FilterDisplay({ filters }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="w-full max-w-xl mb-1 sm:mb-4">
+      {/* Mobile: compact pill, tap to expand */}
+      <div className="sm:hidden">
+        <button
+          onClick={() => setExpanded(s => !s)}
+          className="flex items-center gap-1.5 bg-indigo-500/20 border border-indigo-400 rounded-full px-3 py-1 mb-1"
+        >
+          <span className="text-indigo-200 text-xs font-semibold">
+            {filters.map(f => f.icon).join(' ')}
+          </span>
+          <span className="text-indigo-300 text-xs font-bold">{filters.length} Filter</span>
+          <span className="text-indigo-400 text-xs">{expanded ? '▴' : '▾'}</span>
+        </button>
+        {expanded && (
+          <div className="mt-1">
+            {filters.map((filter, index) => (
+              <div key={index} className="bg-indigo-500/20 border border-indigo-400 rounded-lg px-2 py-1 mb-1">
+                <span className="text-indigo-200 text-xs font-semibold">
+                  {filter.icon} {filter.name}: {filter.description}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {/* Desktop: always full */}
+      <div className="hidden sm:block">
+        {filters.map((filter, index) => (
+          <div key={index} className="bg-indigo-500/20 border border-indigo-400 rounded-lg p-2 mb-2">
+            <span className="text-indigo-200 text-sm font-semibold">
+              {filter.icon} {filter.name}: {filter.description}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ScoreTooltip({ message, breakdown }) {
   const [showTooltip, setShowTooltip] = useState(false);
   return (
@@ -995,15 +1037,7 @@ export default function Game({
 
       {/* Active Filter Display */}
       {getActiveFilterInfo() && (
-        <div className="w-full max-w-xl mb-1 sm:mb-4">
-          {getActiveFilterInfo().map((filter, index) => (
-            <div key={index} className="bg-indigo-500/20 border border-indigo-400 rounded-lg px-2 py-1 sm:p-2 mb-1 sm:mb-2">
-              <span className="text-indigo-200 text-xs sm:text-sm font-semibold">
-                {filter.icon} {filter.name}: {filter.description}
-              </span>
-            </div>
-          ))}
-        </div>
+        <FilterDisplay filters={getActiveFilterInfo()} />
       )}
 
       {(showPriceHint || showAverage) && (
@@ -1068,11 +1102,11 @@ export default function Game({
         </div>
       )}
 
-      <div className="sm:mt-6 mt-auto flex gap-4 text-lg min-h-[50px] sm:min-h-[80px] items-center pb-1 sm:pb-2">
+      <div className="sm:mt-6 mt-auto flex gap-4 items-center pb-1 sm:pb-2">
         {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
           <button
             onClick={handleSkipCard}
-            className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 text-white px-6 py-4 rounded transition shadow-lg hover:shadow-xl"
+            className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 active:scale-95 text-white px-6 py-4 rounded-xl transition shadow-lg hover:shadow-xl"
             title="Press S to skip"
           >
             ⭐ Skip
@@ -1083,10 +1117,18 @@ export default function Game({
           <button
             onClick={handleNextPair}
             disabled={perkSystem.showPerkSelection || level.showLevelUp}
-            className={`text-lg sm:text-2xl w-full sm:w-auto sm:min-w-[250px] font-semibold text-white px-4 py-3 sm:px-6 sm:py-6 rounded transition ${(perkSystem.showPerkSelection || level.showLevelUp) ? "bg-amber-600/50 cursor-not-allowed" : "bg-amber-600 hover:bg-amber-500"
+            className={`text-xl sm:text-2xl w-full sm:w-auto sm:min-w-[250px] font-bold text-white
+              px-6 py-5 sm:px-6 sm:py-6
+              [@media(max-height:500px)]:py-2 [@media(max-height:500px)]:text-base
+              rounded-xl sm:rounded
+              transition-all duration-150
+              active:scale-[0.97]
+              ${(perkSystem.showPerkSelection || level.showLevelUp)
+                ? "bg-amber-600/50 cursor-not-allowed shadow-none"
+                : "bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-500/30 hover:shadow-amber-400/40"
               }`}
           >
-            Next
+            Next →
           </button>
         )}
       </div>
@@ -1132,7 +1174,7 @@ export default function Game({
         </GameOverScreen>
       )}
 
-      <div className="w-full min-h-[3.5rem] sm:min-h-0 pb-8 sm:pb-0 flex items-start sm:justify-center">
+      <div className="w-full min-h-[2rem] sm:min-h-0 pb-4 sm:pb-0 flex items-start sm:justify-center">
         {message && !gameOver && (
           scoreBreakdown ? (
             <ScoreTooltip message={message} breakdown={scoreBreakdown} />
