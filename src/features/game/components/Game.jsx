@@ -9,7 +9,8 @@ import { useLevel } from "../hooks/useLevel";
 import { useRelicSystem } from "../hooks/useRelicSystem";
 import { useSynergyEngine } from "../hooks/useSynergyEngine";
 import { updateHighscore } from "../api/gameApi";
-import { saveGameSession } from "../api/statsApi";
+import { saveGameSession, saveRunLog } from "../api/statsApi";
+import useRunLogger from "../hooks/useRunLogger";
 import {
   isChoiceCorrect,
   getMoreExpensiveCard,
@@ -209,6 +210,7 @@ export default function Game({
   const perkSystem = usePerkSystem();
   const level = useLevel();
   const relicSystem = useRelicSystem();
+  const runLogger = useRunLogger();
 
   // Blinkt ein Relic kurz auf (1.2s) — visuelles Feedback wenn es triggert
   const flashRelic = useCallback((id) => {
@@ -703,6 +705,18 @@ export default function Game({
         if (effectiveStreakForBonus > 0) baseBreakdown.push({ label: `Streak ${effectiveStreakForBonus}x${effectiveStreakForBonus > streak.streak ? ' 👻' : ''}`, icon: '🔥', delta: streakBonus });
         setScoreBreakdown({ total: totalPoints, items: [...baseBreakdown, ...perkBreakdown, ...extraBreakdown] });
 
+        runLogger.logRound({
+          n: currentRound,
+          card_left:  { id: card1.id, name: card1.name, price: parseFloat(card1.prices?.eur) || 0 },
+          card_right: { id: card2.id, name: card2.name, price: parseFloat(card2.prices?.eur) || 0 },
+          chosen: chosenIndex,
+          correct: true,
+          score: Math.floor(totalPoints),
+          time: timer.timeLeft,
+          streak: newStreakValue,
+          breakdown: [...baseBreakdown, ...perkBreakdown, ...extraBreakdown].map(b => ({ label: b.label, delta: b.delta, mult: !!b.isMult })),
+        });
+
         let scoreMessage = `+${totalPoints} pts`;
         // Heart Regeneration Perk — Overflow konvertiert bei vollem Leben
         const regenResult = perkSystem.trackCorrectAnswer();
@@ -810,6 +824,18 @@ export default function Game({
           const correctCard = getMoreExpensiveCard(card1, card2);
           setMessage(createErrorMessage(correctCard));
 
+          runLogger.logRound({
+            n: currentRound,
+            card_left:  { id: card1.id, name: card1.name, price: parseFloat(card1.prices?.eur) || 0 },
+            card_right: { id: card2.id, name: card2.name, price: parseFloat(card2.prices?.eur) || 0 },
+            chosen: chosenIndex,
+            correct: false,
+            score: 0,
+            time: timer.timeLeft,
+            streak: 0,
+            breakdown: [],
+          });
+
           if (remainingLives <= 0) {
             setGameOver(true);
             if (!user?.guest) {
@@ -820,6 +846,19 @@ export default function Game({
                 wrong_answers: wrongCountRef.current,
                 best_streak: streak.bestStreak,
                 mode: initialCards ? 'daily' : 'normal',
+              });
+              const runSummary = runLogger.getRunSummary(synergyEngine.activeSynergies);
+              saveRunLog({
+                mode:              initialCards ? 'daily' : 'normal',
+                final_score:       score,
+                final_level:       level.level,
+                rounds_played:     currentRound,
+                best_streak:       streak.bestStreak,
+                client_session_id: runSummary.client_session_id,
+                perks:             runSummary.perks,
+                relics:            runSummary.relics,
+                synergies:         runSummary.synergies,
+                rounds:            runSummary.rounds,
               });
             }
             if (onGameOver) onGameOver(score);
@@ -974,7 +1013,13 @@ export default function Game({
         await cardLoader.setNextPair();
       }
     }
-  }, [perkSystem, achievements, cardLoader, relicSystem, flashRelic]);
+    runLogger.logPerkSelected({
+      round:       currentRound,
+      perk_id:     perk.id,
+      perk_name:   perk.name,
+      offered_ids: perkSystem.availablePerks.map(p => p.id),
+    });
+  }, [perkSystem, achievements, cardLoader, relicSystem, flashRelic, runLogger, currentRound]);
 
   // Level-Up-Pick: Relic → relicSystem, Item (Perk) → perkSystem, Upgrade → perkSystem
   // WICHTIG: Kein cardLoader.setNextPair() hier!
@@ -1005,15 +1050,18 @@ export default function Game({
         relicSystem.addRelic(pick);
       }
       achievements.trackRelicCollected();
+      runLogger.logRelicSelected({ level: level.level, relic_id: pick.id, relic_name: pick.name });
       if (pick.effect === 'glass_cannon') setLives(1);
     } else if (pick.category === 'item') {
       perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
       achievements.trackPerkCollected();
+      runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'level_up', offered_ids: [] });
     } else if (pick.category === 'upgrade') {
       perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
+      runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'upgrade', offered_ids: [] });
     }
     level.dismissLevelUp();
-  }, [relicSystem, perkSystem, level, achievements, setLives]);
+  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound]);
 
   const handleSkipCard = useCallback(() => {
     if (perkSystem.hasPerk("skip_card")) {
@@ -1086,10 +1134,11 @@ export default function Game({
     setFortressRegenCount(0);
     bestComboMultiplierRef.current = 1;
     achievements.resetGameStats();
+    runLogger.reset();
 
     await cardLoader.preloadCards();
     await cardLoader.setNextPair();
-  }, [setScore, streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, achievements]);
+  }, [setScore, streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, achievements, runLogger]);
 
   const handleImageLoad = useCallback((index) => {
     setImagesLoaded((prev) => {

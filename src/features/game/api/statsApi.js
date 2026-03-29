@@ -26,3 +26,15 @@ export const fetchStats = async () => {
   const response = await apiClient.get('/api/stats');
   return response.data;
 };
+
+/**
+ * Speichert den vollständigen Run-Log (Runden, Perks, Relics, Synergien).
+ * Fire-and-forget — Fehler werden ignoriert um das UI nicht zu blockieren.
+ */
+export const saveRunLog = async (payload) => {
+  try {
+    await apiClient.post('/api/stats/run-log', payload);
+  } catch {
+    // Nicht kritisch — kein Fehler nach oben propagieren
+  }
+};
