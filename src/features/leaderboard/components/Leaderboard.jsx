@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchLeaderboard } from "../api/leaderboardApi";
 
-export default function Leaderboard({ onBack, compact = false }) {
+export default function Leaderboard({ onBack, compact = false, mobileLimit = 5 }) {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,7 +55,7 @@ export default function Leaderboard({ onBack, compact = false }) {
         </p>
       ) : (
         <ol className="bg-white/10 border border-white/20 rounded-lg p-3">
-          {players.map((player, index) => (
+          {(compact ? players.slice(0, mobileLimit) : players).map((player, index) => (
             <li
               key={index}
               className={`flex items-center justify-between border-b border-white/10 last:border-none ${compact ? "py-1.5 text-sm" : "py-2"}`}
@@ -69,6 +69,11 @@ export default function Leaderboard({ onBack, compact = false }) {
               <span className="text-amber-400 font-semibold">{player.highscore.toLocaleString()}</span>
             </li>
           ))}
+          {compact && players.length > mobileLimit && (
+            <li className="pt-2 text-center text-xs text-white/40">
+              +{players.length - mobileLimit} more · see full leaderboard
+            </li>
+          )}
         </ol>
       )}
 

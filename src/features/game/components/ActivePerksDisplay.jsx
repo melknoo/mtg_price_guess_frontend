@@ -1,6 +1,6 @@
 // src/features/game/components/ActivePerksDisplay.jsx
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -85,9 +85,16 @@ function getCounterInfo(item, currentRound, heartRegenProgress, fortressRegenCou
   return null;
 }
 
-export default function ActivePerksDisplay({ perks, relics = [], synergies = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1 }) {
+export default function ActivePerksDisplay({ perks, relics = [], synergies = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1, showPerkSelection = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSynergyId, setExpandedSynergyId] = useState(null);
+
+  // Auto-close when perk selection closes (i.e. a perk was just picked)
+  const prevShowPerkSelection = useRef(showPerkSelection);
+  useEffect(() => {
+    if (prevShowPerkSelection.current && !showPerkSelection) setIsOpen(false);
+    prevShowPerkSelection.current = showPerkSelection;
+  }, [showPerkSelection]);
 
   const uniqueTagCount = (() => {
     const tags = new Set();
@@ -104,12 +111,11 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
   };
 
   const totalCount = (perks?.length ?? 0) + relics.length + synergies.length;
-  if (totalCount === 0) return null;
 
   return (
     <>
-      {/* Desktop: Fixed Sidebar (scrollable, full height) — z-[55] keeps it above modal backdrop (z-50) */}
-      <div className="hidden md:flex fixed left-0 top-0 bottom-0 z-[55] flex-col">
+      {/* Desktop: Fixed Sidebar — only shown when there are active bonuses */}
+      <div className={`hidden ${totalCount > 0 ? 'md:flex' : ''} fixed left-0 top-0 bottom-0 z-[55] flex-col`}>
         <div className="bg-[#0d1b3e]/95 backdrop-blur-sm p-2 shadow-2xl border-r-2 border-amber-400/40 flex flex-col h-full">
           <h3 className="text-[10px] font-bold text-amber-300/70 mb-2 text-center whitespace-nowrap shrink-0 uppercase tracking-widest">
             Boni
@@ -141,11 +147,11 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
 
       {/* Mobile: Bottom Sheet */}
       <div className="md:hidden">
-        {/* Toggle Button — top left */}
+        {/* Toggle Button — bottom left */}
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setIsOpen(!isOpen)}
-          className="fixed top-4 left-3 z-[46] bg-[#0d1b3e] text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg border border-amber-400/50"
+          className="fixed bottom-6 left-3 z-[65] bg-[#0d1b3e] text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg border border-amber-400/50"
         >
           <span className="text-lg leading-none">🎮</span>
           {totalCount > 0 && (
@@ -164,7 +170,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setIsOpen(false)}
-                className="fixed inset-0 bg-black/60 z-[44]"
+                className="fixed inset-0 bg-black/60 z-[66]"
               />
               {/* Sheet */}
               <motion.div
@@ -172,7 +178,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="fixed bottom-0 left-0 right-0 z-[45] bg-[#0d1b3e] border-t border-amber-400/40 rounded-t-2xl shadow-2xl flex flex-col max-h-[70vh]"
+                className="fixed bottom-0 left-0 right-0 z-[67] bg-[#0d1b3e] border-t border-amber-400/40 rounded-t-2xl shadow-2xl flex flex-col max-h-[70vh]"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
@@ -181,6 +187,12 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                 </div>
                 {/* Scrollable content */}
                 <div className="overflow-y-auto p-3 flex flex-col gap-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
+                  {totalCount === 0 && (
+                    <div className="py-4 text-center text-white/40 text-sm space-y-1">
+                      <p>No active bonuses yet.</p>
+                      <p className="text-xs">Pick perks every 5 rounds · earn relics on level-up.</p>
+                    </div>
+                  )}
                   {perks.map((perk) => (
                     <MobilePerkCard key={perk.id} item={perk} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />
                   ))}

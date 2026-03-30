@@ -160,8 +160,8 @@ function AppContent() {
 
   if (!user) {
     return (
-      <div className="min-h-[100dvh] bg-gradient-to-br from-[#0d1b3e] via-[#1a3668] to-[#0c2454] text-white flex flex-col pt-safe">
-        <div className="flex-1 flex items-center justify-center p-4 py-8">
+      <div className="h-[100dvh] bg-gradient-to-br from-[#0d1b3e] via-[#1a3668] to-[#0c2454] text-white flex flex-col pt-safe overflow-hidden">
+        <div className="flex-1 overflow-y-auto flex items-start lg:items-center justify-center p-4 py-8">
           <div className="w-full max-w-4xl mx-auto flex flex-col lg:flex-row gap-8 items-start lg:items-center justify-center">
 
             {/* Left: title + form */}
@@ -219,7 +219,7 @@ function AppContent() {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center sm:p-4 px-4 pb-safe" style={{paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)'}}>
+      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-start lg:justify-center sm:p-4 px-4 pb-safe" style={{paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)'}}>
 
         {screen === "menu" && (
           <div className="w-full max-w-4xl mx-auto flex flex-col lg:flex-row gap-8 items-start justify-center py-2">

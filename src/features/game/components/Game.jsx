@@ -103,9 +103,8 @@ function ScoreTooltip({ message, breakdown }) {
     </div>
   );
 
-  return (
+  const chip = (panelDir) => (
     <div className="relative group">
-      {/* Tappable chip — sieht auf mobile wie ein Button aus */}
       <button
         onClick={() => setOpen(s => !s)}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-150 active:scale-95
@@ -117,13 +116,24 @@ function ScoreTooltip({ message, breakdown }) {
         <span className="text-green-400 font-bold text-sm sm:text-base leading-none">{message}</span>
         <span className={`text-green-500/70 text-xs transition-transform duration-150 ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
-
-      {/* Panel: on mobile click-toggle, on desktop also hover */}
-      <div className={`absolute bottom-full left-0 mb-2 z-50 transition-all duration-150 pointer-events-none
+      <div className={`absolute ${panelDir === 'down' ? 'top-full mt-2' : 'bottom-full mb-2'} left-0 z-50 transition-all duration-150 pointer-events-none
         ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0'}`}>
         {panel}
       </div>
     </div>
+  );
+
+  return (
+    <>
+      {/* Mobile: fixed top-left, panel opens downward */}
+      <div className="sm:hidden fixed top-3 left-3 z-[64]">
+        {chip('down')}
+      </div>
+      {/* Desktop: in normal flow, panel opens upward */}
+      <div className="hidden sm:block">
+        {chip('up')}
+      </div>
+    </>
   );
 }
 
@@ -1304,6 +1314,7 @@ export default function Game({
         heartRegenProgress={perkSystem.getHeartRegenProgress()}
         fortressRegenCount={fortressRegenCount}
         level={level.level}
+        showPerkSelection={perkSystem.showPerkSelection}
       />
 
       <StreakDisplay
@@ -1380,7 +1391,7 @@ export default function Game({
         </div>
       )}
 
-      <div className="sm:mt-6 mt-auto w-full flex gap-4 items-center justify-center pb-1 sm:pb-2">
+      <div className="sm:mt-6 mt-auto w-full flex gap-4 items-center justify-center pb-1 sm:pb-2 pl-14 sm:pl-0">
         {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
           <button
             onClick={handleSkipCard}
@@ -1452,7 +1463,7 @@ export default function Game({
         </GameOverScreen>
       )}
 
-      <div className="w-full min-h-[2.5rem] sm:min-h-0 pt-1 pb-2 sm:pb-0 flex items-center sm:justify-center">
+      <div className="w-full sm:min-h-[2.5rem] pt-1 pb-2 sm:pb-0 hidden sm:flex items-center sm:justify-center">
         {message && !gameOver && (
           scoreBreakdown ? (
             <ScoreTooltip message={message} breakdown={scoreBreakdown} />
@@ -1461,6 +1472,10 @@ export default function Game({
           )
         )}
       </div>
+      {/* Mobile: plain message (ScoreTooltip renders itself fixed top-left) */}
+      {message && !gameOver && !scoreBreakdown && (
+        <p className="sm:hidden text-base transition-all duration-500 pt-1 pb-2 pl-14">{message}</p>
+      )}
 
       {process.env.NODE_ENV === 'development' && (
         <DebugPanel
