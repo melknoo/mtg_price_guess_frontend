@@ -155,6 +155,8 @@ export default function Game({
   const [nextRoundDouble, setNextRoundDouble] = useState(false); // Perfectionist Echo Relic
   const [synergyToast, setSynergyToast] = useState(null);      // aktuelle Synergy-Notification
   const bestComboMultiplierRef = useRef(1);                    // Für Game-Over Summary
+  const runLoggedRef = useRef(false);                          // Verhindert doppeltes Logging
+  const saveCurrentRunRef = useRef(null);                      // Immer aktuelle saveCurrentRun-Ref
   const [flashingRelics, setFlashingRelics] = useState(new Set()); // Relic-Trigger-Animation
   const [tickingRelics, setTickingRelics] = useState(new Set());  // Subtler Tick-Animation
   const [fortressRegenCount, setFortressRegenCount] = useState(0); // Fortress unabhängiger Zähler
@@ -518,6 +520,28 @@ export default function Game({
 
     return { total: Math.floor(finalPoints), breakdown };
   }, [perkSystem, getTimerDuration, relicSystem, ironWillActive, comboMultiplier, synergyEngine, lives, level, currentRound, masochistMult]);
+
+  const saveCurrentRun = useCallback(() => {
+    if (user?.guest || currentRound <= 1 || runLoggedRef.current) return;
+    runLoggedRef.current = true;
+    const runSummary = runLogger.getRunSummary(synergyEngine.activeSynergies);
+    saveRunLog({
+      mode:              initialCards ? 'daily' : 'normal',
+      final_score:       score,
+      final_level:       level.level,
+      rounds_played:     currentRound,
+      best_streak:       streak.bestStreak,
+      client_session_id: runSummary.client_session_id,
+      perks:             runSummary.perks,
+      relics:            runSummary.relics,
+      synergies:         runSummary.synergies,
+      rounds:            runSummary.rounds,
+    });
+  }, [user, currentRound, score, level.level, streak.bestStreak, initialCards, runLogger, synergyEngine]);
+
+  // Ref immer aktuell halten — wird beim Unmount (Back to Menu) aufgerufen
+  useEffect(() => { saveCurrentRunRef.current = saveCurrentRun; }, [saveCurrentRun]);
+  useEffect(() => { return () => { saveCurrentRunRef.current?.(); }; }, []);
 
   const handleChoice = useCallback(
     async (chosenIndex) => {
@@ -1096,25 +1120,9 @@ export default function Game({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedCard, showPrices, gameOver, perkSystem.showPerkSelection, perkSystem, handleChoice, handleNextPair, handleSkipCard, level.showLevelUp]);
 
-  const saveCurrentRun = useCallback(() => {
-    if (user?.guest || currentRound <= 1) return;
-    const runSummary = runLogger.getRunSummary(synergyEngine.activeSynergies);
-    saveRunLog({
-      mode:              initialCards ? 'daily' : 'normal',
-      final_score:       score,
-      final_level:       level.level,
-      rounds_played:     currentRound,
-      best_streak:       streak.bestStreak,
-      client_session_id: runSummary.client_session_id,
-      perks:             runSummary.perks,
-      relics:            runSummary.relics,
-      synergies:         runSummary.synergies,
-      rounds:            runSummary.rounds,
-    });
-  }, [user, currentRound, score, level.level, streak.bestStreak, initialCards, runLogger, synergyEngine]);
-
   const handleRestart = useCallback(async () => {
     saveCurrentRun();
+    runLoggedRef.current = false;
     setScore(0);
     setMessage("");
     setScoreBreakdown(null);
