@@ -314,7 +314,7 @@ export const RELICS = {
   DOUBLE_DIP: {
     id: 'double_dip',
     name: 'Double Dip',
-    description: 'When picking perks every 5 rounds: choose 2 instead of 1',
+    description: 'When picking a perk every 5 rounds: your choice is applied twice — double the effect.',
     icon: '✌️',
     rarity: RELIC_RARITY.LEGENDARY,
     tags: [RELIC_TAGS.LUCK],

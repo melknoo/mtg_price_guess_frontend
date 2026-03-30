@@ -847,19 +847,7 @@ export default function Game({
                 best_streak: streak.bestStreak,
                 mode: initialCards ? 'daily' : 'normal',
               });
-              const runSummary = runLogger.getRunSummary(synergyEngine.activeSynergies);
-              saveRunLog({
-                mode:              initialCards ? 'daily' : 'normal',
-                final_score:       score,
-                final_level:       level.level,
-                rounds_played:     currentRound,
-                best_streak:       streak.bestStreak,
-                client_session_id: runSummary.client_session_id,
-                perks:             runSummary.perks,
-                relics:            runSummary.relics,
-                synergies:         runSummary.synergies,
-                rounds:            runSummary.rounds,
-              });
+              saveCurrentRun();
             }
             if (onGameOver) onGameOver(score);
             return;
@@ -963,12 +951,13 @@ export default function Game({
     } else {
       cardLoader.setNextPair();
     }
-  }, [currentRound, achievements, perkSystem, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, setScore, synergyEngine]);
+  }, [currentRound, achievements, perkSystem, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, setScore, synergyEngine, saveCurrentRun]);
 
-  const handlePerkSelect = useCallback(async (perk, keepOpen = false) => {
-    console.log('[Perk]', perk.name, `(${perk.id})`, perk.tags ?? []);
+  const handlePerkSelect = useCallback(async (perk) => {
     const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
     const hasUpgradeMaster = relicSystem.hasRelic('upgrade_master');
+    const hasDoubleDip = relicSystem.hasRelic('double_dip');
+    if (hasDoubleDip) flashRelic('double_dip');
 
     if (perk.type === 'filter') {
       const currentFilterPerks = perkSystem.getActiveFilterPerks();
@@ -982,7 +971,7 @@ export default function Game({
         else if (filterPerk.filterType === 'rarity') filters.rarity = filterPerk.value;
       });
       const newCards = await cardLoader.preloadCards(filters);
-      perkSystem.selectPerk(perk, { keepOpen, hasEternalFlame, hasUpgradeMaster });
+      perkSystem.selectPerk(perk, { hasEternalFlame, hasUpgradeMaster, doubleDip: hasDoubleDip });
       achievements.trackPerkCollected();
       await cardLoader.setNextPair(false, newCards);
     } else {
@@ -993,7 +982,7 @@ export default function Game({
         relicSystem.consumeRelic('parasite');
         flashRelic('parasite');
       }
-      perkSystem.selectPerk(finalPerk, { keepOpen, hasEternalFlame, hasUpgradeMaster });
+      perkSystem.selectPerk(finalPerk, { hasEternalFlame, hasUpgradeMaster, doubleDip: hasDoubleDip });
       achievements.trackPerkCollected();
 
       // Copycat: halbe Kopie des Perks (nur temporäre Perks)
@@ -1009,9 +998,7 @@ export default function Game({
         flashRelic('copycat');
       }
 
-      if (!keepOpen) {
-        await cardLoader.setNextPair();
-      }
+      await cardLoader.setNextPair();
     }
     runLogger.logPerkSelected({
       round:       currentRound,
@@ -1109,7 +1096,25 @@ export default function Game({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedCard, showPrices, gameOver, perkSystem.showPerkSelection, perkSystem, handleChoice, handleNextPair, handleSkipCard, level.showLevelUp]);
 
+  const saveCurrentRun = useCallback(() => {
+    if (user?.guest || currentRound <= 1) return;
+    const runSummary = runLogger.getRunSummary(synergyEngine.activeSynergies);
+    saveRunLog({
+      mode:              initialCards ? 'daily' : 'normal',
+      final_score:       score,
+      final_level:       level.level,
+      rounds_played:     currentRound,
+      best_streak:       streak.bestStreak,
+      client_session_id: runSummary.client_session_id,
+      perks:             runSummary.perks,
+      relics:            runSummary.relics,
+      synergies:         runSummary.synergies,
+      rounds:            runSummary.rounds,
+    });
+  }, [user, currentRound, score, level.level, streak.bestStreak, initialCards, runLogger, synergyEngine]);
+
   const handleRestart = useCallback(async () => {
+    saveCurrentRun();
     setScore(0);
     setMessage("");
     setScoreBreakdown(null);
@@ -1138,7 +1143,7 @@ export default function Game({
 
     await cardLoader.preloadCards();
     await cardLoader.setNextPair();
-  }, [setScore, streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, achievements, runLogger]);
+  }, [setScore, streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, achievements, runLogger, saveCurrentRun]);
 
   const handleImageLoad = useCallback((index) => {
     setImagesLoaded((prev) => {
@@ -1374,7 +1379,7 @@ export default function Game({
             className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 active:scale-95 text-white px-6 py-4 rounded-xl transition shadow-lg hover:shadow-xl"
             title="Press S to skip"
           >
-            ⭐ Skip
+            ⭐ Skip{(() => { const sc = perkSystem.activePerks.find(p => p.id === 'skip_card'); return sc && sc.value > 1 ? ` (×${sc.value})` : ''; })()}
           </button>
         )}
 

@@ -113,73 +113,101 @@ export const usePerkSystem = () => {
     setShowPerkSelection(true);
   }, [generateRandomPerks]);
 
-  const selectPerk = useCallback((perk, { keepOpen = false, hasEternalFlame = false, hasUpgradeMaster = false } = {}) => {
+  const selectPerk = useCallback((perk, { keepOpen = false, hasEternalFlame = false, hasUpgradeMaster = false, doubleDip = false } = {}) => {
     setActivePerks(prev => {
-      // Check if this is an extended perk and base perk is active
-      const basePerkId = getBasePerkId(perk.id);
-      const isExtended = isExtendedPerk(perk.id);
+      // Helper: apply one stack of `perk` onto `list`
+      const applyOnce = (list) => {
+        const basePerkId = getBasePerkId(perk.id);
+        const isExtended = isExtendedPerk(perk.id);
 
-      // Find if base perk (or same effect perk) is already active
-      // Also check: existing perk is an extended version of the incoming base perk
-      const existingIndex = prev.findIndex(p =>
-        p.id === perk.id ||
-        p.id === basePerkId ||
-        (isExtended && p.effect === perk.effect) ||
-        getBasePerkId(p.id) === perk.id
-      );
+        const existingIndex = list.findIndex(p =>
+          p.id === perk.id ||
+          p.id === basePerkId ||
+          (isExtended && p.effect === perk.effect) ||
+          getBasePerkId(p.id) === perk.id
+        );
 
-      if (existingIndex >= 0) {
-        // Perk with same effect exists - extend duration
-        const updated = [...prev];
-        const bonusDuration = perk.bonusDuration || perk.duration;
-
-        if (updated[existingIndex].duration > 0 || perk.duration > 0) {
-          // Upgrade Master: +2 upgradeCount instead of +1
+        if (existingIndex >= 0) {
+          const updated = [...list];
+          const existing = updated[existingIndex];
+          const bonusDuration = perk.bonusDuration || perk.duration;
+          const isSamePerk = existing.id === perk.id;
           const upgradeIncrement = hasUpgradeMaster ? 2 : 1;
-          // Use at least the new perk's full duration (prevents +2 when picking fresh extended perk)
-          const newRemaining = Math.max(
-            updated[existingIndex].remainingDuration + bonusDuration,
-            perk.duration > 0 ? perk.duration : 0
-          );
-          // For slow_time lower value = better (slower timer); for everything else higher = better
-          const newValue = perk.effect === 'slow_time'
-            ? Math.min(updated[existingIndex].value ?? 1, perk.value ?? 1)
-            : Math.max(updated[existingIndex].value ?? 0, perk.value ?? 0);
-          updated[existingIndex] = {
-            ...updated[existingIndex],
-            value: newValue,
-            description: newValue === perk.value ? perk.description : updated[existingIndex].description,
-            remainingDuration: newRemaining,
-            upgradeCount: (updated[existingIndex].upgradeCount || 1) + upgradeIncrement,
-            name: updated[existingIndex].name.includes('+')
-              ? updated[existingIndex].name
-              : updated[existingIndex].name + '+'
-          };
-        }
-        return updated;
-      } else {
-        // New perk - add it
-        // Eternal Flame: +3 rounds to duration-based perks
-        const durationBonus = (hasEternalFlame && perk.duration > 0) ? 3 : 0;
 
-        // For filter perks, replace existing filter of same type
-        if (perk.type === PERK_TYPES.FILTER) {
-          const filtered = prev.filter(p =>
-            !(p.type === PERK_TYPES.FILTER && p.filterType === perk.filterType)
-          );
-          return [...filtered, {
+          const computeStackedValue = () => {
+            if (perk.effect === 'slow_time') {
+              // Lower = better: multiplicative for same perk, min for upgrade path
+              return isSamePerk
+                ? (existing.value ?? 1) * (perk.value ?? 1)
+                : Math.min(existing.value ?? 1, perk.value ?? 1);
+            }
+            if (perk.effect === 'heart_regen') {
+              // Lower threshold = better: reduce by 1 per extra pick (min 1)
+              return isSamePerk ? Math.max(1, (existing.value ?? 5) - 1) : existing.value;
+            }
+            if (perk.effect === 'point_multiplier') {
+              // Multipliers: keep value (Double Dip just extends duration)
+              return Math.max(existing.value ?? 0, perk.value ?? 0);
+            }
+            if (isSamePerk) {
+              // Non-numeric values (e.g. filter perks: value is a string like 'rare') — keep as-is, only duration extends
+              if (typeof perk.value !== 'number') return existing.value;
+              // Flat numeric values: additive stacking
+              return (existing.value ?? 0) + (perk.value ?? 0);
+            }
+            return Math.max(existing.value ?? 0, perk.value ?? 0);
+          };
+
+          if (existing.duration > 0 || perk.duration > 0) {
+            const newRemaining = Math.max(
+              existing.remainingDuration + bonusDuration,
+              perk.duration > 0 ? perk.duration : 0
+            );
+            const newValue = computeStackedValue();
+            updated[existingIndex] = {
+              ...existing,
+              value: newValue,
+              description: newValue === perk.value ? perk.description : existing.description,
+              remainingDuration: newRemaining,
+              upgradeCount: (existing.upgradeCount || 1) + upgradeIncrement,
+              name: existing.name.includes('+') ? existing.name : existing.name + '+',
+            };
+          } else if (isSamePerk) {
+            const newValue = computeStackedValue();
+            updated[existingIndex] = {
+              ...existing,
+              value: newValue,
+              upgradeCount: (existing.upgradeCount || 1) + upgradeIncrement,
+              name: existing.name.includes('+') ? existing.name : existing.name + '+',
+            };
+          }
+          return updated;
+        } else {
+          // New perk - add it
+          const durationBonus = (hasEternalFlame && perk.duration > 0) ? 3 : 0;
+
+          if (perk.type === PERK_TYPES.FILTER) {
+            const filtered = list.filter(p =>
+              !(p.type === PERK_TYPES.FILTER && p.filterType === perk.filterType)
+            );
+            return [...filtered, {
+              ...perk,
+              remainingDuration: perk.duration > 0 ? perk.duration + durationBonus : perk.duration,
+              activatedAt: roundsPlayed
+            }];
+          }
+
+          return [...list, {
             ...perk,
             remainingDuration: perk.duration > 0 ? perk.duration + durationBonus : perk.duration,
             activatedAt: roundsPlayed
           }];
         }
+      };
 
-        return [...prev, {
-          ...perk,
-          remainingDuration: perk.duration > 0 ? perk.duration + durationBonus : perk.duration,
-          activatedAt: roundsPlayed
-        }];
-      }
+      // First application; if Double Dip, apply a second time atomically
+      const afterFirst = applyOnce(prev);
+      return doubleDip ? applyOnce(afterFirst) : afterFirst;
     });
 
     // Track permanent perks
@@ -220,11 +248,28 @@ export const usePerkSystem = () => {
   }, []);
 
   const consumePerk = useCallback((perkId) => {
-    setActivePerks(prev => prev.filter(p => p.id !== perkId));
+    let fullyConsumed = false;
+    setActivePerks(prev => {
+      const idx = prev.findIndex(p => p.id === perkId);
+      if (idx < 0) return prev;
+      const perk = prev[idx];
+      // Multi-charge: decrement value; remove only when exhausted
+      if (perk.value > 1) {
+        const updated = [...prev];
+        updated[idx] = { ...perk, value: perk.value - 1 };
+        return updated;
+      }
+      fullyConsumed = true;
+      return prev.filter(p => p.id !== perkId);
+    });
 
+    // Clean up permanentPerks tracking only when fully removed
     const consumedPerk = PERKS[Object.keys(PERKS).find(key => PERKS[key].id === perkId)];
     if (consumedPerk && consumedPerk.duration === -1 && consumedPerk.consumable) {
-      setSelectedPermanentPerks(prev => prev.filter(id => id !== perkId));
+      setSelectedPermanentPerks(prev => {
+        if (!fullyConsumed) return prev;
+        return prev.filter(id => id !== perkId);
+      });
     }
   }, []);
 

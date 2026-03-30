@@ -4,19 +4,13 @@ import { PERK_RARITY, PERK_CONFIG } from '../constants/perkDefinitions';
 
 export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip = false }) {
     const [isMinimized, setIsMinimized] = useState(false);
-    const [picksLeft, setPicksLeft] = useState(1);
 
     useEffect(() => {
-        if (show) {
-            setIsMinimized(false);
-            setPicksLeft(hasDoubleDip ? 2 : 1);
-        }
-    }, [show, hasDoubleDip]);
+        if (show) setIsMinimized(false);
+    }, [show]);
 
     const handlePerkClick = (perk) => {
-        const newPicksLeft = picksLeft - 1;
-        setPicksLeft(newPicksLeft);
-        onSelect(perk, newPicksLeft > 0);
+        onSelect(perk);
     };
 
     if (!show || !perks || perks.length === 0) return null;
@@ -120,7 +114,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                         transition={{ delay: 0.3 }}
                                         className="mt-2 inline-flex items-center gap-2 bg-amber-500/20 border border-amber-400/50 rounded-full px-4 py-1"
                                     >
-                                        <span className="text-amber-300 font-bold text-sm">✌️ Double Dip — {picksLeft} pick{picksLeft !== 1 ? 's' : ''} remaining</span>
+                                        <span className="text-amber-300 font-bold text-sm">✌️ Double Dip — your pick will be applied twice!</span>
                                     </motion.div>
                                 )}
                             </div>
