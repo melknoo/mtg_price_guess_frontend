@@ -891,7 +891,7 @@ export default function Game({
 
       perkSystem.decrementPerkDurations(relicSystem.hasRelic('perk_recycler'));
     },
-    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult]
+    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult, runLogger, saveCurrentRun]
   );
 
   // Update handleChoiceRef when handleChoice changes
@@ -985,7 +985,7 @@ export default function Game({
     } else {
       cardLoader.setNextPair();
     }
-  }, [currentRound, achievements, perkSystem, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, setScore, synergyEngine, saveCurrentRun]);
+  }, [currentRound, achievements, perkSystem, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, setScore, synergyEngine]);
 
   const handlePerkSelect = useCallback(async (perk) => {
     const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
