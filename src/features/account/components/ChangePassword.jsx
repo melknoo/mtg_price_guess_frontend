@@ -118,10 +118,10 @@ export default function ChangePassword({ onBack, onSuccess }) {
 
         <div>
           <label className="block text-sm font-medium mb-2">
-            Neues Passwort bestätigen
+            Confirm New Password
           </label>
           <PasswordInput
-            placeholder="Neues Passwort wiederholen"
+            placeholder="Repeat new password"
             className="w-full p-3 border border-white/20 rounded-lg bg-white/10 text-white placeholder-white/40 focus:border-amber-400/60 focus:outline-none"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}

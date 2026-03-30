@@ -218,7 +218,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                 transition={{ delay: 0.2 }}
                 className="text-gray-300 text-sm sm:text-lg"
               >
-                Wähle eine Belohnung!
+                Choose a reward!
               </motion.p>
             </div>
 
@@ -370,7 +370,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
               transition={{ delay: 0.5 }}
               className="text-center text-gray-400 text-xs sm:text-sm mt-3 sm:mt-8"
             >
-              💡 Relics sind permanent — Items sind temporäre Perks.
+              💡 Relics are permanent — Items are temporary perks.
             </motion.p>
           </motion.div>
         </motion.div>

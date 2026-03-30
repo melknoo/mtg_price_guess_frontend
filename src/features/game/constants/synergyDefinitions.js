@@ -2,7 +2,7 @@ export const SYNERGIES = {
   SPEED_DEMON: {
     id: 'speed_demon_combo',
     name: 'Speed Demon',
-    description: 'Alle Timer-Boni werden verdoppelt',
+    description: 'All timer bonuses are doubled',
     icon: '⚡⚡',
     requiredTags: { speed: 2 },
     effect: 'double_time_bonus',
@@ -11,7 +11,7 @@ export const SYNERGIES = {
   FORTRESS: {
     id: 'fortress',
     name: 'Fortress',
-    description: 'Herz-Regen alle 8 statt 15 richtige Antworten',
+    description: 'Regenerate a life every 8 correct answers instead of 15',
     icon: '🏰',
     requiredTags: { defense: 2 },
     effect: 'improved_regen',
@@ -20,7 +20,7 @@ export const SYNERGIES = {
   GOLD_RUSH: {
     id: 'gold_rush',
     name: 'Gold Rush',
-    description: 'Permanenter 1.5x Score-Multiplikator',
+    description: 'Permanent 1.5× score multiplier',
     icon: '💎💎',
     requiredTags: { score: 3 },
     effect: 'permanent_score_mult',
@@ -29,7 +29,7 @@ export const SYNERGIES = {
   SCHOLAR: {
     id: 'scholar',
     name: 'Scholar',
-    description: 'XP-Schwelle für Level-Up sinkt um 20%',
+    description: 'XP threshold for leveling up is reduced by 20%',
     icon: '📚',
     requiredTags: { xp: 2 },
     effect: 'reduced_xp_threshold',
@@ -38,7 +38,7 @@ export const SYNERGIES = {
   HOT_STREAK: {
     id: 'hot_streak',
     name: 'Hot Streak',
-    description: 'Streak-Bonus skaliert exponentiell — lange Streaks werden massiv belohnt',
+    description: 'Streak bonus scales exponentially — long streaks are massively rewarded',
     icon: '🔥🔥',
     requiredTags: { streak: 2 },
     effect: 'exponential_streak_bonus',
@@ -47,7 +47,7 @@ export const SYNERGIES = {
   FORTUNE: {
     id: 'fortune',
     name: 'Fortune',
-    description: 'Level-Up bietet 4 Optionen statt 3',
+    description: 'Level-up offers 4 choices instead of 3',
     icon: '🎰',
     requiredTags: { luck: 2 },
     effect: 'extra_pick_option',
@@ -56,7 +56,7 @@ export const SYNERGIES = {
   BERSERKER: {
     id: 'berserker',
     name: 'Berserker',
-    description: '2x XP + 2x Score wenn nur noch 1 Leben',
+    description: '2× XP + 2× score when down to 1 life',
     icon: '😤',
     requiredTags: { score: 1, defense: 1, streak: 1 },
     effect: 'low_hp_bonus',
@@ -65,7 +65,7 @@ export const SYNERGIES = {
   INFINITE_ENGINE: {
     id: 'infinite_engine',
     name: 'Infinite Engine',
-    description: 'Snowball-Scaling verdreifacht sich',
+    description: 'Snowball scaling triples',
     icon: '♾️',
     requiredTags: { score: 4 },
     effect: 'triple_snowball',
@@ -74,7 +74,7 @@ export const SYNERGIES = {
   JACKPOT: {
     id: 'jackpot',
     name: 'Jackpot',
-    description: 'Jede 10. richtige Antwort: Score ×10',
+    description: 'Every 10th correct answer: score ×10',
     icon: '🎰🎰',
     requiredTags: { luck: 3 },
     effect: 'jackpot',
@@ -83,7 +83,7 @@ export const SYNERGIES = {
   UNSTOPPABLE: {
     id: 'unstoppable',
     name: 'Unstoppable',
-    description: 'Streak wird bei Fehler gar nicht reduziert',
+    description: 'Streak is not reduced at all on a wrong answer',
     icon: '🔥🛡️🔥',
     requiredTags: { streak: 2, defense: 2 },
     effect: 'streak_immune',
@@ -94,7 +94,7 @@ export const SYNERGIES = {
   CHEATER: {
     id: 'cheater',
     name: 'Cheater',
-    description: 'Gefakte Bedingungen geben doppelten Bonus statt normalen',
+    description: 'Faked conditions grant double their bonus instead of normal',
     icon: '🃏🃏',
     requiredTags: { fake: 2 },
     effect: 'double_fake_bonus',
@@ -103,7 +103,7 @@ export const SYNERGIES = {
   MASOCHIST: {
     id: 'masochist',
     name: 'Masochist',
-    description: 'Jeder Lebensverlust gibt permanent +20% Multiplikator für den ganzen Run',
+    description: 'Each life lost permanently adds +20% multiplier for the entire run',
     icon: '🩸🩸',
     requiredTags: { sacrifice: 1, defense: 1 },
     effect: 'permanent_damage_mult',
@@ -112,7 +112,7 @@ export const SYNERGIES = {
   ASCENSION: {
     id: 'ascension',
     name: 'Ascension',
-    description: 'Overflow-Heilung gibt ×1.5 Score-Multiplikator statt flat 100',
+    description: 'Overflow healing grants ×1.5 score multiplier instead of a flat 100',
     icon: '🫀✨',
     requiredTags: { defense: 3 },
     effect: 'overflow_multiplier',
@@ -121,7 +121,7 @@ export const SYNERGIES = {
   PHANTOM_POWER: {
     id: 'phantom_power',
     name: 'Phantom Power',
-    description: 'Fake-Relics zählen doppelt für Tag-Counts (aktiviert mehr Synergien)',
+    description: 'Fake relics count double toward tag counts (activates more synergies)',
     icon: '👻⚡',
     requiredTags: { fake: 1, luck: 1 },
     effect: 'fake_double_tags',
@@ -130,7 +130,7 @@ export const SYNERGIES = {
   SACRIFICE_REWARD: {
     id: 'sacrifice_reward',
     name: 'Sacrifice Reward',
-    description: 'Pro Sacrifice-Relic: +50% globaler Multiplikator',
+    description: 'Per sacrifice relic: +50% global multiplier',
     icon: '🔥💀',
     requiredTags: { sacrifice: 2 },
     effect: 'per_sacrifice_mult',

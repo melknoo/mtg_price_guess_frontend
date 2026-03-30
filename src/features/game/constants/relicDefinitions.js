@@ -1,4 +1,4 @@
-// Relic-Tags — identisch mit den Perk-Tags für Synergy-Matching
+// Relic-Tags — identical to Perk-Tags for synergy matching
 export const RELIC_TAGS = {
   STREAK: 'streak',
   SPEED: 'speed',
@@ -21,7 +21,7 @@ export const RELICS = {
   COMBO_MASTER: {
     id: 'combo_master',
     name: 'Combo Master',
-    description: 'Jede 3er-Streak gibt +5% globalen Score-Multiplikator (stackt!)',
+    description: 'Every 3-streak adds +5% to your global score multiplier (stacks!)',
     icon: '🔗',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.STREAK, RELIC_TAGS.SCORE],
@@ -32,7 +32,7 @@ export const RELICS = {
   MOMENTUM: {
     id: 'momentum',
     name: 'Momentum',
-    description: 'Jede richtige Antwort in Folge gibt +2 XP mehr als die vorherige',
+    description: 'Each consecutive correct answer gives +2 more XP than the previous',
     icon: '🚀',
     rarity: RELIC_RARITY.COMMON,
     tags: [RELIC_TAGS.STREAK, RELIC_TAGS.XP],
@@ -42,7 +42,7 @@ export const RELICS = {
   PRICE_SENSE: {
     id: 'price_sense',
     name: 'Price Sense',
-    description: 'Karten mit >$10 Preisdifferenz geben 1.5x XP',
+    description: 'Cards with >$10 price difference grant 1.5x XP',
     icon: '💰',
     rarity: RELIC_RARITY.COMMON,
     tags: [RELIC_TAGS.XP, RELIC_TAGS.SCORE],
@@ -53,7 +53,7 @@ export const RELICS = {
   LUCKY_CHARM: {
     id: 'lucky_charm',
     name: 'Lucky Charm',
-    description: 'Seltene Perks erscheinen 20% häufiger',
+    description: 'Rare perks appear 20% more often',
     icon: '🍀',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.LUCK],
@@ -63,7 +63,7 @@ export const RELICS = {
   GLASS_CANNON: {
     id: 'glass_cannon',
     name: 'Glass Cannon',
-    description: '2x Score, aber max. 1 Leben',
+    description: '2x score, but maximum 1 life',
     icon: '💥',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.SCORE],
@@ -73,7 +73,7 @@ export const RELICS = {
   QUICK_LEARNER: {
     id: 'quick_learner',
     name: 'Quick Learner',
-    description: '+50% XP für Antworten unter 3 Sekunden',
+    description: '+50% XP for answers within 3 seconds',
     icon: '⚡',
     rarity: RELIC_RARITY.COMMON,
     tags: [RELIC_TAGS.SPEED, RELIC_TAGS.XP],
@@ -84,7 +84,7 @@ export const RELICS = {
   IRON_WILL: {
     id: 'iron_will',
     name: 'Iron Will',
-    description: 'Nach einem Fehler: nächste richtige Antwort gibt 3x Score',
+    description: 'After a mistake: your next correct answer scores 3x',
     icon: '🛡️',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.DEFENSE, RELIC_TAGS.SCORE],
@@ -94,7 +94,7 @@ export const RELICS = {
   CARD_COUNTER: {
     id: 'card_counter',
     name: 'Card Counter',
-    description: 'Alle 10 Runden: +1 Leben (max 5)',
+    description: 'Every 10 rounds: +1 life (max 5)',
     icon: '🃏',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.DEFENSE],
@@ -104,7 +104,7 @@ export const RELICS = {
   TREASURE_HUNTER: {
     id: 'treasure_hunter',
     name: 'Treasure Hunter',
-    description: '+25% mehr Score von allen Perk-Boni',
+    description: '+25% more score from all perk bonuses',
     icon: '🗝️',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.SCORE, RELIC_TAGS.LUCK],
@@ -114,7 +114,7 @@ export const RELICS = {
   MEDITATION: {
     id: 'meditation',
     name: 'Meditation',
-    description: 'Timer startet mit +2 Sekunden extra',
+    description: 'Timer starts with +2 extra seconds',
     icon: '🧘',
     rarity: RELIC_RARITY.COMMON,
     tags: [RELIC_TAGS.SPEED, RELIC_TAGS.DEFENSE],
@@ -126,7 +126,7 @@ export const RELICS = {
   ECHO: {
     id: 'echo',
     name: 'Echo',
-    description: 'Relic-Boni werden doppelt angerechnet',
+    description: 'All relic bonuses are applied twice',
     icon: '🔁',
     rarity: RELIC_RARITY.LEGENDARY,
     tags: [RELIC_TAGS.LUCK],
@@ -136,7 +136,7 @@ export const RELICS = {
   AMPLIFIER: {
     id: 'amplifier',
     name: 'Amplifier',
-    description: 'Alle Relic-Multiplikatoren sind 50% stärker',
+    description: 'All relic multipliers are 50% stronger',
     icon: '📡',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.SCORE],
@@ -146,7 +146,7 @@ export const RELICS = {
   COLLECTOR_BONUS: {
     id: 'collector_bonus',
     name: 'Collector Bonus',
-    description: '+15 flat Score pro aktivem Relic',
+    description: '+15 flat score for each active relic',
     icon: '🏛️',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.SCORE],
@@ -156,7 +156,7 @@ export const RELICS = {
   SYNERGY_AMP: {
     id: 'synergy_amp',
     name: 'Synergy Amplifier',
-    description: '+10% Score pro aktiver Synergy',
+    description: '+10% score per active synergy',
     icon: '🔗📡',
     rarity: RELIC_RARITY.LEGENDARY,
     tags: [RELIC_TAGS.SCORE, RELIC_TAGS.LUCK],
@@ -164,11 +164,11 @@ export const RELICS = {
     value: 0.1,
   },
 
-  // === META-RELICS: Konverter ===
+  // === META-RELICS: Converters ===
   ALCHEMIST: {
     id: 'alchemist',
     name: 'Alchemist',
-    description: 'Flat-Boni werden zu Multiplikatoren (+20 → ×1.2)',
+    description: 'Flat bonuses convert to multipliers (+20 → ×1.2)',
     icon: '⚗️',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.SCORE],
@@ -178,7 +178,7 @@ export const RELICS = {
   RISK_REWARD: {
     id: 'risk_reward',
     name: 'Risk & Reward',
-    description: 'Weniger Restzeit = höherer Multiplikator (bis ×3)',
+    description: 'Less time remaining = higher multiplier (up to ×3)',
     icon: '🎲',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.SPEED, RELIC_TAGS.SCORE],
@@ -188,7 +188,7 @@ export const RELICS = {
   SNOWBALL: {
     id: 'snowball',
     name: 'Snowball',
-    description: '+0.1× Score pro gespielte Runde (stackt permanent)',
+    description: '+0.1× score per round played (stacks permanently)',
     icon: '☃️',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.SCORE, RELIC_TAGS.STREAK],
@@ -198,7 +198,7 @@ export const RELICS = {
   OVERKILL: {
     id: 'overkill',
     name: 'Overkill',
-    description: 'Score über 100 pro Runde: überschüssige Punkte werden verdoppelt',
+    description: 'Score above 100 per round: excess points are doubled',
     icon: '💀',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.SCORE],
@@ -210,7 +210,7 @@ export const RELICS = {
   TAG_MASTER: {
     id: 'tag_master',
     name: 'Tag Master',
-    description: '+0.1× Score pro einzigartigen Tag den du besitzt',
+    description: '+0.1× score for each unique tag you own',
     icon: '🏷️',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.SCORE, RELIC_TAGS.LUCK],
@@ -220,7 +220,7 @@ export const RELICS = {
   SYNERGY_CHAIN: {
     id: 'synergy_chain',
     name: 'Synergy Chain',
-    description: 'Jede aktive Synergy gibt +0.25× auf alle Score-Multiplikatoren',
+    description: 'Each active synergy adds +0.25× to all score multipliers',
     icon: '⛓️',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.SCORE, RELIC_TAGS.LUCK],
@@ -230,7 +230,7 @@ export const RELICS = {
   PERK_MASTERY: {
     id: 'perk_mastery',
     name: 'Perk Mastery',
-    description: '+0.15× Score pro aktivem Perk',
+    description: '+0.15× score per active perk',
     icon: '🎓',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.SCORE],
@@ -240,7 +240,7 @@ export const RELICS = {
   LEVEL_POWER: {
     id: 'level_power',
     name: 'Level Power',
-    description: '+2% Score pro Level (Level 10 = +20%)',
+    description: '+2% score per level (Level 10 = +20%)',
     icon: '📈',
     rarity: RELIC_RARITY.COMMON,
     tags: [RELIC_TAGS.SCORE, RELIC_TAGS.XP],
@@ -248,11 +248,11 @@ export const RELICS = {
     value: 0.02,
   },
 
-  // === META-RELICS: Bedingungs-Combos ===
+  // === META-RELICS: Conditional Combos ===
   CHAIN_REACTION: {
     id: 'chain_reaction',
     name: 'Chain Reaction',
-    description: 'Wenn Iron Will oder Combo Master aktiv ist: +50% Bonus',
+    description: 'When Iron Will or Combo Master is active: +50% bonus',
     icon: '💥⚡',
     rarity: RELIC_RARITY.LEGENDARY,
     tags: [RELIC_TAGS.SCORE, RELIC_TAGS.LUCK],
@@ -262,7 +262,7 @@ export const RELICS = {
   PERFECTIONIST_ECHO: {
     id: 'perfectionist_echo',
     name: 'Perfectionist Echo',
-    description: 'Bei perfekter Antwort (erste Sekunde): nächste Runde alle Boni ×2',
+    description: 'On a perfect answer (first second): next round all bonuses ×2',
     icon: '✨🔁',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.SPEED, RELIC_TAGS.SCORE],
@@ -272,7 +272,7 @@ export const RELICS = {
   STREAK_SHIELD: {
     id: 'streak_shield',
     name: 'Streak Shield',
-    description: 'Bei Fehler wird Streak halbiert statt auf 0 gesetzt',
+    description: 'On a mistake, streak is halved instead of reset to 0',
     icon: '🔥🛡️',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.STREAK, RELIC_TAGS.DEFENSE],
@@ -282,7 +282,7 @@ export const RELICS = {
   LAST_STAND: {
     id: 'last_stand',
     name: 'Last Stand',
-    description: 'Bei letztem Leben: alle Multiplikatoren nochmal angewendet (×2)',
+    description: 'On last life: all multipliers are applied again (×2)',
     icon: '⚔️',
     rarity: RELIC_RARITY.LEGENDARY,
     tags: [RELIC_TAGS.DEFENSE, RELIC_TAGS.SCORE],
@@ -292,7 +292,7 @@ export const RELICS = {
   XP_CONVERTER: {
     id: 'xp_converter',
     name: 'XP Converter',
-    description: 'Überschüssige XP nach Level-Up → Score (1 XP = 2 Score)',
+    description: 'Excess XP after leveling up converts to score (1 XP = 2 score)',
     icon: '💱',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.XP, RELIC_TAGS.SCORE],
@@ -300,11 +300,11 @@ export const RELICS = {
     value: 2,
   },
 
-  // === META-RELICS: Perk-Verstärker ===
+  // === META-RELICS: Perk Enhancers ===
   ETERNAL_FLAME: {
     id: 'eternal_flame',
     name: 'Eternal Flame',
-    description: 'Perks mit Duration halten 3 Runden länger',
+    description: 'Perks with a duration last 3 rounds longer',
     icon: '🕯️',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.LUCK],
@@ -314,7 +314,7 @@ export const RELICS = {
   DOUBLE_DIP: {
     id: 'double_dip',
     name: 'Double Dip',
-    description: 'Beim Perk-Pick alle 5 Runden: wähle 2 statt 1',
+    description: 'When picking perks every 5 rounds: choose 2 instead of 1',
     icon: '✌️',
     rarity: RELIC_RARITY.LEGENDARY,
     tags: [RELIC_TAGS.LUCK],
@@ -324,7 +324,7 @@ export const RELICS = {
   UPGRADE_MASTER: {
     id: 'upgrade_master',
     name: 'Upgrade Master',
-    description: 'Upgrades geben +2 upgradeCount (doppelte Tag-Contribution)',
+    description: 'Upgrades grant +2 upgrade count (double tag contribution)',
     icon: '⬆️⬆️',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.LUCK, RELIC_TAGS.SCORE],
@@ -334,7 +334,7 @@ export const RELICS = {
   PERK_RECYCLER: {
     id: 'perk_recycler',
     name: 'Perk Recycler',
-    description: 'Wenn ein Perk ausläuft: 30% Chance dass er sich erneuert',
+    description: 'When a perk expires: 30% chance it renews itself',
     icon: '♻️',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.LUCK, RELIC_TAGS.DEFENSE],
@@ -342,11 +342,11 @@ export const RELICS = {
     value: 0.3,
   },
 
-  // === CHEAT THE SYSTEM: Kategorie 1 — Zustand faken ===
+  // === CHEAT THE SYSTEM: Category 1 — Fake State ===
   DEATHS_MASK: {
     id: 'deaths_mask',
     name: "Death's Mask",
-    description: 'Du zählst immer als hättest du 1 Leben',
+    description: 'You always count as having 1 life',
     icon: '💀',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.FAKE, RELIC_TAGS.SCORE],
@@ -356,7 +356,7 @@ export const RELICS = {
   PHANTOM_STREAK: {
     id: 'phantom_streak',
     name: 'Phantom Streak',
-    description: 'Du zählst immer als hättest du mindestens 10er Streak',
+    description: 'You always count as having at least a 10-streak',
     icon: '👻',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.FAKE, RELIC_TAGS.STREAK],
@@ -366,7 +366,7 @@ export const RELICS = {
   TIMELESS: {
     id: 'timeless',
     name: 'Timeless',
-    description: 'Du zählst immer als hättest du sofort geantwortet — alle Speed-Boni triggern immer',
+    description: 'You always count as having answered instantly — all speed bonuses always trigger',
     icon: '⏳',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.FAKE, RELIC_TAGS.SPEED],
@@ -374,11 +374,11 @@ export const RELICS = {
     value: 1,
   },
 
-  // === CHEAT THE SYSTEM: Kategorie 2 — Regeln umdrehen ===
+  // === CHEAT THE SYSTEM: Category 2 — Rule Inversions ===
   REVERSE_TIMER: {
     id: 'reverse_timer',
     name: 'Reverse Timer',
-    description: 'Weniger Restzeit gibt MEHR Time-Bonus statt weniger',
+    description: 'Less remaining time gives MORE time bonus instead of less',
     icon: '⏪',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.SCORE, RELIC_TAGS.SPEED],
@@ -388,7 +388,7 @@ export const RELICS = {
   PAIN_IS_GAIN: {
     id: 'pain_is_gain',
     name: 'Pain is Gain',
-    description: 'Wenn du ein Leben verlierst: +50 Score und +30 XP',
+    description: 'When you lose a life: +50 score and +30 XP',
     icon: '🩸',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.SACRIFICE, RELIC_TAGS.SCORE],
@@ -399,7 +399,7 @@ export const RELICS = {
   OVERFLOW: {
     id: 'overflow',
     name: 'Overflow',
-    description: 'Überschüssige Heilung über dem Max wird zu Score (100 Score pro Heal)',
+    description: 'Excess healing above max converts to score (100 score per heal)',
     icon: '🫀',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.DEFENSE, RELIC_TAGS.SCORE],
@@ -407,11 +407,11 @@ export const RELICS = {
     value: 100,
   },
 
-  // === CHEAT THE SYSTEM: Kategorie 3 — Items hacken ===
+  // === CHEAT THE SYSTEM: Category 3 — Item Hacking ===
   BLUEPRINT: {
     id: 'blueprint',
     name: 'Blueprint',
-    description: 'Kopiert den Effekt eines zufälligen anderen Relics',
+    description: 'Copies the effect of a random other relic',
     icon: '📋',
     rarity: RELIC_RARITY.LEGENDARY,
     tags: [RELIC_TAGS.LUCK],
@@ -421,7 +421,7 @@ export const RELICS = {
   PARASITE: {
     id: 'parasite',
     name: 'Parasite',
-    description: 'Macht deinen nächsten temporären Perk permanent',
+    description: 'Makes your next temporary perk permanent',
     icon: '🦠',
     rarity: RELIC_RARITY.LEGENDARY,
     tags: [RELIC_TAGS.LUCK, RELIC_TAGS.SCORE],
@@ -432,7 +432,7 @@ export const RELICS = {
   MIRROR: {
     id: 'mirror',
     name: 'Mirror',
-    description: 'Bei mind. 2 aktiven Multiplikatoren: +30% auf den Gesamt-Score',
+    description: 'With at least 2 active multipliers: +30% to total score',
     icon: '🪞',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.SCORE],
@@ -442,7 +442,7 @@ export const RELICS = {
   COPYCAT: {
     id: 'copycat',
     name: 'Copycat',
-    description: 'Jeder Perk-Pick gibt zusätzlich eine Kopie mit halben Werten und halber Duration',
+    description: 'Each perk pick also gives a copy with half values and half duration',
     icon: '🐱',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.LUCK],
@@ -450,11 +450,11 @@ export const RELICS = {
     value: 0.5,
   },
 
-  // === CHEAT THE SYSTEM: Kategorie 4 — Anti-Synergien ===
+  // === CHEAT THE SYSTEM: Category 4 — Anti-Synergies ===
   HERMIT: {
     id: 'hermit',
     name: 'Hermit',
-    description: 'DEAKTIVIERT alle Synergien. Dafür: alle Relic-Boni doppelt so stark',
+    description: 'DISABLES all synergies. In return: all relic bonuses are twice as strong',
     icon: '🏚️',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.SACRIFICE, RELIC_TAGS.SCORE],
@@ -464,7 +464,7 @@ export const RELICS = {
   MINIMALIST: {
     id: 'minimalist',
     name: 'Minimalist',
-    description: 'Max. 3 Relics. Dafür: alle drei sind dreifach so stark',
+    description: 'Max. 3 relics. In return: all three are three times as strong',
     icon: '🧹',
     rarity: RELIC_RARITY.EPIC,
     tags: [RELIC_TAGS.SACRIFICE, RELIC_TAGS.SCORE],
@@ -475,7 +475,7 @@ export const RELICS = {
   NO_PERKS: {
     id: 'no_perks',
     name: 'No Perks',
-    description: 'Keine Perk-Picks mehr. Dafür: +1 extra Relic-Option bei jedem Level-Up',
+    description: 'No more perk picks. In return: +1 extra relic option at each level-up',
     icon: '🚫',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.SACRIFICE],

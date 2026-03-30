@@ -354,7 +354,7 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
             )}
             {counterInfo && (
               <div className="text-amber-300 text-xs mt-2">
-                🔢 Zähler: {counterInfo.current} / {counterInfo.max}
+                🔢 Counter: {counterInfo.current} / {counterInfo.max}
               </div>
             )}
             {item.tags?.length > 0 && (

@@ -27,14 +27,14 @@ export default function InstallBanner() {
         <span className="text-xl">📲</span>
         <span>
           {isIOS
-            ? 'Zum Home Screen hinzufügen: Teilen → "Zum Home-Bildschirm"'
-            : "App installieren für bessere Erfahrung"}
+            ? 'Add to Home Screen: Share → "Add to Home Screen"'
+            : "Install the app for a better experience"}
         </span>
       </div>
       <button
         onClick={() => { sessionStorage.setItem("install_banner_dismissed", "1"); setShow(false); }}
         className="text-purple-300 hover:text-white text-xl leading-none shrink-0"
-        aria-label="Schließen"
+        aria-label="Dismiss"
       >
         ✕
       </button>

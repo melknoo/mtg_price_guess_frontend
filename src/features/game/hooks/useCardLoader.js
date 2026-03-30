@@ -73,7 +73,7 @@ export const useCardLoader = () => {
     }
 
     if (cardsToUse.length < GAME_CONFIG.MIN_CARDS_NEEDED) {
-      setError('Nicht genügend Karten verfügbar');
+      setError('Not enough cards available');
       return false;
     }
 
@@ -92,7 +92,7 @@ export const useCardLoader = () => {
    */
   const initWithCards = useCallback((cards) => {
     if (!cards || cards.length < 2) {
-      setError('Nicht genügend Karten verfügbar');
+      setError('Not enough cards available');
       return false;
     }
     setCurrentPair(cards.slice(0, 2));

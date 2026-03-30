@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchLeaderboard } from "../api/leaderboardApi";
 
-export default function Leaderboard({ onBack }) {
+export default function Leaderboard({ onBack, compact = false }) {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,30 +46,40 @@ export default function Leaderboard({ onBack }) {
   }
 
   return (
-    <div className="text-white text-center max-w-md mx-auto">
-      <h2 className="text-3xl font-bold mb-6">🏆 Leaderboard</h2>
+    <div className={`text-white text-center ${compact ? "w-full" : "max-w-md mx-auto"}`}>
+      <h2 className={`font-bold ${compact ? "text-xl mb-3" : "text-3xl mb-6"}`}>🏆 Leaderboard</h2>
 
       {players.length === 0 ? (
-        <p className="text-gray-400 py-4">
+        <p className="text-gray-400 py-4 text-sm">
           No highscores yet. Be the first!
         </p>
       ) : (
-        <ol className="bg-white/10 border border-white/20 rounded-lg p-4">
+        <ol className="bg-white/10 border border-white/20 rounded-lg p-3">
           {players.map((player, index) => (
-            <li key={index} className="py-1 border-b border-white/10 last:border-none">
-              <span className="font-bold">{index + 1}.</span> {player.username} –{" "}
-              <span className="text-amber-400 font-semibold">{player.highscore}</span>
+            <li
+              key={index}
+              className={`flex items-center justify-between border-b border-white/10 last:border-none ${compact ? "py-1.5 text-sm" : "py-2"}`}
+            >
+              <span className="flex items-center gap-2">
+                <span className={`font-bold w-5 text-right shrink-0 ${index === 0 ? "text-amber-400" : index === 1 ? "text-slate-300" : index === 2 ? "text-amber-700" : "text-white/50"}`}>
+                  {index + 1}.
+                </span>
+                <span className="text-white/90">{player.username}</span>
+              </span>
+              <span className="text-amber-400 font-semibold">{player.highscore.toLocaleString()}</span>
             </li>
           ))}
         </ol>
       )}
 
-      <button
-        onClick={onBack}
-        className="mt-6 bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded text-white transition"
-      >
-        Back
-      </button>
+      {!compact && (
+        <button
+          onClick={onBack}
+          className="mt-6 bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded text-white transition"
+        >
+          Back
+        </button>
+      )}
     </div>
   );
 }
