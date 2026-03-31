@@ -126,31 +126,31 @@ const CATEGORY_STYLES = {
   relic: {
     border: 'border-amber-400',
     gradient: 'from-amber-700 to-yellow-800',
-    badge: 'bg-amber-500 text-white',
+    badge: 'badge badge-legendary',
     badgeLabel: '⭐ Relic',
     glow: 'group-hover:shadow-amber-500/40',
   },
   item: {
     border: 'border-blue-400',
     gradient: 'from-blue-700 to-indigo-800',
-    badge: 'bg-blue-500 text-white',
+    badge: 'badge badge-rare',
     badgeLabel: '🎮 Item',
     glow: 'group-hover:shadow-blue-500/40',
   },
   upgrade: {
     border: 'border-emerald-400',
     gradient: 'from-emerald-700 to-teal-800',
-    badge: 'bg-emerald-500 text-white',
+    badge: 'badge badge-rare',
     badgeLabel: '⬆️ Upgrade',
     glow: 'group-hover:shadow-emerald-500/40',
   },
 };
 
 const RARITY_BADGE = {
-  common: 'bg-gray-500 text-white',
-  rare: 'bg-blue-500 text-white',
-  epic: 'bg-purple-500 text-white',
-  legendary: 'bg-amber-400 text-black',
+  common: 'badge badge-common',
+  rare: 'badge badge-rare',
+  epic: 'badge badge-epic',
+  legendary: 'badge badge-legendary',
 };
 
 export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], onSelect }) {
@@ -239,11 +239,11 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                     whileTap={{ scale: 0.97 }}
                     onClick={() => onSelect(option)}
                     className={`
-                      relative cursor-pointer group
+                      card-selectable group
                       bg-gradient-to-br ${style.gradient}
-                      border-2 sm:border-4 ${style.border} rounded-xl sm:rounded-2xl
+                      ${style.border}
                       p-3 sm:p-6
-                      shadow-2xl transition-all duration-300
+                      shadow-2xl duration-300
                       hover:shadow-xl ${style.glow}
                     `}
                   >
@@ -256,10 +256,10 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap gap-1 mb-1">
-                          <span className={`${style.badge} px-1.5 py-0.5 rounded-full text-xs font-bold`}>
+                          <span className={style.badge}>
                             {style.badgeLabel}
                           </span>
-                          <span className={`${RARITY_BADGE[option.rarity] ?? 'bg-gray-500 text-white'} px-1.5 py-0.5 rounded-full text-xs font-bold uppercase`}>
+                          <span className={`${RARITY_BADGE[option.rarity] ?? 'badge badge-common'} uppercase`}>
                             {option.rarity}
                           </span>
                         </div>
@@ -305,12 +305,12 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                     {/* Desktop: vertical layout (original) */}
                     <div className="hidden md:block">
                       <div className="absolute top-3 left-4">
-                        <span className={`${style.badge} px-2 py-0.5 rounded-full text-xs font-bold`}>
+                        <span className={style.badge}>
                           {style.badgeLabel}
                         </span>
                       </div>
                       <div className="absolute top-3 right-4">
-                        <span className={`${RARITY_BADGE[option.rarity] ?? 'bg-gray-500 text-white'} px-2 py-0.5 rounded-full text-xs font-bold uppercase`}>
+                        <span className={`${RARITY_BADGE[option.rarity] ?? 'badge badge-common'} uppercase`}>
                           {option.rarity}
                         </span>
                       </div>
@@ -368,8 +368,8 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                     </div>
 
                     {/* Hover-Glow */}
-                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white/10" />
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      <div className="absolute inset-0 bg-white/10" />
                     </div>
                   </motion.div>
                 );

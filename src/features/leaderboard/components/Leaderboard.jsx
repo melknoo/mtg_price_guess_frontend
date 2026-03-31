@@ -37,7 +37,7 @@ export default function Leaderboard({ onBack, onShowFull, compact = false, mobil
         <p className="text-red-400 mb-4">❌ {error}</p>
         <button
           onClick={onBack}
-          className="bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded text-white transition"
+          className="btn-secondary"
         >
           Back
         </button>
@@ -85,7 +85,7 @@ export default function Leaderboard({ onBack, onShowFull, compact = false, mobil
       {!compact && (
         <button
           onClick={onBack}
-          className="mt-6 bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded text-white transition"
+          className="btn-secondary mt-6"
         >
           Back
         </button>

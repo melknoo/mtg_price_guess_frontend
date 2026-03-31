@@ -1,18 +1,18 @@
 import React from 'react';
 
 const variants = {
-  primary: 'bg-amber-600 hover:bg-amber-500',
-  secondary: 'bg-gray-600 hover:bg-gray-700',
-  success: 'bg-green-600 hover:bg-green-700',
-  danger: 'bg-red-600 hover:bg-red-700',
-  warning: 'bg-yellow-600 hover:bg-yellow-700',
+  primary: 'btn-primary',
+  secondary: 'btn-secondary',
+  success: 'btn-primary',
+  danger: 'btn-danger',
+  warning: 'btn-primary',
 };
 
 const sizes = {
-  sm: 'px-3 py-1 text-sm',
-  md: 'px-4 py-2',
-  lg: 'px-6 py-3 text-lg',
-  xl: 'px-8 py-4 text-xl',
+  sm: 'btn-sm',
+  md: '',
+  lg: '',
+  xl: 'text-xl px-8 py-4',
 };
 
 export default function Button({
@@ -37,7 +37,6 @@ export default function Button({
       className={`
         ${variantClass}
         ${sizeClass}
-        text-white rounded transition
         ${(disabled || loading) ? 'opacity-50 cursor-not-allowed' : ''}
         ${className}
       `}

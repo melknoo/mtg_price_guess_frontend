@@ -80,6 +80,40 @@ src/
 └── App.jsx
 ```
 
+## UI Design System
+
+Einheitliche Klassen definiert in `src/index.css` via `@layer components`.
+
+### Buttons
+
+- `btn-primary` — Amber/Gold, Hauptaktionen (New Game, Restart, Confirm)
+- `btn-secondary` — Transparent/White-Border, Nebenaktionen (Back, Settings)
+- `btn-danger` — Red, Destruktive Aktionen (Delete, Logout)
+- Modifier: `btn-sm` (kompakt), `btn-full` (volle Breite)
+
+### Panels
+
+- `panel` — Standard-Sektion (bg-white/5, border-white/10)
+- `panel-highlight` — Amber-Akzent für wichtige Infos
+- `panel-danger` — Red-Akzent für Danger Zones
+- `panel-game` — In-Game mit Backdrop-Blur
+
+### Cards & Badges
+
+- `card-selectable` — Basis für Perk/Relic-Karten in Modals
+- `badge badge-{common|rare|epic|legendary}` — Rarity-Badges
+
+### Dividers
+
+- `divider` — Subtile weiße Trennlinie
+- `divider-amber` — Amber-Akzent-Trennlinie
+
+### Regeln
+
+- ALLE neuen Buttons müssen eine der btn-Klassen verwenden
+- Keine neuen Inline-Button-Styles mehr — immer die Klassen nutzen
+- Perk/Relic-Karten behalten ihre eigenen Rarity-Gradient-Styles
+
 ## Roguelike System
 
 ### Overview

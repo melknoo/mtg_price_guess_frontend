@@ -4,6 +4,103 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply relative border-4 rounded-md min-h-[44px]
+      px-6 py-3
+      font-semibold text-lg
+      transition-all duration-150
+      active:scale-95;
+    box-shadow:
+      inset 4px 4px 0 rgba(255, 255, 255, 0.12),
+      inset -4px -4px 0 rgba(0, 0, 0, 0.16),
+      0 3px 0 rgba(5, 13, 33, 0.65),
+      0 10px 18px rgba(0, 0, 0, 0.18);
+  }
+
+  .btn-primary {
+    @apply bg-amber-800 hover:bg-amber-700 border-[#3c2c12] text-amber-50;
+  }
+
+  .btn-secondary {
+    @apply bg-slate-700 hover:bg-slate-600 border-[#1c2740] text-slate-50;
+  }
+
+  .btn-danger {
+    @apply bg-rose-900 hover:bg-rose-800 border-[#352031] text-rose-50;
+  }
+
+  .btn-sm {
+    @apply px-4 py-1.5 min-h-[44px] text-sm;
+  }
+
+  .btn-full {
+    @apply w-full;
+  }
+
+  .panel {
+    @apply bg-white/5 border border-white/10 rounded-xl p-5;
+  }
+
+  .panel-highlight {
+    @apply bg-amber-500/5 border border-amber-400/20 rounded-xl p-5;
+  }
+
+  .panel-danger {
+    @apply bg-red-500/5 border border-red-500/30 rounded-xl p-5;
+  }
+
+  .panel-game {
+    @apply bg-black/20 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-2;
+  }
+
+  .card-selectable {
+    @apply relative cursor-pointer
+      border-4 rounded-md p-5
+      shadow-xl transition-all duration-200
+      hover:scale-[1.03] hover:-translate-y-1
+      active:scale-95;
+    box-shadow:
+      inset 4px 4px 0 rgba(255, 255, 255, 0.12),
+      inset -4px -4px 0 rgba(0, 0, 0, 0.18),
+      0 3px 0 rgba(5, 13, 33, 0.65),
+      0 14px 22px rgba(0, 0, 0, 0.2);
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-sm border border-[#22304f] text-xs font-bold;
+    box-shadow:
+      inset 2px 2px 0 rgba(255, 255, 255, 0.14),
+      inset -2px -2px 0 rgba(0, 0, 0, 0.16);
+  }
+
+  .badge-common {
+    @apply bg-gray-500/60 text-gray-200;
+  }
+
+  .badge-rare {
+    @apply bg-blue-500/60 text-blue-100;
+  }
+
+  .badge-epic {
+    @apply bg-purple-500/60 text-purple-100;
+  }
+
+  .badge-legendary {
+    @apply bg-amber-500/60 text-amber-100;
+  }
+
+  .divider {
+    @apply h-px bg-gradient-to-r from-transparent via-white/15 to-transparent my-4;
+  }
+
+  .divider-amber {
+    @apply h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent my-4;
+  }
+}
+
 /* Viewport layout */
 html, body, #root {
   width: 100%;

@@ -147,7 +147,7 @@ function MobileFilterDropdown({ selectedCategory, setSelectedCategory, categoryI
     <div className="relative sm:hidden mb-4">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-white/10 rounded-lg text-white font-medium border border-white/20"
+        className="btn-secondary btn-full flex items-center justify-between"
       >
         <span className="flex items-center gap-2">
           {selectedCategory === 'all'
@@ -221,7 +221,7 @@ function DesktopFilterButtons({ selectedCategory, setSelectedCategory, categoryI
         onClick={() => setSelectedCategory('all')}
         className={`px-4 py-2 rounded-lg transition font-medium ${selectedCategory === 'all'
             ? 'bg-amber-600 text-white'
-            : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            : 'btn-secondary text-base min-h-0'
           }`}
       >
         All
@@ -232,7 +232,7 @@ function DesktopFilterButtons({ selectedCategory, setSelectedCategory, categoryI
           onClick={() => setSelectedCategory(key)}
           className={`px-4 py-2 rounded-lg transition font-medium ${selectedCategory === key
               ? 'bg-amber-600 text-white'
-              : 'bg-white/10 text-gray-300 hover:bg-white/20'
+              : 'btn-secondary text-base min-h-0'
             }`}
         >
           <span className="inline-flex items-center gap-2">
@@ -336,7 +336,7 @@ export default function AchievementsDisplay({ achievements, onBack }) {
       {/* Back Button */}
       <button
         onClick={onBack}
-        className="mt-6 w-full bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-lg transition font-medium text-white"
+        className="btn-secondary btn-full mt-6"
       >
         Back to Menu
       </button>

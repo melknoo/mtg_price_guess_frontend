@@ -196,19 +196,19 @@ function AppContent() {
       {/* Header row — never overlaps content */}
       <div className="flex justify-end items-center gap-2 px-4 py-3 min-h-[56px] shrink-0">
         {(screen === "game" || screen === "daily-challenge") && (
-          <button onClick={() => setScreen("menu")} className="bg-white/10 hover:bg-white/20 border border-white/15 px-4 py-1.5 rounded-lg text-sm text-white/90 transition">
+          <button onClick={() => setScreen("menu")} className="btn-secondary btn-sm">
             Back to Menu
           </button>
         )}
         {screen === "menu" && (
           <>
-            <button onClick={() => setScreen("settings")} className="bg-white/10 hover:bg-white/20 border border-white/15 px-3 py-1.5 rounded-lg text-sm text-white/80 transition">
+            <button onClick={() => setScreen("settings")} className="btn-secondary btn-sm">
               <span className="inline-flex items-center gap-1">
                 <GameIcon name="gear" size={16} color="white" />
                 <span>Settings</span>
               </span>
             </button>
-            <button onClick={handleLogout} className="bg-red-900/60 hover:bg-red-800/80 border border-red-700/30 px-3 py-1.5 rounded-lg text-sm text-red-200 transition">
+            <button onClick={handleLogout} className="btn-danger btn-sm">
               Logout
             </button>
           </>
@@ -250,7 +250,7 @@ function AppContent() {
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <button
                   onClick={() => { setShowRegister(false); setScore(0); setGameKey((k) => k + 1); setScreen("game"); }}
-                  className="bg-emerald-700 hover:bg-emerald-600 border border-emerald-500/40 rounded-lg py-4 text-white font-semibold text-lg transition-all shadow-md active:scale-95"
+                  className="btn-primary btn-full"
                 >
                   <span className="inline-flex items-center justify-center gap-2">
                     <GameIcon name="play" size={20} color="white" />
@@ -259,7 +259,7 @@ function AppContent() {
                 </button>
                 <button
                   onClick={() => setShowHowToPlay(true)}
-                  className="bg-violet-700/80 hover:bg-violet-600/80 border border-violet-500/40 rounded-lg py-4 text-white font-semibold text-lg transition-all shadow-md active:scale-95"
+                  className="btn-secondary btn-full"
                 >
                   <span className="inline-flex items-center justify-center">
                     How to Play
@@ -272,7 +272,7 @@ function AppContent() {
                 <div className="grid grid-cols-2 gap-2 mb-2">
                   <button
                     onClick={() => setScreen("stats")}
-                    className="bg-slate-600/70 hover:bg-slate-500/70 border border-slate-400/30 rounded-lg py-3 text-white text-sm font-medium transition-all active:scale-95"
+                    className="btn-secondary btn-full text-sm"
                   >
                     <span className="inline-flex items-center justify-center gap-1.5">
                       <GameIcon name="stat" size={18} color="white" />
@@ -281,7 +281,7 @@ function AppContent() {
                   </button>
                   <button
                     onClick={() => setScreen("achievements")}
-                    className="bg-amber-700/70 hover:bg-amber-600/70 border border-amber-500/30 rounded-lg py-3 text-white text-sm font-medium transition-all active:scale-95"
+                    className="btn-secondary btn-full text-sm"
                   >
                     <span className="inline-flex items-center justify-center gap-1.5">
                       <GameIcon name="trophy" size={18} color="amber" />
@@ -294,7 +294,7 @@ function AppContent() {
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   <button
                     onClick={() => setScreen("codex")}
-                    className="bg-indigo-700/70 hover:bg-indigo-600/70 border border-indigo-500/30 rounded-lg py-3 text-white text-sm font-medium transition-all active:scale-95"
+                    className="btn-secondary btn-full text-sm"
                   >
                     <span className="inline-flex items-center justify-center gap-1.5">
                       <GameIcon name="scroll" size={18} color="white" />
@@ -303,7 +303,7 @@ function AppContent() {
                   </button>
                   <button
                     onClick={() => setShowSuggestionModal(true)}
-                    className="bg-rose-700/70 hover:bg-rose-600/70 border border-rose-500/30 rounded-lg py-3 text-white text-sm font-medium transition-all active:scale-95"
+                    className="btn-secondary btn-full text-sm"
                   >
                     <span className="inline-flex items-center justify-center gap-1.5">
                       <GameIcon name="light_bulb" size={18} color="amber" />
@@ -318,7 +318,7 @@ function AppContent() {
                 <div className="mb-4">
                   <button
                     onClick={() => setScreen("achievements")}
-                    className="bg-amber-700 hover:bg-amber-600 border border-amber-500/40 rounded-lg px-8 py-3 text-white font-medium transition-all active:scale-95"
+                    className="btn-secondary text-base"
                   >
                     <span className="inline-flex items-center justify-center gap-1.5">
                       <GameIcon name="trophy_2" size={18} color="amber" />
@@ -332,7 +332,7 @@ function AppContent() {
               {user?.guest && !showRegister && (
                 <button
                   onClick={() => setShowRegister(true)}
-                  className="w-full bg-indigo-600 hover:bg-indigo-500 border border-indigo-400/40 rounded-lg py-3 text-white font-medium transition-all active:scale-95"
+                  className="btn-primary btn-full"
                 >
                   Register & Save Score
                 </button>

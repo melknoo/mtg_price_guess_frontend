@@ -91,7 +91,7 @@ export default function HowToPlayModal({ onClose }) {
         <div className="px-6 pb-5">
           <button
             onClick={onClose}
-            className="w-full bg-emerald-700 hover:bg-emerald-600 rounded-xl py-3 font-semibold transition-all active:scale-95"
+            className="btn-primary btn-full"
           >
             Let's Play!
           </button>

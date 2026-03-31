@@ -33,7 +33,7 @@ export default function GameOverScreen({
         )}
 
         {/* Roguelike Run-Summary */}
-        <div className="w-full bg-white/5 border border-white/10 rounded-xl p-3 mb-4 text-left">
+        <div className="panel w-full mb-4 text-left p-3">
           <div className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-2">Run Summary</div>
 
           <div className="flex items-center gap-2 mb-1">
@@ -78,14 +78,14 @@ export default function GameOverScreen({
 
         <button
           onClick={onRestart}
-          className="w-full bg-emerald-700 hover:bg-emerald-600 px-6 py-3 rounded-xl text-white text-lg font-semibold transition active:scale-95"
+          className="btn-primary btn-full"
         >
           Restart
         </button>
 
         <button
           onClick={onBack}
-          className="mt-3 w-full bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-xl text-white/80 text-lg transition active:scale-95"
+          className="btn-secondary btn-full mt-3"
         >
           Back to Menu
         </button>
@@ -93,7 +93,7 @@ export default function GameOverScreen({
         {isGuest && !showRegister && (
           <button
             onClick={onShowRegister}
-            className="mt-3 w-full bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl text-white text-lg font-semibold transition active:scale-95"
+            className="btn-primary btn-full mt-3"
           >
             Register & Save Score
           </button>

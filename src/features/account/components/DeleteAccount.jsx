@@ -65,7 +65,7 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
         <h2 className="text-3xl font-bold mb-6 text-red-400">Delete Account</h2>
 
         <div className="space-y-4 text-gray-200">
-          <div className="bg-red-500/20 border-2 border-red-500 rounded-lg p-4">
+          <div className="panel-danger border-2 p-4">
             <h3 className="font-bold text-red-300 mb-2">⚠️ Warning</h3>
             <p className="text-sm">
               Deleting your account is <strong>irreversible</strong> and has the following consequences:
@@ -90,13 +90,13 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
           <div className="flex gap-4 mt-8">
             <button
               onClick={onBack}
-              className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-lg transition font-medium"
+              className="btn-secondary flex-1 text-base"
             >
               Back
             </button>
             <button
               onClick={handleInitiateDelete}
-              className="flex-1 bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg transition font-medium"
+              className="btn-danger flex-1 text-base"
             >
               Delete Account
             </button>
@@ -160,14 +160,14 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
           <button
             type="button"
             onClick={() => setShowConfirmation(false)}
-            className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-3 rounded-lg transition font-medium"
+            className="btn-secondary flex-1 text-base"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className={`flex-1 bg-red-600 hover:bg-red-700 px-4 py-3 rounded-lg transition font-medium ${
+            className={`btn-danger flex-1 text-base ${
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
