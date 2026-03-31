@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { RELICS, RELIC_RARITY_WEIGHTS } from '../constants/relicDefinitions';
 import { PERKS, PERK_RARITY, getExtendedVersion } from '../constants/perkDefinitions';
 import { SYNERGIES } from '../constants/synergyDefinitions';
+import GameIcon from '../../../shared/components/GameIcon';
+import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
 // Gewichteter Zufalls-Pick aus einem Array von Objekten mit `rarity`-Property
 function weightedRandomPick(items, weights, excludeIds = new Set()) {
@@ -247,7 +249,11 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                   >
                     {/* Mobile: horizontal layout */}
                     <div className="flex items-start gap-3 md:hidden">
-                      <div className="text-4xl shrink-0 mt-0.5">{option.icon}</div>
+                      <div className="shrink-0 mt-0.5 w-10 h-10 flex items-center justify-center">
+                        {ITEM_ICONS[option.id]
+                          ? <GameIcon name={ITEM_ICONS[option.id].icon} color={ITEM_ICONS[option.id].color} size={36} />
+                          : <span className="text-4xl">{option.icon}</span>}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap gap-1 mb-1">
                           <span className={`${style.badge} px-1.5 py-0.5 rounded-full text-xs font-bold`}>
@@ -285,7 +291,9 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                           <div className="mt-1.5 flex flex-col gap-1">
                             {newSynergies.map(s => (
                               <div key={s.id} className="flex items-center gap-1 bg-teal-500/20 border border-teal-400/60 rounded-md px-1.5 py-0.5">
-                                <span className="text-sm leading-none">{s.icon}</span>
+                                {ITEM_ICONS[s.id]
+                                  ? <GameIcon name={ITEM_ICONS[s.id].icon} color={ITEM_ICONS[s.id].color} size={14} />
+                                  : <span className="text-sm leading-none">{s.icon}</span>}
                                 <span className="text-teal-200 text-xs font-bold truncate">🔗 {s.name}</span>
                               </div>
                             ))}
@@ -307,8 +315,10 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                         </span>
                       </div>
                       <div className="flex flex-col items-center mt-6 mb-4">
-                        <motion.div whileHover={{ scale: 1.2, rotate: 5 }} transition={{ duration: 0.3 }} className="text-6xl mb-3">
-                          {option.icon}
+                        <motion.div whileHover={{ scale: 1.2, rotate: 5 }} transition={{ duration: 0.3 }} className="mb-3 flex items-center justify-center w-16 h-16">
+                          {ITEM_ICONS[option.id]
+                            ? <GameIcon name={ITEM_ICONS[option.id].icon} color={ITEM_ICONS[option.id].color} size={36} />
+                            : <span className="text-6xl">{option.icon}</span>}
                         </motion.div>
                         {option.category === 'upgrade' ? (
                           <div className="text-center">
@@ -344,7 +354,9 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                         <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + 0.1 * index }} className="mt-3 flex flex-col gap-1">
                           {newSynergies.map(s => (
                             <div key={s.id} className="flex items-center gap-1.5 bg-teal-500/20 border border-teal-400/60 rounded-lg px-2 py-1">
-                              <span className="text-base leading-none">{s.icon}</span>
+                              {ITEM_ICONS[s.id]
+                                ? <GameIcon name={ITEM_ICONS[s.id].icon} color={ITEM_ICONS[s.id].color} size={16} />
+                                : <span className="text-base leading-none">{s.icon}</span>}
                               <div className="flex-1 min-w-0">
                                 <span className="text-teal-200 text-xs font-bold">🔗 Aktiviert: {s.name}</span>
                                 <p className="text-teal-300/70 text-xs truncate">{s.description}</p>

@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import GameIcon from '../../../shared/components/GameIcon';
+import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
 export default function SynergyToast({ synergy, onDismiss }) {
   if (!synergy) return null;
@@ -28,9 +30,11 @@ export default function SynergyToast({ synergy, onDismiss }) {
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', delay: 0.2, stiffness: 200 }}
-                className="text-2xl sm:text-4xl shrink-0"
+                className="shrink-0 w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center"
               >
-                {synergy.icon}
+                {ITEM_ICONS[synergy.id]
+                  ? <GameIcon name={ITEM_ICONS[synergy.id].icon} color={ITEM_ICONS[synergy.id].color} size={40} />
+                  : <span className="text-2xl sm:text-4xl">{synergy.icon}</span>}
               </motion.div>
 
               <div className="flex-1 min-w-0">

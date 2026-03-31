@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PERK_RARITY, PERK_CONFIG } from '../constants/perkDefinitions';
+import GameIcon from '../../../shared/components/GameIcon';
+import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
 export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip = false }) {
     const [isMinimized, setIsMinimized] = useState(false);
@@ -139,7 +141,11 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                     >
                                         {/* Mobile: horizontal layout */}
                                         <div className="flex items-start gap-3 md:hidden">
-                                            <div className="text-4xl shrink-0 mt-0.5">{perk.icon}</div>
+                                            <div className="shrink-0 mt-0.5 w-10 h-10 flex items-center justify-center">
+                                              {ITEM_ICONS[perk.id]
+                                                ? <GameIcon name={ITEM_ICONS[perk.id].icon} color={ITEM_ICONS[perk.id].color} size={36} />
+                                                : <span className="text-4xl">{perk.icon}</span>}
+                                            </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex flex-wrap gap-1 mb-1">
                                                     <span className={`${getRarityBadgeColor(perk.rarity)} px-1.5 py-0.5 rounded-full text-xs font-bold uppercase`}>
@@ -173,9 +179,11 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                                 <motion.div
                                                     whileHover={{ scale: 1.2 }}
                                                     transition={{ duration: 0.5 }}
-                                                    className="text-7xl mb-3 inline-block"
+                                                    className="mb-3 flex items-center justify-center w-20 h-20"
                                                 >
-                                                    {perk.icon}
+                                                  {ITEM_ICONS[perk.id]
+                                                    ? <GameIcon name={ITEM_ICONS[perk.id].icon} color={ITEM_ICONS[perk.id].color} size={36} />
+                                                    : <span className="text-7xl">{perk.icon}</span>}
                                                 </motion.div>
                                                 <h3 className="text-2xl font-bold text-white text-center">
                                                     {perk.name}

@@ -1,4 +1,6 @@
 import React from 'react';
+import GameIcon from '../../../shared/components/GameIcon';
+import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
 export default function GameOverScreen({
   message,
@@ -48,8 +50,10 @@ export default function GameOverScreen({
               <div className="text-xs text-amber-400 font-semibold mb-1">⭐ Relics ({relics.length})</div>
               <div className="flex flex-wrap gap-1">
                 {relics.map(r => (
-                  <span key={r.id} title={r.description} className="bg-amber-500/20 border border-amber-400/40 rounded px-1.5 py-0.5 text-xs text-amber-200">
-                    {r.icon} {r.name}
+                  <span key={r.id} title={r.description} className="inline-flex items-center gap-1 bg-amber-500/20 border border-amber-400/40 rounded px-1.5 py-0.5 text-xs text-amber-200">
+                    {ITEM_ICONS[r.id]
+                      ? <GameIcon name={ITEM_ICONS[r.id].icon} color={ITEM_ICONS[r.id].color} size={12} />
+                      : r.icon} {r.name}
                   </span>
                 ))}
               </div>
@@ -61,8 +65,10 @@ export default function GameOverScreen({
               <div className="text-xs text-teal-400 font-semibold mb-1">🔗 Synergies ({synergies.length})</div>
               <div className="flex flex-wrap gap-1">
                 {synergies.map(s => (
-                  <span key={s.id} title={s.description} className="bg-teal-500/20 border border-teal-400/40 rounded px-1.5 py-0.5 text-xs text-teal-200">
-                    {s.icon} {s.name}
+                  <span key={s.id} title={s.description} className="inline-flex items-center gap-1 bg-teal-500/20 border border-teal-400/40 rounded px-1.5 py-0.5 text-xs text-teal-200">
+                    {ITEM_ICONS[s.id]
+                      ? <GameIcon name={ITEM_ICONS[s.id].icon} color={ITEM_ICONS[s.id].color} size={12} />
+                      : s.icon} {s.name}
                   </span>
                 ))}
               </div>

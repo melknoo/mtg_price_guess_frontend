@@ -475,5 +475,40 @@ Output-Format für Pläne:
 ```
 
 **Wann nutzen:** Feature-Planung, System-Design, Architektur-Entscheidungen,
-Roadmap-Priorisierung, Prompt-Erstellung für Claude Code, 
+Roadmap-Priorisierung, Prompt-Erstellung für Claude Code,
 Abhängigkeitsanalyse zwischen Frontend und Backend.
+
+---
+
+## Icon-System & Custom Font
+
+### Font
+Custom font "Clarity" eingebunden via `src/assets/fonts/fonts.css`. Tailwind config nutzt Clarity als Default sans-serif (`fontFamily.sans`).
+
+### Icon-System
+119 monochrome weiße PNG-Icons unter `src/assets/icons/` (kein Unterordner).
+
+Zentrale Dateien:
+- `src/shared/constants/iconMap.js` — Mappt Dateinamen zu Imports (Key = Name ohne `icon_` Prefix und `.png` Suffix)
+- `src/shared/components/GameIcon.jsx` — `<GameIcon name="shield" size={24} color="amber" />`
+- `src/shared/constants/itemIconMap.js` — Mappt Perk/Relic/Synergy-IDs auf `{ icon, color }`
+- `src/shared/utils/getItemIcon.js` — Helper mit Emoji-Fallback
+
+### GameIcon Farben
+Verfügbare `color`-Props: `white`, `amber`, `purple`, `blue`, `green`, `red`, `pink`, `orange`, `teal`, `gray`.
+Farben werden per CSS `filter` auf die weißen PNGs angewendet (kein Recoloring-Library nötig).
+
+### Icon-Migration
+Emojis in den Definitions-Dateien (`perkDefinitions.js`, `relicDefinitions.js`, `synergyDefinitions.js`) bleiben als Fallback erhalten. Das visuelle Override passiert über `itemIconMap.js`. Wenn ein Item dort keinen Eintrag hat (oder `null`), wird das Emoji angezeigt.
+
+Migrierte Komponenten:
+- `PerkSelectionModal.jsx` — Perk-Auswahl-Karten (Mobile + Desktop)
+- `LevelUpModal.jsx` — Relic/Item/Upgrade-Karten + Synergy-Previews
+- `ActivePerksDisplay.jsx` — Sidebar (Desktop) + Bottom Sheet (Mobile) + Contributor-Tooltips
+- `SynergyToast.jsx` — Synergy-Aktivierungsbenachrichtigung
+- `GameOverScreen.jsx` — Run-Recap Relics & Synergies
+
+### Neue Icons hinzufügen
+1. PNG nach `src/assets/icons/` legen (weiß, monochrom, Dateiname `icon_<name>.png`)
+2. Import + Export in `iconMap.js` ergänzen
+3. Eintrag in `itemIconMap.js` hinzufügen: `item_id: { icon: 'name', color: 'amber' }`

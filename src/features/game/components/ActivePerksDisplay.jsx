@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import GameIcon from '../../../shared/components/GameIcon';
+import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
 // Findet alle Relics + Perks die mindestens einen der required Tags einer Synergy haben
 function getContributors(synergy, relics, perks) {
@@ -231,7 +233,9 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                                 <div className="text-xs text-teal-300 font-semibold pt-1.5 mb-1">Aktiviert durch:</div>
                                 {contributors.map(c => (
                                   <div key={c.id} className="flex items-center gap-1.5 text-xs text-gray-200 py-0.5">
-                                    <span>{c.icon}</span>
+                                    {ITEM_ICONS[c.id]
+                                      ? <GameIcon name={ITEM_ICONS[c.id].icon} color={ITEM_ICONS[c.id].color} size={12} />
+                                      : <span>{c.icon}</span>}
                                     <span>{c.name}</span>
                                   </div>
                                 ))}
@@ -329,7 +333,11 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
           )}
         </AnimatePresence>
         <div className="flex flex-col items-center gap-1">
-          <span className="text-3xl">{item.icon}</span>
+          <span className="w-8 h-8 flex items-center justify-center">
+            {ITEM_ICONS[item.id]
+              ? <GameIcon name={ITEM_ICONS[item.id].icon} color={ITEM_ICONS[item.id].color} size={28} />
+              : <span className="text-3xl">{item.icon}</span>}
+          </span>
           <div className="text-center">
             <div className="text-white font-semibold text-xs leading-tight">{item.name}</div>
             {item.remainingDuration > 0 && (
@@ -379,7 +387,9 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
                 <div className="text-teal-300 text-xs font-semibold mb-1">Aktiviert durch:</div>
                 {contributors.map(c => (
                   <div key={c.id} className="flex items-center gap-1.5 text-xs text-gray-200 py-0.5">
-                    <span>{c.icon}</span>
+                    {ITEM_ICONS[c.id]
+                      ? <GameIcon name={ITEM_ICONS[c.id].icon} color={ITEM_ICONS[c.id].color} size={12} />
+                      : <span>{c.icon}</span>}
                     <span>{c.name}</span>
                   </div>
                 ))}
@@ -441,7 +451,11 @@ function MobilePerkCard({ item, borderColor = "border-blue-400/60", gradientColo
           )}
         </AnimatePresence>
         <div className="flex items-center gap-2">
-          <span className="text-2xl">{item.icon}</span>
+          <span className="w-7 h-7 flex items-center justify-center shrink-0">
+            {ITEM_ICONS[item.id]
+              ? <GameIcon name={ITEM_ICONS[item.id].icon} color={ITEM_ICONS[item.id].color} size={24} />
+              : <span className="text-2xl">{item.icon}</span>}
+          </span>
           <div className="flex-1">
             <div className="text-white font-semibold text-sm leading-tight flex items-center gap-1">
               {item.name}
