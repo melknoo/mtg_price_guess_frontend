@@ -20,6 +20,7 @@ import AchievementsDisplay from "./features/game/components/AchievementsDisplay"
 import StatsDisplay from "./features/game/components/StatsDisplay";
 import CodexPage from "./features/game/components/CodexPage";
 import HowToPlayModal from "./features/game/components/HowToPlayModal";
+import GameIcon from "./shared/components/GameIcon";
 
 function AppContent() {
   const { user, logout, refreshUser, setUser } = useAuth();
@@ -167,18 +168,24 @@ function AppContent() {
             {/* Left: title + form */}
             <div className="w-full max-w-sm mx-auto lg:mx-0 space-y-4">
               <div className="text-center">
-                <h1 className="text-3xl font-bold text-amber-200">🧙‍♂️ Magic Price Duel</h1>
+                <h1 className="text-3xl font-bold text-amber-200">
+                  Magic Price Duel
+                </h1>
                 <p className="text-purple-300 text-sm mt-1">Guess which Magic card costs more.</p>
                 <button
                   onClick={() => setShowHowToPlay(true)}
-                  className="mt-2 text-sm text-amber-400 hover:text-amber-300 underline underline-offset-2 transition"
+                  className="mt-2 text-sm text-amber-400 hover:text-amber-300 underline underline-offset-2 transition inline-flex items-center gap-1"
                 >
-                  ❓ How to Play
+                  <GameIcon name="interrogation" size={16} color="amber" />
+                  <span>How to Play</span>
                 </button>
               </div>
               {resetSuccess && (
                 <div className="bg-green-100 text-green-700 p-3 rounded-lg text-center text-sm">
-                  ✅ {resetSuccess}
+                  <span className="inline-flex items-center justify-center gap-1">
+                    <GameIcon name="star" size={16} color="green" />
+                    <span>{resetSuccess}</span>
+                  </span>
                 </div>
               )}
               <LoginForm onForgotPassword={() => setScreen("forgot-password")} />
@@ -210,7 +217,10 @@ function AppContent() {
         {screen === "menu" && (
           <>
             <button onClick={() => setScreen("settings")} className="bg-white/10 hover:bg-white/20 border border-white/15 px-3 py-1.5 rounded-lg text-sm text-white/80 transition">
-              ⚙️ Settings
+              <span className="inline-flex items-center gap-1">
+                <GameIcon name="gear" size={16} color="white" />
+                <span>Settings</span>
+              </span>
             </button>
             <button onClick={handleLogout} className="bg-red-900/60 hover:bg-red-800/80 border border-red-700/30 px-3 py-1.5 rounded-lg text-sm text-red-200 transition">
               Logout
@@ -230,7 +240,7 @@ function AppContent() {
               {/* Title */}
               <div className="mb-6">
                 <h1 className="text-4xl font-bold tracking-wide text-amber-200 drop-shadow-lg">
-                  🧙‍♂️ Magic Price Duel
+                  Magic Price Duel
                 </h1>
                 <div className="flex items-center gap-3 my-3">
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent to-amber-500/40" />
@@ -244,8 +254,9 @@ function AppContent() {
 
               {/* Achievement Badge */}
               <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-5 shadow-inner">
+                <GameIcon name="trophy" size={18} color="amber" />
                 <span className="text-amber-400 text-sm font-medium tracking-wide">
-                  🏆 {achievements.totalUnlocked} / {achievements.totalAchievements} Achievements
+                  {achievements.totalUnlocked} / {achievements.totalAchievements} Achievements
                 </span>
               </div>
 
@@ -255,13 +266,19 @@ function AppContent() {
                   onClick={() => { setShowRegister(false); setScore(0); setGameKey((k) => k + 1); setScreen("game"); }}
                   className="bg-emerald-700 hover:bg-emerald-600 border border-emerald-500/40 rounded-xl py-4 text-white font-semibold text-lg transition-all shadow-md active:scale-95"
                 >
-                  New Game
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <GameIcon name="play" size={20} color="white" />
+                    <span>New Game</span>
+                  </span>
                 </button>
                 <button
                   onClick={() => setShowHowToPlay(true)}
                   className="bg-violet-700/80 hover:bg-violet-600/80 border border-violet-500/40 rounded-xl py-4 text-white font-semibold text-lg transition-all shadow-md active:scale-95"
                 >
-                  ❓ How to Play
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <GameIcon name="interrogation" size={20} color="white" />
+                    <span>How to Play</span>
+                  </span>
                 </button>
               </div>
 
@@ -272,13 +289,19 @@ function AppContent() {
                     onClick={() => setScreen("stats")}
                     className="bg-slate-600/70 hover:bg-slate-500/70 border border-slate-400/30 rounded-xl py-3 text-white text-sm font-medium transition-all active:scale-95"
                   >
-                    📊 Stats
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <GameIcon name="stat" size={18} color="white" />
+                      <span>Stats</span>
+                    </span>
                   </button>
                   <button
                     onClick={() => setScreen("achievements")}
                     className="bg-amber-700/70 hover:bg-amber-600/70 border border-amber-500/30 rounded-xl py-3 text-white text-sm font-medium transition-all active:scale-95"
                   >
-                    🏆 Trophies
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <GameIcon name="trophy" size={18} color="amber" />
+                      <span>Trophies</span>
+                    </span>
                   </button>
                 </div>
               )}
@@ -288,13 +311,19 @@ function AppContent() {
                     onClick={() => setScreen("codex")}
                     className="bg-indigo-700/70 hover:bg-indigo-600/70 border border-indigo-500/30 rounded-xl py-3 text-white text-sm font-medium transition-all active:scale-95"
                   >
-                    📖 Codex
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <GameIcon name="scroll" size={18} color="white" />
+                      <span>Codex</span>
+                    </span>
                   </button>
                   <button
                     onClick={() => setShowSuggestionModal(true)}
                     className="bg-rose-700/70 hover:bg-rose-600/70 border border-rose-500/30 rounded-xl py-3 text-white text-sm font-medium transition-all active:scale-95"
                   >
-                    💡 Ideas
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <GameIcon name="light_bulb" size={18} color="amber" />
+                      <span>Ideas</span>
+                    </span>
                   </button>
                 </div>
               )}
@@ -306,7 +335,10 @@ function AppContent() {
                     onClick={() => setScreen("achievements")}
                     className="bg-amber-700 hover:bg-amber-600 border border-amber-500/40 rounded-xl px-8 py-3 text-white font-medium transition-all active:scale-95"
                   >
-                    🏆 Achievements
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <GameIcon name="trophy_2" size={18} color="amber" />
+                      <span>Achievements</span>
+                    </span>
                   </button>
                 </div>
               )}

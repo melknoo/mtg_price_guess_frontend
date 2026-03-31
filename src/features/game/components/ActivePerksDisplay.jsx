@@ -155,7 +155,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
           onClick={() => setIsOpen(!isOpen)}
           className="fixed bottom-6 left-3 z-[65] bg-[#0d1b3e] text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg border border-amber-400/50"
         >
-          <span className="text-lg leading-none">🎮</span>
+          <GameIcon name="human_controller" size={24} color="white" />
           {totalCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
               {totalCount}
