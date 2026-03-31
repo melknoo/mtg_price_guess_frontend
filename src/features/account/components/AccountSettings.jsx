@@ -11,7 +11,7 @@ export default function AccountSettings({ onBack }) {
 
   if (view === "delete") {
     return (
-      <div className="min-h-screen text-white p-6 flex items-center justify-center">
+      <div className="min-h-[100dvh] text-white p-6 flex items-center justify-center">
         <DeleteAccount
           onBack={() => setView("main")}
           onDeleteSuccess={() => {
@@ -26,7 +26,7 @@ export default function AccountSettings({ onBack }) {
 
   if (view === "password") {
     return (
-      <div className="min-h-screen text-white p-6 flex items-center justify-center">
+      <div className="min-h-[100dvh] text-white p-6 flex items-center justify-center">
         <ChangePassword
           onBack={() => setView("main")}
           onSuccess={() => setView("main")}
@@ -37,7 +37,7 @@ export default function AccountSettings({ onBack }) {
 
   if (view === "email") {
     return (
-      <div className="min-h-screen text-white p-6 flex items-center justify-center">
+      <div className="min-h-[100dvh] text-white p-6 flex items-center justify-center">
         <ChangeEmail
           onBack={() => setView("main")}
           onSuccess={() => setView("main")}
@@ -50,7 +50,7 @@ export default function AccountSettings({ onBack }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl"
+      className="w-full max-w-2xl mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-6 sm:p-8 shadow-2xl"
     >
       <h2 className="text-3xl font-bold mb-6">Account Settings</h2>
 
@@ -96,7 +96,7 @@ export default function AccountSettings({ onBack }) {
           </div>
         </section>
 
-        {/* Datenschutz */}
+        {/* Privacy & Legal Overview */}
         <section className="bg-white/5 p-4 rounded-lg">
           <h3 className="text-xl font-semibold mb-3 text-amber-300">Privacy & Rights</h3>
           <p className="text-sm text-gray-300 mb-4">
@@ -109,11 +109,61 @@ export default function AccountSettings({ onBack }) {
             <li>Right to data portability</li>
           </ul>
           <p className="text-sm text-gray-400 mt-4">
-            For questions about your data, contact us at::{" "}
-            <a href="mailto:datenschutz@magic-preis-duell.de" className="text-amber-400 hover:underline">
-              melleee17+magic-price-guess@gmail.com
+            For questions about your data, contact{" "}
+            <a href="mailto:melle17@gmx.de" className="text-amber-400 hover:underline">
+              Melvin Lorenze-Knop (melle17@gmx.de)
             </a>
           </p>
+        </section>
+
+        {/* Legal Texts (previously separate pages) */}
+        <section className="bg-white/5 p-4 rounded-lg space-y-4">
+          <h3 className="text-xl font-semibold mb-3 text-amber-300">Legal Information</h3>
+
+          <div className="space-y-2 text-sm text-gray-200">
+            <h4 className="font-semibold text-amber-200">Impressum / Legal Notice</h4>
+            <p>
+              Responsible for this game (according to § 5 TMG / EU law) is{" "}
+              <span className="font-semibold">Melvin Lorenze-Knop</span>.  
+              Contact via e-mail:{" "}
+              <a href="mailto:melle17@gmx.de" className="text-amber-400 hover:underline">
+                melle17@gmx.de
+              </a>.
+            </p>
+          </div>
+
+          <div className="space-y-2 text-sm text-gray-200">
+            <h4 className="font-semibold text-amber-200">Privacy Policy (Kurzfassung)</h4>
+            <p>
+              Für die Nutzung von Magic Price Duel werden ausschließlich die Daten verarbeitet,
+              die für den Betrieb des Spiels notwendig sind: Benutzerkonto (E-Mail, Username, Passwort-Hash),
+              Highscores und Spielstatistiken. Die Daten werden nur für dieses Spiel verwendet und nicht an
+              Dritte verkauft.
+            </p>
+            <p>
+              Du kannst jederzeit die Löschung deines Accounts und deiner Daten anfordern, indem du die
+              Account-Löschfunktion unten nutzt oder eine E-Mail an{" "}
+              <a href="mailto:melle17@gmx.de" className="text-amber-400 hover:underline">
+                melle17@gmx.de
+              </a>{" "}
+              sendest.
+            </p>
+          </div>
+
+          <div className="space-y-2 text-sm text-gray-200">
+            <h4 className="font-semibold text-amber-200">Terms of Service (Kurzfassung)</h4>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Das Spiel ist kostenlos und dient nur zur Unterhaltung.</li>
+              <li>Cheats, Bots oder bewusste Manipulation der Leaderboards sind nicht erlaubt.</li>
+              <li>Wir übernehmen keine Haftung für die Richtigkeit der Kartenpreise.</li>
+              <li>Magic: The Gathering und alle zugehörigen Marken gehören Wizards of the Coast LLC.</li>
+              <li>
+                Magic Price Duel nutzt Kartendaten von{" "}
+                <span className="font-semibold">Scryfall</span> und ist nicht offiziell mit
+                Wizards of the Coast verbunden.
+              </li>
+            </ul>
+          </div>
         </section>
 
         {/* Danger Zone */}

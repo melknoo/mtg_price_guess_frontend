@@ -3,15 +3,35 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ACHIEVEMENT_CATEGORIES } from '../constants/achievementDefinitions';
+import GameIcon from '../../../shared/components/GameIcon';
 
 const categoryInfo = {
-  [ACHIEVEMENT_CATEGORIES.STREAK]: { name: 'Streak', icon: '🔥' },
-  [ACHIEVEMENT_CATEGORIES.SCORE]: { name: 'Score', icon: '💰' },
-  [ACHIEVEMENT_CATEGORIES.GAMES]: { name: 'Rounds', icon: '🎯' },
-  [ACHIEVEMENT_CATEGORIES.PERKS]: { name: 'Perks', icon: '⭐' },
-  [ACHIEVEMENT_CATEGORIES.SPEED]: { name: 'Speed', icon: '⚡' },
-  [ACHIEVEMENT_CATEGORIES.SPECIAL]: { name: 'Special', icon: '✨' }
+  [ACHIEVEMENT_CATEGORIES.STREAK]: { name: 'Streak' },
+  [ACHIEVEMENT_CATEGORIES.SCORE]: { name: 'Score' },
+  [ACHIEVEMENT_CATEGORIES.GAMES]: { name: 'Rounds' },
+  [ACHIEVEMENT_CATEGORIES.PERKS]: { name: 'Perks' },
+  [ACHIEVEMENT_CATEGORIES.SPEED]: { name: 'Speed' },
+  [ACHIEVEMENT_CATEGORIES.SPECIAL]: { name: 'Special' }
 };
+
+function CategoryIcon({ category, size = 16 }) {
+  switch (category) {
+    case ACHIEVEMENT_CATEGORIES.STREAK:
+      return <GameIcon name="thunder" size={size} color="yellow" />;
+    case ACHIEVEMENT_CATEGORIES.SCORE:
+      return <GameIcon name="coin" size={size} color="amber" />;
+    case ACHIEVEMENT_CATEGORIES.GAMES:
+      return <GameIcon name="target" size={size} color="white" />;
+    case ACHIEVEMENT_CATEGORIES.PERKS:
+      return <GameIcon name="potion" size={size} color="purple" />;
+    case ACHIEVEMENT_CATEGORIES.SPEED:
+      return <GameIcon name="wind" size={size} color="blue" />;
+    case ACHIEVEMENT_CATEGORIES.SPECIAL:
+      return <GameIcon name="star" size={size} color="amber" />;
+    default:
+      return <GameIcon name="stat" size={size} color="white" />;
+  }
+}
 
 const rarityColors = {
   Common: 'from-gray-500 to-gray-700 border-gray-400',
@@ -46,15 +66,17 @@ const AchievementCard = React.forwardRef(({ achievement, index }, ref) => {
       {isSecret && (
         <div className="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-10">
           <div className="text-center">
-            <span className="text-4xl">🔒</span>
+            <GameIcon name="lock" size={28} color="gray" />
             <p className="text-gray-400 text-sm mt-2">Secret Achievement</p>
           </div>
         </div>
       )}
 
       <div className="flex items-start gap-3">
-        <div className={`text-3xl ${!achievement.unlocked && !isSecret ? 'grayscale' : ''}`}>
-          {isSecret ? '❓' : achievement.icon}
+        <div className={`text-3xl ${!achievement.unlocked && !isSecret ? 'grayscale' : ''} flex items-center justify-center w-10 h-10`}>
+          {isSecret
+            ? <GameIcon name="interrogation" size={20} color="white" />
+            : <span>{achievement.icon}</span>}
         </div>
 
         <div className="flex-1 min-w-0">
@@ -80,9 +102,9 @@ const AchievementCard = React.forwardRef(({ achievement, index }, ref) => {
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="text-2xl"
+            className="text-2xl flex items-center"
           >
-            ✅
+            <GameIcon name="star" size={18} color="amber" />
           </motion.div>
         )}
       </div>
@@ -111,9 +133,9 @@ function MobileFilterDropdown({ selectedCategory, setSelectedCategory, categoryI
   const [isOpen, setIsOpen] = useState(false);
 
   const getCurrentLabel = () => {
-    if (selectedCategory === 'all') return '📋 All Categories';
+    if (selectedCategory === 'all') return 'All Categories';
     const info = categoryInfo[selectedCategory];
-    return info ? `${info.icon} ${info.name}` : 'Select Category';
+    return info ? info.name : 'Select Category';
   };
 
   const handleSelect = (category) => {
@@ -127,7 +149,12 @@ function MobileFilterDropdown({ selectedCategory, setSelectedCategory, categoryI
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between px-4 py-3 bg-white/10 rounded-lg text-white font-medium border border-white/20"
       >
-        <span>{getCurrentLabel()}</span>
+        <span className="flex items-center gap-2">
+          {selectedCategory === 'all'
+            ? <GameIcon name="list" size={16} color="white" />
+            : <CategoryIcon category={selectedCategory} size={16} />}
+          <span>{getCurrentLabel()}</span>
+        </span>
         <motion.span
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
@@ -152,7 +179,7 @@ function MobileFilterDropdown({ selectedCategory, setSelectedCategory, categoryI
                   : 'text-gray-300 hover:bg-white/10'
                 }`}
             >
-              <span>📋</span>
+              <CategoryIcon category={ACHIEVEMENT_CATEGORIES.SPECIAL} size={16} />
               <span>All Categories</span>
               {selectedCategory === 'all' && <span className="ml-auto">✓</span>}
             </button>
@@ -166,7 +193,7 @@ function MobileFilterDropdown({ selectedCategory, setSelectedCategory, categoryI
                     : 'text-gray-300 hover:bg-white/10'
                   }`}
               >
-                <span>{info.icon}</span>
+              <CategoryIcon category={key} size={16} />
                 <span>{info.name}</span>
                 {selectedCategory === key && <span className="ml-auto">✓</span>}
               </button>
@@ -208,7 +235,10 @@ function DesktopFilterButtons({ selectedCategory, setSelectedCategory, categoryI
               : 'bg-white/10 text-gray-300 hover:bg-white/20'
             }`}
         >
-          {info.icon} {info.name}
+          <span className="inline-flex items-center gap-2">
+            <CategoryIcon category={key} size={16} />
+            <span>{info.name}</span>
+          </span>
         </button>
       ))}
     </div>
@@ -244,7 +274,10 @@ export default function AchievementsDisplay({ achievements, onBack }) {
       {/* Header */}
       <div className="flex items-left sm:items-center sm:flex-row flex-col mb-4 sm:justify-between sm:mb-6 pr-12 sm:pr-0">
         <div>
-          <h2 className="text-3xl font-bold text-white">🏆 Achievements</h2>
+          <h2 className="text-3xl font-bold text-white flex items-center gap-2">
+            <GameIcon name="trophy" size={26} color="amber" />
+            <span>Achievements</span>
+          </h2>
           <p className="text-gray-300 mt-1">
             {unlockedCount} / {totalCount} unlocked ({progressPercent}%)
           </p>
@@ -293,7 +326,9 @@ export default function AchievementsDisplay({ achievements, onBack }) {
       {/* Empty State */}
       {filteredAchievements.length === 0 && (
         <div className="text-center py-12 text-gray-400">
-          <span className="text-4xl block mb-2">🔍</span>
+          <div className="mb-2 flex justify-center">
+            <GameIcon name="search" size={24} color="gray" />
+          </div>
           <p>No achievements in this category yet.</p>
         </div>
       )}

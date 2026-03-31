@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { fetchStats } from "../api/statsApi";
+import GameIcon from "../../../shared/components/GameIcon";
 
-function StatCard({ icon, label, value, sub }) {
+function StatCard({ icon, color = "white", label, value, sub }) {
   return (
     <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-center">
-      <div className="text-2xl mb-1">{icon}</div>
+      <div className="mb-1 flex justify-center">
+        <GameIcon name={icon} size={24} color={color} />
+      </div>
       <div className="text-2xl font-bold text-white">{value}</div>
       <div className="text-sm text-amber-200/80">{label}</div>
       {sub && <div className="text-xs text-amber-300/70 mt-1">{sub}</div>}
@@ -56,7 +59,10 @@ export default function StatsDisplay({ onBack }) {
 
   return (
     <div className="w-full max-w-lg mx-auto space-y-6">
-      <h2 className="text-2xl font-bold text-white">📊 Meine Statistiken</h2>
+      <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+        <GameIcon name="stat" size={22} color="white" />
+        <span>Meine Statistiken</span>
+      </h2>
 
       {loading && (
         <div className="text-center text-amber-300/70 py-12">
@@ -74,14 +80,15 @@ export default function StatsDisplay({ onBack }) {
         <>
           {/* Übersicht */}
           <div className="grid grid-cols-3 gap-3">
-            <StatCard icon="🎮" label="Spiele" value={stats.games_played} />
+            <StatCard icon="human_controller" label="Spiele" value={stats.games_played} />
             <StatCard
-              icon="🎯"
+              icon="target"
               label="Trefferquote"
               value={`${stats.accuracy}%`}
             />
             <StatCard
-              icon="🏆"
+              icon="trophy"
+              color="amber"
               label="Bester Score"
               value={stats.best_score ?? "—"}
             />
@@ -90,17 +97,18 @@ export default function StatsDisplay({ onBack }) {
           {/* Details */}
           <div className="grid grid-cols-3 gap-3">
             <StatCard
-              icon="⚡"
+              icon="thunder"
+              color="yellow"
               label="Beste Streak"
               value={stats.best_streak ?? 0}
             />
             <StatCard
-              icon="📊"
+              icon="graph"
               label="Ø Score"
               value={stats.avg_score ?? 0}
             />
             <StatCard
-              icon="🔢"
+              icon="list"
               label="Runden gesamt"
               value={stats.total_rounds ?? 0}
             />
@@ -132,17 +140,21 @@ export default function StatsDisplay({ onBack }) {
           {stats.daily_challenge && (
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
               <h3 className="text-sm font-semibold text-yellow-300 mb-3">
-                📅 Daily Challenge
+                <span className="inline-flex items-center gap-2">
+                  <GameIcon name="time" size={16} color="yellow" />
+                  <span>Daily Challenge</span>
+                </span>
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <StatCard
-                  icon="📅"
+                  icon="timeline"
                   label="Gespielt"
                   value={stats.daily_challenge.games_played}
                   sub="Tage"
                 />
                 <StatCard
-                  icon="🥇"
+                  icon="trophy_2"
+                  color="amber"
                   label="Bester Score"
                   value={stats.daily_challenge.best_score ?? "—"}
                 />

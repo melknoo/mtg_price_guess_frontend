@@ -6,9 +6,10 @@ export default function PrivacyPolicy({ onBack }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white p-6"
+      className="w-full h-full bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col"
     >
-      <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl">
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl">
         <h1 className="text-4xl font-bold mb-6">Privacy Policy</h1>
         
         <div className="space-y-6 text-gray-200">
@@ -115,6 +116,7 @@ export default function PrivacyPolicy({ onBack }) {
             Back
           </button>
         )}
+      </div>
       </div>
     </motion.div>
   );

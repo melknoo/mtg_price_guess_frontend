@@ -4,12 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Kein ungewolltes Scrolling — exakt Viewport-Größe */
+/* Viewport layout */
 html, body, #root {
-  overflow: hidden;
   width: 100%;
   height: 100%;
   max-width: 100vw;
+  /* Scrollen ist erlaubt; die App kümmert sich selbst um Layout/Safe Areas */
+  overflow-x: hidden;
 }
 
 /* iOS safe area support */

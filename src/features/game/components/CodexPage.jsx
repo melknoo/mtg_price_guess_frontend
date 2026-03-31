@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { RELICS } from '../constants/relicDefinitions';
 import { PERKS } from '../constants/perkDefinitions';
 import { SYNERGIES } from '../constants/synergyDefinitions';
+import GameIcon from '../../../shared/components/GameIcon';
+import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
 // ─── Rarity config ──────────────────────────────────────────────────────────
 const RARITY_CFG = {
@@ -61,11 +63,15 @@ function RelicCard({ relic, locked }) {
     <div className={`relative bg-gray-800/70 border ${r.border} rounded-xl p-3 flex flex-col gap-1.5 shadow-md ${r.glow} ${locked ? 'opacity-40' : ''}`}>
       {locked && (
         <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-gray-900/60 z-10">
-          <span className="text-2xl">🔒</span>
+          <GameIcon name="lock" size={20} color="gray" />
         </div>
       )}
       <div className="flex items-start gap-2">
-        <span className="text-xl leading-none mt-0.5 shrink-0">{relic.icon}</span>
+        <span className="w-8 h-8 flex items-center justify-center shrink-0 mt-0.5">
+          {ITEM_ICONS[relic.id]
+            ? <GameIcon name={ITEM_ICONS[relic.id].icon} color={ITEM_ICONS[relic.id].color} size={28} />
+            : <span className="text-2xl">{relic.icon}</span>}
+        </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-1">
             <span className="text-white text-sm font-semibold leading-tight truncate">{relic.name}</span>
@@ -94,11 +100,15 @@ function PerkCard({ perk, locked }) {
     <div className={`relative bg-gray-800/70 border ${r.border} rounded-xl p-3 flex flex-col gap-1.5 shadow-md ${r.glow} ${locked ? 'opacity-40' : ''}`}>
       {locked && (
         <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-gray-900/60 z-10">
-          <span className="text-2xl">🔒</span>
+          <GameIcon name="lock" size={20} color="gray" />
         </div>
       )}
       <div className="flex items-start gap-2">
-        <span className="text-xl leading-none mt-0.5 shrink-0">{perk.icon}</span>
+        <span className="w-8 h-8 flex items-center justify-center shrink-0 mt-0.5">
+          {ITEM_ICONS[perk.id]
+            ? <GameIcon name={ITEM_ICONS[perk.id].icon} color={ITEM_ICONS[perk.id].color} size={28} />
+            : <span className="text-2xl">{perk.icon}</span>}
+        </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-1">
             <span className="text-white text-sm font-semibold leading-tight truncate">{perk.name}</span>
@@ -110,7 +120,10 @@ function PerkCard({ perk, locked }) {
       <div className="flex flex-wrap gap-1 mt-0.5 items-center">
         {perk.tags?.map(tag => <Tag key={tag} tag={tag} small />)}
         {durationLabel && (
-          <span className="text-gray-500 text-[9px] ml-auto">⏱ {durationLabel}</span>
+          <span className="flex items-center gap-1 text-gray-500 text-[9px] ml-auto">
+            <GameIcon name="time" size={10} color="gray" />
+            <span>{durationLabel}</span>
+          </span>
         )}
       </div>
     </div>
@@ -125,11 +138,15 @@ function SynergyCard({ synergy, locked }) {
     <div className={`relative bg-gray-800/70 border ${r.border} rounded-xl p-3 flex flex-col gap-1.5 shadow-md ${r.glow} ${locked ? 'opacity-40' : ''}`}>
       {locked && (
         <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-gray-900/60 z-10">
-          <span className="text-2xl">🔒</span>
+          <GameIcon name="lock" size={20} color="gray" />
         </div>
       )}
       <div className="flex items-start gap-2">
-        <span className="text-xl leading-none mt-0.5 shrink-0">{synergy.icon}</span>
+        <span className="w-8 h-8 flex items-center justify-center shrink-0 mt-0.5">
+          {ITEM_ICONS[synergy.id]
+            ? <GameIcon name={ITEM_ICONS[synergy.id].icon} color={ITEM_ICONS[synergy.id].color} size={28} />
+            : <span className="text-2xl">{synergy.icon}</span>}
+        </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-1">
             <span className="text-white text-sm font-semibold leading-tight truncate">{synergy.name}</span>
@@ -164,9 +181,9 @@ function SectionHeader({ label, count }) {
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'relics', label: 'Relics', icon: '🏺' },
-  { id: 'perks', label: 'Perks', icon: '⭐' },
-  { id: 'synergies', label: 'Synergies', icon: '⚡' },
+  { id: 'relics', label: 'Relics', icon: 'trophy', color: 'amber' },
+  { id: 'perks', label: 'Perks', icon: 'potion', color: 'purple' },
+  { id: 'synergies', label: 'Synergies', icon: 'thunder', color: 'yellow' },
 ];
 
 export default function CodexPage({ onBack }) {
@@ -258,7 +275,10 @@ export default function CodexPage({ onBack }) {
           ← Back
         </button>
         <div>
-          <h2 className="text-xl font-bold text-amber-200 leading-tight">📖 Codex</h2>
+          <h2 className="text-xl font-bold text-amber-200 leading-tight flex items-center gap-2">
+            <GameIcon name="scroll" size={20} color="amber" />
+            <span>Codex</span>
+          </h2>
           <p className="text-gray-400 text-xs">All Relics, Perks & Synergies</p>
         </div>
       </div>
@@ -274,7 +294,7 @@ export default function CodexPage({ onBack }) {
                 ? 'bg-gray-700 text-white shadow'
                 : 'text-gray-400 hover:text-gray-200'}`}
           >
-            <span>{tab.icon}</span>
+            <GameIcon name={tab.icon} size={16} color={activeTab === tab.id ? tab.color : 'gray'} />
             <span>{tab.label}</span>
             <span className={`text-[10px] rounded-full px-1.5 py-0.5 font-bold
               ${activeTab === tab.id ? 'bg-amber-500/30 text-amber-300' : 'bg-gray-700 text-gray-500'}`}>
@@ -408,7 +428,9 @@ export default function CodexPage({ onBack }) {
 function EmptyState() {
   return (
     <div className="text-center py-12 text-gray-500">
-      <p className="text-3xl mb-2">🔍</p>
+      <div className="mb-2 flex justify-center">
+        <GameIcon name="search" size={24} color="gray" />
+      </div>
       <p className="text-sm">No results</p>
     </div>
   );
