@@ -33,13 +33,13 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
     const getRarityBadgeColor = (rarity) => {
         switch (rarity) {
             case PERK_RARITY.COMMON:
-                return 'bg-gray-500 text-white';
+                return 'badge-common';
             case PERK_RARITY.RARE:
-                return 'bg-blue-500 text-white';
+                return 'badge-rare';
             case PERK_RARITY.EPIC:
-                return 'bg-purple-500 text-white';
+                return 'badge-epic';
             default:
-                return 'bg-gray-500 text-white';
+                return 'badge-common';
         }
     };
 
@@ -133,10 +133,10 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                         whileTap={{ scale: 0.97 }}
                                         onClick={() => handlePerkClick(perk)}
                                         className={`
-                    relative cursor-pointer group
+                    card-selectable group
                     bg-gradient-to-br ${getRarityColor(perk.rarity)}
-                    border-2 sm:border-4 rounded-xl sm:rounded-2xl p-3 sm:p-6
-                    shadow-2xl transition-all duration-300
+                    sm:border-4 sm:rounded-2xl p-3 sm:p-6
+                    shadow-2xl duration-300
                   `}
                                     >
                                         {/* Mobile: horizontal layout */}
@@ -148,7 +148,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex flex-wrap gap-1 mb-1">
-                                                    <span className={`${getRarityBadgeColor(perk.rarity)} px-1.5 py-0.5 rounded-full text-xs font-bold uppercase`}>
+                                                    <span className={`badge ${getRarityBadgeColor(perk.rarity)} uppercase`}>
                                                         {getRarityLabel(perk.rarity)}
                                                     </span>
                                                 </div>
@@ -169,7 +169,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                         <div className="hidden md:block">
                                             {/* Rarity Badge */}
                                             <div className="absolute top-4 right-4">
-                                                <span className={`${getRarityBadgeColor(perk.rarity)} px-3 py-1 rounded-full text-xs font-bold uppercase`}>
+                                                <span className={`badge ${getRarityBadgeColor(perk.rarity)} uppercase`}>
                                                     {getRarityLabel(perk.rarity)}
                                                 </span>
                                             </div>

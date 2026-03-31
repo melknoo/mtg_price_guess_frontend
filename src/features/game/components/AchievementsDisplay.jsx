@@ -336,7 +336,7 @@ export default function AchievementsDisplay({ achievements, onBack }) {
       {/* Back Button */}
       <button
         onClick={onBack}
-        className="mt-6 w-full bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-lg transition font-medium text-white"
+        className="mt-6 btn-secondary btn-full"
       >
         Back to Menu
       </button>

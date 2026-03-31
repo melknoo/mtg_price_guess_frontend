@@ -90,13 +90,13 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
           <div className="flex gap-4 mt-8">
             <button
               onClick={onBack}
-              className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-lg transition font-medium"
+              className="btn-secondary flex-1 text-base"
             >
               Back
             </button>
             <button
               onClick={handleInitiateDelete}
-              className="flex-1 bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg transition font-medium"
+              className="btn-danger flex-1 text-base"
             >
               Delete Account
             </button>
@@ -160,14 +160,14 @@ export default function DeleteAccount({ onBack, onDeleteSuccess }) {
           <button
             type="button"
             onClick={() => setShowConfirmation(false)}
-            className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-3 rounded-lg transition font-medium"
+            className="btn-secondary flex-1 text-base"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className={`flex-1 bg-red-600 hover:bg-red-700 px-4 py-3 rounded-lg transition font-medium ${
+            className={`btn-danger flex-1 text-base ${
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >

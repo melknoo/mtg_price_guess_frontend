@@ -172,7 +172,7 @@ export default function StatsDisplay({ onBack }) {
 
       <button
         onClick={onBack}
-        className="mt-2 w-full bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded text-white transition"
+        className="mt-2 btn-secondary btn-full"
       >
         Back to Menu
       </button>

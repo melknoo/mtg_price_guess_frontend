@@ -147,10 +147,10 @@ const CATEGORY_STYLES = {
 };
 
 const RARITY_BADGE = {
-  common: 'bg-gray-500 text-white',
-  rare: 'bg-blue-500 text-white',
-  epic: 'bg-purple-500 text-white',
-  legendary: 'bg-amber-400 text-black',
+  common: 'badge-common',
+  rare: 'badge-rare',
+  epic: 'badge-epic',
+  legendary: 'badge-legendary',
 };
 
 export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], onSelect }) {
@@ -239,11 +239,11 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                     whileTap={{ scale: 0.97 }}
                     onClick={() => onSelect(option)}
                     className={`
-                      relative cursor-pointer group
+                      card-selectable group
                       bg-gradient-to-br ${style.gradient}
-                      border-2 sm:border-4 ${style.border} rounded-xl sm:rounded-2xl
+                      sm:border-4 ${style.border} sm:rounded-2xl
                       p-3 sm:p-6
-                      shadow-2xl transition-all duration-300
+                      shadow-2xl duration-300
                       hover:shadow-xl ${style.glow}
                     `}
                   >
@@ -259,7 +259,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                           <span className={`${style.badge} px-1.5 py-0.5 rounded-full text-xs font-bold`}>
                             {style.badgeLabel}
                           </span>
-                          <span className={`${RARITY_BADGE[option.rarity] ?? 'bg-gray-500 text-white'} px-1.5 py-0.5 rounded-full text-xs font-bold uppercase`}>
+                          <span className={`badge ${RARITY_BADGE[option.rarity] ?? 'badge-common'} uppercase`}>
                             {option.rarity}
                           </span>
                         </div>
@@ -310,7 +310,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                         </span>
                       </div>
                       <div className="absolute top-3 right-4">
-                        <span className={`${RARITY_BADGE[option.rarity] ?? 'bg-gray-500 text-white'} px-2 py-0.5 rounded-full text-xs font-bold uppercase`}>
+                        <span className={`badge ${RARITY_BADGE[option.rarity] ?? 'badge-common'} uppercase`}>
                           {option.rarity}
                         </span>
                       </div>

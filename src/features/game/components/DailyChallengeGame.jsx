@@ -140,7 +140,7 @@ export default function DailyChallengeGame({ onBack }) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 text-center">
         <p className="text-red-400 text-lg">{errorMessage}</p>
-        <button onClick={onBack} className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded text-white transition">
+        <button onClick={onBack} className="btn-secondary">
           Back to Menu
         </button>
       </div>
@@ -174,7 +174,7 @@ export default function DailyChallengeGame({ onBack }) {
 
         <button
           onClick={onBack}
-          className="mt-4 bg-purple-600 px-6 py-3 rounded text-white hover:bg-purple-700 transition"
+          className="mt-4 btn-secondary"
         >
           Back to Menu
         </button>

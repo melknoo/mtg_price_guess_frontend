@@ -20,3 +20,84 @@ html, body, #root {
 .pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
 }
+
+@layer components {
+  /* === BUTTONS === */
+  .btn-primary {
+    @apply bg-amber-600 hover:bg-amber-500 active:scale-95
+           border border-amber-400/30
+           px-6 py-3 rounded-lg
+           text-white font-semibold text-lg
+           transition-all duration-150
+           shadow-lg shadow-amber-900/20;
+  }
+
+  .btn-secondary {
+    @apply bg-white/5 hover:bg-white/10 active:scale-95
+           border border-white/20 hover:border-white/30
+           px-6 py-3 rounded-lg
+           text-white/80 hover:text-white font-medium text-lg
+           transition-all duration-150;
+  }
+
+  .btn-danger {
+    @apply bg-red-900/40 hover:bg-red-800/60 active:scale-95
+           border border-red-500/30 hover:border-red-400/40
+           px-6 py-3 rounded-lg
+           text-red-200 hover:text-red-100 font-medium text-lg
+           transition-all duration-150;
+  }
+
+  .btn-sm {
+    @apply px-4 py-1.5 text-sm rounded-md;
+  }
+
+  .btn-full {
+    @apply w-full;
+  }
+
+  /* === PANELS === */
+  .panel {
+    @apply bg-white/5 border border-white/10 rounded-xl p-5;
+  }
+
+  .panel-highlight {
+    @apply bg-amber-500/5 border border-amber-400/20 rounded-xl p-5;
+  }
+
+  .panel-danger {
+    @apply bg-red-500/5 border border-red-500/30 rounded-xl p-5;
+  }
+
+  .panel-game {
+    @apply bg-black/20 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-2;
+  }
+
+  /* === CARDS === */
+  .card-selectable {
+    @apply relative cursor-pointer
+           border-2 rounded-xl p-5
+           shadow-xl transition-all duration-200
+           hover:scale-[1.03] hover:-translate-y-1
+           active:scale-95;
+  }
+
+  /* === BADGES === */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold;
+  }
+
+  .badge-common { @apply bg-gray-500/60 text-gray-200; }
+  .badge-rare { @apply bg-blue-500/60 text-blue-100; }
+  .badge-epic { @apply bg-purple-500/60 text-purple-100; }
+  .badge-legendary { @apply bg-amber-500/60 text-amber-100; }
+
+  /* === DIVIDERS === */
+  .divider {
+    @apply h-px bg-gradient-to-r from-transparent via-white/15 to-transparent my-4;
+  }
+
+  .divider-amber {
+    @apply h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent my-4;
+  }
+}

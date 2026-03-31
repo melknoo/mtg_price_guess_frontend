@@ -117,14 +117,14 @@ export default function SuggestionModal({ isOpen, onClose, onSubmit }) {
                       type="button"
                       onClick={handleClose}
                       disabled={loading}
-                      className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-3 rounded-lg transition font-medium text-white disabled:opacity-50"
+                      className="btn-secondary flex-1 text-base disabled:opacity-50"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={loading || suggestion.trim().length < 10}
-                      className={`flex-1 bg-amber-600 hover:bg-amber-500 px-4 py-3 rounded-lg transition font-medium text-white ${
+                      className={`btn-primary flex-1 text-base ${
                         (loading || suggestion.trim().length < 10) ? "opacity-50 cursor-not-allowed" : ""
                       }`}
                     >

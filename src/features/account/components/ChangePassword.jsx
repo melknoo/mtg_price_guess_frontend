@@ -139,14 +139,14 @@ export default function ChangePassword({ onBack, onSuccess }) {
           <button
             type="button"
             onClick={onBack}
-            className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-3 rounded-lg transition font-medium"
+            className="btn-secondary flex-1 text-base"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className={`flex-1 bg-amber-600 hover:bg-amber-500 px-4 py-3 rounded-lg transition font-medium ${
+            className={`btn-primary flex-1 text-base ${
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >

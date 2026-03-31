@@ -56,7 +56,7 @@ export default function AccountSettings({ onBack }) {
 
       <div className="space-y-6 text-gray-200">
         {/* Account Info */}
-        <section className="bg-white/5 p-4 rounded-lg">
+        <section className="panel p-4">
           <h3 className="text-xl font-semibold mb-3 text-amber-300">Your Data</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -75,12 +75,12 @@ export default function AccountSettings({ onBack }) {
         </section>
 
         {/* Account Actions */}
-        <section className="bg-white/5 p-4 rounded-lg">
+        <section className="panel p-4">
           <h3 className="text-xl font-semibold mb-3 text-amber-300">Account-Actions</h3>
           <div className="space-y-3">
             <button
               onClick={() => setView("password")}
-              className="w-full bg-blue-900/60 hover:bg-blue-800/80 border border-blue-700/30 px-4 py-3 rounded-lg transition font-medium text-left flex items-center justify-between"
+              className="btn-secondary btn-full text-base text-left flex items-center justify-between"
             >
               <span>🔒 Change Password</span>
               <span className="text-sm text-white/60">→</span>
@@ -88,7 +88,7 @@ export default function AccountSettings({ onBack }) {
 
             <button
               onClick={() => setView("email")}
-              className="w-full bg-blue-900/60 hover:bg-blue-800/80 border border-blue-700/30 px-4 py-3 rounded-lg transition font-medium text-left flex items-center justify-between"
+              className="btn-secondary btn-full text-base text-left flex items-center justify-between"
             >
               <span>📧 Change E-Mail</span>
               <span className="text-sm text-white/60">→</span>
@@ -97,7 +97,7 @@ export default function AccountSettings({ onBack }) {
         </section>
 
         {/* Privacy & Legal Overview */}
-        <section className="bg-white/5 p-4 rounded-lg">
+        <section className="panel p-4">
           <h3 className="text-xl font-semibold mb-3 text-amber-300">Privacy & Rights</h3>
           <p className="text-sm text-gray-300 mb-4">
             According to GDPR, you have the following rights regarding your data:
@@ -117,7 +117,7 @@ export default function AccountSettings({ onBack }) {
         </section>
 
         {/* Legal Texts (previously separate pages) */}
-        <section className="bg-white/5 p-4 rounded-lg space-y-4">
+        <section className="panel p-4 space-y-4">
           <h3 className="text-xl font-semibold mb-3 text-amber-300">Legal Information</h3>
 
           <div className="space-y-2 text-sm text-gray-200">
@@ -167,14 +167,14 @@ export default function AccountSettings({ onBack }) {
         </section>
 
         {/* Danger Zone */}
-        <section className="bg-red-500/10 border-2 border-red-500 p-4 rounded-lg">
+        <section className="panel-danger p-4">
           <h3 className="text-xl font-semibold mb-3 text-red-400">Danger Zone</h3>
           <p className="text-sm text-gray-300 mb-4">
             Deleting your account is irreversible. All your data will be permanently removed.
           </p>
           <button
             onClick={() => setView("delete")}
-            className="w-full bg-red-600 hover:bg-red-700 px-4 py-3 rounded-lg transition font-medium"
+            className="btn-danger btn-full"
           >
             Delete Account
           </button>
@@ -183,7 +183,7 @@ export default function AccountSettings({ onBack }) {
         {/* Back Button */}
         <button
           onClick={onBack}
-          className="w-full bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-lg transition font-medium text-white"
+          className="btn-secondary btn-full"
         >
           Back to Menu
         </button>

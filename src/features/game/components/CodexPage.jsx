@@ -270,7 +270,7 @@ export default function CodexPage({ onBack }) {
       <div className="flex items-center gap-3 mb-4 shrink-0">
         <button
           onClick={onBack}
-          className="bg-white/10 hover:bg-white/20 border border-white/15 px-3 py-1.5 rounded-lg text-sm text-white/80 transition"
+          className="btn-secondary btn-sm"
         >
           ← Back
         </button>
