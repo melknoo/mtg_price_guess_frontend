@@ -1464,15 +1464,15 @@ export default function Game({
       )}
 
       <div className="w-full sm:min-h-[2.5rem] pt-1 pb-2 sm:pb-0 hidden sm:flex items-center sm:justify-center">
-        {message && !gameOver && (
-          scoreBreakdown ? (
-            <ScoreTooltip message={message} breakdown={scoreBreakdown} />
-          ) : (
-            <p className="text-base sm:text-xl transition-all duration-500 sm:text-center">{message}</p>
-          )
+        {message && !gameOver && !scoreBreakdown && (
+          <p className="text-base sm:text-xl transition-all duration-500 sm:text-center">{message}</p>
         )}
       </div>
-      {/* Mobile: plain message (ScoreTooltip renders itself fixed top-left) */}
+      {/* ScoreTooltip handles its own mobile (fixed top-left) and desktop rendering */}
+      {message && !gameOver && scoreBreakdown && (
+        <ScoreTooltip message={message} breakdown={scoreBreakdown} />
+      )}
+      {/* Mobile: plain message when no breakdown */}
       {message && !gameOver && !scoreBreakdown && (
         <p className="sm:hidden text-base transition-all duration-500 pt-1 pb-2 pl-14">{message}</p>
       )}

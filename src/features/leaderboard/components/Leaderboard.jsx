@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchLeaderboard } from "../api/leaderboardApi";
 
-export default function Leaderboard({ onBack, compact = false, mobileLimit = 5 }) {
+export default function Leaderboard({ onBack, onShowFull, compact = false, mobileLimit = 5 }) {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,8 +70,13 @@ export default function Leaderboard({ onBack, compact = false, mobileLimit = 5 }
             </li>
           ))}
           {compact && players.length > mobileLimit && (
-            <li className="pt-2 text-center text-xs text-white/40">
-              +{players.length - mobileLimit} more · see full leaderboard
+            <li className="pt-2 text-center">
+              <button
+                onClick={onShowFull}
+                className="text-xs text-white/40 hover:text-amber-400 transition-colors cursor-pointer"
+              >
+                +{players.length - mobileLimit} more · see full leaderboard
+              </button>
             </li>
           )}
         </ol>

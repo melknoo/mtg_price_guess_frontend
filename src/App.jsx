@@ -186,7 +186,7 @@ function AppContent() {
 
             {/* Right: leaderboard */}
             <div className="w-full max-w-sm mx-auto lg:mx-0">
-              <Leaderboard compact />
+              <Leaderboard compact onShowFull={() => setScreen("leaderboard")} />
             </div>
 
           </div>
@@ -332,7 +332,7 @@ function AppContent() {
 
             {/* Right: leaderboard */}
             <div className="w-full max-w-sm mx-auto lg:mx-0">
-              <Leaderboard compact />
+              <Leaderboard compact onShowFull={() => setScreen("leaderboard")} />
             </div>
 
           </div>
