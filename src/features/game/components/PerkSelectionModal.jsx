@@ -140,8 +140,8 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                   `}
                                     >
                                         {/* Mobile: horizontal layout */}
-                                        <div className="flex items-start gap-3 md:hidden">
-                                            <div className="shrink-0 mt-0.5 w-10 h-10 flex items-center justify-center">
+                                        <div className="flex items-center gap-3 md:hidden">
+                                            <div className="shrink-0 w-10 h-10 flex items-center justify-center">
                                               {ITEM_ICONS[perk.id]
                                                 ? <GameIcon name={ITEM_ICONS[perk.id].icon} color={ITEM_ICONS[perk.id].color} size={36} />
                                                 : <span className="text-4xl">{perk.icon}</span>}

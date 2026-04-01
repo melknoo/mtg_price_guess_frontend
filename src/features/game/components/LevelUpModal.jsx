@@ -248,8 +248,8 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                     `}
                   >
                     {/* Mobile: horizontal layout */}
-                    <div className="flex items-start gap-3 md:hidden">
-                      <div className="shrink-0 mt-0.5 w-10 h-10 flex items-center justify-center">
+                    <div className="flex items-center gap-3 md:hidden">
+                      <div className="shrink-0 w-10 h-10 flex items-center justify-center">
                         {ITEM_ICONS[option.id]
                           ? <GameIcon name={ITEM_ICONS[option.id].icon} color={ITEM_ICONS[option.id].color} size={36} />
                           : <span className="text-4xl">{option.icon}</span>}
