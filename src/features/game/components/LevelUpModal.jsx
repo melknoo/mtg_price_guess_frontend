@@ -21,9 +21,7 @@ function weightedRandomPick(items, weights, excludeIds = new Set()) {
   return available[0];
 }
 
-const RELIC_MILESTONE_INTERVAL = 7;
-
-// Relic-Milestone: Nur Relics zur Wahl (alle 7 Level)
+// Relic-Selection: Nur Relics zur Wahl (alle 10 Runden)
 function generateRelicMilestoneOptions(activeRelics, hasForture = false) {
   const usedIds = new Set();
   const options = [];
@@ -156,10 +154,10 @@ function getOptionDynamicHint(option, activeRelicsCount) {
 
 // Rarity → Hintergrundfarbe, Borderfarbe, Glow, Rarity-Badge
 const RARITY_STYLES = {
-  common:    { gradient: 'from-slate-800/90 to-slate-900/90',   borderColor: 'border-slate-400',  glow: 'group-hover:shadow-slate-400/30', badge: 'bg-slate-500 text-white' },
-  rare:      { gradient: 'from-blue-900/90 to-indigo-950/90',   borderColor: 'border-blue-400',   glow: 'group-hover:shadow-blue-400/40',  badge: 'bg-blue-500 text-white' },
-  epic:      { gradient: 'from-purple-900/90 to-purple-950/90', borderColor: 'border-purple-400', glow: 'group-hover:shadow-purple-500/40', badge: 'bg-purple-500 text-white' },
-  legendary: { gradient: 'from-amber-900/90 to-yellow-950/90',  borderColor: 'border-amber-300',  glow: 'group-hover:shadow-amber-400/50', badge: 'bg-amber-400 text-black' },
+  common:    { gradient: 'from-slate-800 to-slate-900/90',   borderColor: 'border-slate-400',  glow: 'group-hover:shadow-slate-400/30', badge: 'bg-slate-500 text-white' },
+  rare:      { gradient: 'from-blue-900 to-blue-900/90',     borderColor: 'border-blue-400',   glow: 'group-hover:shadow-blue-400/40',  badge: 'bg-blue-500 text-white' },
+  epic:      { gradient: 'from-purple-900 to-purple-900/90', borderColor: 'border-purple-400', glow: 'group-hover:shadow-purple-500/40', badge: 'bg-purple-500 text-white' },
+  legendary: { gradient: 'from-amber-900 to-amber-900/90',   borderColor: 'border-amber-300',  glow: 'group-hover:shadow-amber-400/50', badge: 'bg-amber-400 text-black' },
 };
 
 // Kategorie → Borderbreite + Badge-Style
@@ -170,7 +168,7 @@ const CATEGORY_STYLES = {
 };
 
 
-export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], onSelect }) {
+export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], onSelect, forceRelicMode = false }) {
   const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
@@ -178,7 +176,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
   }, [show]);
 
   const hasFortune = activeSynergies.some(s => s.effect === 'extra_pick_option');
-  const isRelicMilestone = newLevel % RELIC_MILESTONE_INTERVAL === 0;
+  const isRelicMilestone = forceRelicMode;
 
   const options = useMemo(() => {
     if (!show) return [];
@@ -208,7 +206,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-start justify-center z-50 overflow-y-auto"
+          className={`fixed inset-0 backdrop-blur-sm flex items-start justify-center z-50 overflow-y-auto ${isRelicMilestone ? 'bg-amber-950/70' : 'bg-black/80'}`}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -224,7 +222,10 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                 transition={{ type: 'spring', stiffness: 300, damping: 15 }}
                 className="inline-block mb-1 sm:mb-3"
               >
-                <GameIcon name="star" color={isRelicMilestone ? 'amber' : 'white'} size={isRelicMilestone ? 52 : 44} />
+                {isRelicMilestone
+                  ? <GameIcon name="gem" color="amber" size={52} />
+                  : <GameIcon name="star" color="white" size={44} />
+                }
               </motion.div>
               <motion.h2
                 initial={{ y: -20, opacity: 0 }}
@@ -232,7 +233,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                 transition={{ delay: 0.1 }}
                 className={`text-xl sm:text-4xl font-bold mb-1 ${isRelicMilestone ? 'text-yellow-200' : 'text-amber-300'}`}
               >
-                {isRelicMilestone ? `Relic Milestone! — Level ${newLevel}` : `Level Up! — Level ${newLevel}`}
+                {isRelicMilestone ? 'Relic Selection!' : `Level Up! — Level ${newLevel}`}
               </motion.h2>
               <motion.p
                 initial={{ y: -10, opacity: 0 }}
@@ -260,14 +261,36 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                     whileTap={{ scale: 0.97 }}
                     onClick={() => onSelect(option)}
                     className={`
-                      relative cursor-pointer group
+                      relative cursor-pointer group overflow-hidden
                       bg-gradient-to-br ${rStyle.gradient}
-                      ${cStyle.borderWidth} ${rStyle.borderColor} rounded-xl sm:rounded-2xl
+                      ${cStyle.borderWidth} ${isRelicMilestone ? 'border-amber-400' : rStyle.borderColor} rounded-xl sm:rounded-2xl
                       p-3 sm:p-6
                       shadow-2xl transition-all duration-300
-                      hover:shadow-xl ${rStyle.glow}
+                      hover:shadow-xl ${isRelicMilestone ? 'group-hover:shadow-amber-400/50' : rStyle.glow}
                     `}
                   >
+                    {/* Relic: diagonales Muster-Overlay */}
+                    {isRelicMilestone && (
+                      <div
+                        className="absolute inset-0 pointer-events-none rounded-xl sm:rounded-2xl"
+                        style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(251,191,36,0.07) 0px, rgba(251,191,36,0.07) 1px, transparent 1px, transparent 9px)' }}
+                      />
+                    )}
+                    {/* Relic: pulsierender innerer Glow-Ring */}
+                    {isRelicMilestone && (
+                      <motion.div
+                        className="absolute inset-0 rounded-xl sm:rounded-2xl pointer-events-none"
+                        animate={{ opacity: [0.35, 0.7, 0.35] }}
+                        transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut', delay: index * 0.3 }}
+                        style={{ boxShadow: 'inset 0 0 18px rgba(251,191,36,0.35)' }}
+                      />
+                    )}
+                    {/* Relic: Gem-Wasserzeichen */}
+                    {isRelicMilestone && (
+                      <div className="absolute bottom-1 right-1 sm:bottom-3 sm:right-3 opacity-[0.07] pointer-events-none">
+                        <GameIcon name="gem" size={64} color="amber" />
+                      </div>
+                    )}
                     {/* Mobile: horizontal layout */}
                     <div className="flex items-center gap-3 md:hidden">
                       <div className="shrink-0 w-10 h-10 flex items-center justify-center">
@@ -400,8 +423,8 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
               className="text-center text-gray-400 text-xs sm:text-sm mt-3 sm:mt-8"
             >
               {isRelicMilestone
-                ? <span className="inline-flex items-center gap-1"><GameIcon name="star" color="amber" size={13} /> Relics are permanent bonuses for your entire run.</span>
-                : <span className="inline-flex items-center gap-1"><GameIcon name="light_bulb" color="gray" size={13} /> Relics every 7 levels — Items are temporary perks.</span>}
+                ? <span className="inline-flex items-center gap-1"><GameIcon name="gem" color="amber" size={13} /> Relics are permanent bonuses for your entire run.</span>
+                : <span className="inline-flex items-center gap-1"><GameIcon name="light_bulb" color="gray" size={13} /> Relics every 10 rounds — Items are temporary perks.</span>}
             </motion.p>
           </motion.div>
         </motion.div>

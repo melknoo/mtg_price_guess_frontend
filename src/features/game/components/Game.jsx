@@ -30,7 +30,9 @@ import CardPair from "./CardPair";
 import GameOverScreen from "./GameOverScreen";
 import PerkSelectionModal from "./PerkSelectionModal";
 import LevelUpModal from "./LevelUpModal";
+import ProgressionRoadmapModal from "./ProgressionRoadmapModal";
 import SynergyToast from "./SynergyToast";
+import GameIcon from "../../../shared/components/GameIcon";
 import ActivePerksDisplay from "./ActivePerksDisplay";
 import RegisterWithScore from "../../auth/components/RegisterWithScore";
 import DebugPanel from "./DebugPanel";
@@ -131,6 +133,8 @@ export default function Game({
   const [tickingRelics, setTickingRelics] = useState(new Set());  // Subtler Tick-Animation
   const [fortressRegenCount, setFortressRegenCount] = useState(0); // Fortress unabhängiger Zähler
   const [masochistMult, setMasochistMult] = useState(0); // Masochist Synergy: permanent per damage
+  const [showRoadmap, setShowRoadmap] = useState(false);
+  const [showRelicSelection, setShowRelicSelection] = useState(false);
 
   // Animated score counter
   const [displayScore, setDisplayScore] = useState(0);
@@ -947,8 +951,11 @@ export default function Game({
       }
     }
 
-    if (nextRound > 0 && nextRound % 5 === 0) {
-      // No Perks: überspringt Perk-Auswahl
+    if (nextRound > 0 && nextRound % 10 === 0) {
+      // Alle 10 Runden: Relic-Auswahl
+      setShowRelicSelection(true);
+    } else if (nextRound > 0 && nextRound % 5 === 0) {
+      // Alle 5 Runden (außer Relic-Runden): Perk-Auswahl
       if (relicSystem.hasRelic('no_perks')) {
         cardLoader.setNextPair();
       } else {
@@ -1063,6 +1070,26 @@ export default function Game({
     }
     level.dismissLevelUp();
   }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound]);
+
+  const handleRelicRoundSelect = useCallback((pick) => {
+    console.log('[RelicRound]', pick.name, `(${pick.id})`);
+    if (pick.effect === 'blueprint_copy') {
+      const otherRelics = relicSystem.activeRelics.filter(r => r.id !== 'blueprint');
+      if (otherRelics.length > 0) {
+        const src = otherRelics[Math.floor(Math.random() * otherRelics.length)];
+        relicSystem.addRelic({ ...src, id: `blueprint_copy_${Date.now()}`, name: `Blueprint (${src.name})`, icon: '📋', description: `Kopie: ${src.description}` });
+      } else {
+        relicSystem.addRelic(pick);
+      }
+    } else {
+      relicSystem.addRelic(pick);
+    }
+    if (pick.effect === 'glass_cannon') setLives(1);
+    achievements.trackRelicCollected();
+    runLogger.logRelicSelected({ level: level.level, relic_id: pick.id, relic_name: pick.name });
+    setShowRelicSelection(false);
+    cardLoader.setNextPair();
+  }, [relicSystem, achievements, runLogger, level, setLives, cardLoader]);
 
   const handleSkipCard = useCallback(() => {
     if (perkSystem.hasPerk("skip_card")) {
@@ -1265,6 +1292,15 @@ export default function Game({
               />
             </div>
           </div>
+
+          {/* Roadmap Button */}
+          <button
+            onClick={() => setShowRoadmap(true)}
+            title="Progression Roadmap"
+            className="shrink-0 opacity-40 hover:opacity-80 transition-opacity"
+          >
+            <GameIcon name="map" size={16} color="amber" />
+          </button>
         </div>
       </div>
 
@@ -1375,6 +1411,17 @@ export default function Game({
         )}
       </div>
 
+      <AnimatePresence>
+        {showRoadmap && (
+          <ProgressionRoadmapModal
+            onClose={() => setShowRoadmap(false)}
+            currentRound={currentRound}
+            level={level}
+            hasNoPerkRelic={relicSystem.hasRelic('no_perks')}
+          />
+        )}
+      </AnimatePresence>
+
       <LevelUpModal
         show={level.showLevelUp}
         newLevel={level.level}
@@ -1382,6 +1429,16 @@ export default function Game({
         activePerks={perkSystem.activePerks}
         activeSynergies={synergyEngine.activeSynergies}
         onSelect={handleLevelUpSelect}
+      />
+
+      <LevelUpModal
+        show={showRelicSelection}
+        newLevel={currentRound}
+        activeRelics={relicSystem.activeRelics}
+        activePerks={perkSystem.activePerks}
+        activeSynergies={synergyEngine.activeSynergies}
+        onSelect={handleRelicRoundSelect}
+        forceRelicMode
       />
 
       <PerkSelectionModal perks={perkSystem.availablePerks} onSelect={handlePerkSelect} show={perkSystem.showPerkSelection} hasDoubleDip={relicSystem.hasRelic('double_dip')} />
