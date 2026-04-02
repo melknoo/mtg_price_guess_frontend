@@ -261,7 +261,7 @@ export const PERKS = {
     RED_FOCUS: {
         id: 'red_focus',
         name: 'Red Focus',
-        description: 'Red cards appear 40% more often',
+        description: 'Red cards appear 40% more often (stackable)',
         icon: '🔴',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
@@ -271,12 +271,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'color',
         isBoost: true,
+        stackable: true,
     },
 
     GREEN_FOCUS: {
         id: 'green_focus',
         name: 'Green Focus',
-        description: 'Green cards appear 40% more often',
+        description: 'Green cards appear 40% more often (stackable)',
         icon: '🟢',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
@@ -286,12 +287,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'color',
         isBoost: true,
+        stackable: true,
     },
 
     BLUE_FOCUS: {
         id: 'blue_focus',
         name: 'Blue Focus',
-        description: 'Blue cards appear 40% more often',
+        description: 'Blue cards appear 40% more often (stackable)',
         icon: '🔵',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
@@ -301,12 +303,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'color',
         isBoost: true,
+        stackable: true,
     },
 
     BLACK_FOCUS: {
         id: 'black_focus',
         name: 'Black Focus',
-        description: 'Black cards appear 40% more often',
+        description: 'Black cards appear 40% more often (stackable)',
         icon: '⚫',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
@@ -316,12 +319,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'color',
         isBoost: true,
+        stackable: true,
     },
 
     WHITE_FOCUS: {
         id: 'white_focus',
         name: 'White Focus',
-        description: 'White cards appear 40% more often',
+        description: 'White cards appear 40% more often (stackable)',
         icon: '⚪',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
@@ -331,12 +335,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'color',
         isBoost: true,
+        stackable: true,
     },
 
     MULTICOLOR_FOCUS: {
         id: 'multicolor_focus',
         name: 'Multicolor Focus',
-        description: 'Multicolor cards appear 40% more often',
+        description: 'Multicolor cards appear 40% more often (stackable)',
         icon: '🌈',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
@@ -346,12 +351,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'color',
         isBoost: true,
+        stackable: true,
     },
 
     COLORLESS_FOCUS: {
         id: 'colorless_focus',
         name: 'Colorless Focus',
-        description: 'Colorless/artifact cards appear 40% more often',
+        description: 'Colorless/artifact cards appear 40% more often (stackable)',
         icon: '⚙️',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
@@ -361,6 +367,7 @@ export const PERKS = {
         duration: -1,
         filterType: 'color',
         isBoost: true,
+        stackable: true,
     },
 
     // ==================== FILTER PERKS - COLOR EXCLUDE ====================
@@ -466,7 +473,7 @@ export const PERKS = {
     LOW_COST_FOCUS: {
         id: 'low_cost_focus',
         name: 'Low Cost Focus',
-        description: 'Cards with CMC ≤ 3 appear 40% more often',
+        description: 'Cards with CMC ≤ 3 appear 40% more often (stackable)',
         icon: '1️⃣',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
@@ -476,12 +483,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'cmc',
         isBoost: true,
+        stackable: true,
     },
 
     MID_COST_FOCUS: {
         id: 'mid_cost_focus',
         name: 'Mid Cost Focus',
-        description: 'Cards with CMC 4–6 appear 40% more often',
+        description: 'Cards with CMC 4–6 appear 40% more often (stackable)',
         icon: '4️⃣',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
@@ -491,12 +499,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'cmc',
         isBoost: true,
+        stackable: true,
     },
 
     HIGH_COST_FOCUS: {
         id: 'high_cost_focus',
         name: 'High Cost Focus',
-        description: 'Cards with CMC ≥ 7 appear 40% more often',
+        description: 'Cards with CMC ≥ 7 appear 40% more often (stackable)',
         icon: '7️⃣',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
@@ -506,6 +515,7 @@ export const PERKS = {
         duration: -1,
         filterType: 'cmc',
         isBoost: true,
+        stackable: true,
     },
 
     // ==================== FILTER PERKS - CMC EXCLUDE ====================
@@ -555,7 +565,7 @@ export const PERKS = {
     BLACK_BORDER_FOCUS: {
         id: 'black_border_focus',
         name: 'Black Border Focus',
-        description: 'Black border cards appear 40% more often',
+        description: 'Black border cards appear 40% more often (stackable)',
         icon: '🖤',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
@@ -565,12 +575,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'border_color',
         isBoost: true,
+        stackable: true,
     },
 
     WHITE_BORDER_FOCUS: {
         id: 'white_border_focus',
         name: 'White Border Focus',
-        description: 'White border cards appear 40% more often',
+        description: 'White border cards appear 40% more often (stackable)',
         icon: '🤍',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
@@ -580,13 +591,14 @@ export const PERKS = {
         duration: -1,
         filterType: 'border_color',
         isBoost: true,
+        stackable: true,
     },
 
     // ==================== NEW FILTER PERKS - RARITY BOOST ====================
     COMMON_FOCUS: {
         id: 'common_focus',
         name: 'Common Focus',
-        description: 'Common cards appear 40% more often',
+        description: 'Common cards appear 40% more often (stackable)',
         icon: '⬛',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
@@ -596,12 +608,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'rarity',
         isBoost: true,
+        stackable: true,
     },
 
     UNCOMMON_FOCUS: {
         id: 'uncommon_focus',
         name: 'Uncommon Focus',
-        description: 'Uncommon cards appear 40% more often',
+        description: 'Uncommon cards appear 40% more often (stackable)',
         icon: '🔷',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
@@ -611,12 +624,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'rarity',
         isBoost: true,
+        stackable: true,
     },
 
     RARE_FOCUS: {
         id: 'rare_focus',
         name: 'Rare Focus',
-        description: 'Rare cards appear 40% more often',
+        description: 'Rare cards appear 40% more often (stackable)',
         icon: '🟡',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
@@ -626,12 +640,13 @@ export const PERKS = {
         duration: -1,
         filterType: 'rarity',
         isBoost: true,
+        stackable: true,
     },
 
     MYTHIC_FOCUS: {
         id: 'mythic_focus',
         name: 'Mythic Focus',
-        description: 'Mythic rare cards appear 40% more often',
+        description: 'Mythic rare cards appear 40% more often (stackable)',
         icon: '🔶',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.EPIC,
@@ -641,6 +656,7 @@ export const PERKS = {
         duration: -1,
         filterType: 'rarity',
         isBoost: true,
+        stackable: true,
     },
 
     // ==================== FILTER PERKS - RARITY EXCLUDE ====================
@@ -704,7 +720,7 @@ export const PERKS = {
     CREATURE_FOCUS: {
         id: 'creature_focus',
         name: 'Creature Focus',
-        description: 'Creature cards appear 40% more often',
+        description: 'Creature cards appear 40% more often (stackable)',
         icon: '⚔️',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
@@ -715,12 +731,13 @@ export const PERKS = {
         filterType: 'type',
         tags: [PERK_TAGS.LUCK],
         isBoost: true,
+        stackable: true,
     },
 
     INSTANT_SORCERY_FOCUS: {
         id: 'instant_sorcery_focus',
         name: 'Spell Focus',
-        description: 'Instants and sorceries appear 40% more often',
+        description: 'Instants and sorceries appear 40% more often (stackable)',
         icon: '⚡',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
@@ -731,12 +748,13 @@ export const PERKS = {
         filterType: 'type',
         tags: [PERK_TAGS.LUCK],
         isBoost: true,
+        stackable: true,
     },
 
     ARTIFACT_ENCHANTMENT_FOCUS: {
         id: 'artifact_enchantment_focus',
         name: 'Noncreature Focus',
-        description: 'Artifacts and enchantments appear 40% more often',
+        description: 'Artifacts and enchantments appear 40% more often (stackable)',
         icon: '🔮',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
@@ -747,12 +765,13 @@ export const PERKS = {
         filterType: 'type',
         tags: [PERK_TAGS.LUCK],
         isBoost: true,
+        stackable: true,
     },
 
     LAND_FOCUS: {
         id: 'land_focus',
         name: 'Land Focus',
-        description: 'Land cards appear 40% more often',
+        description: 'Land cards appear 40% more often (stackable)',
         icon: '🌍',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.EPIC,
@@ -763,6 +782,7 @@ export const PERKS = {
         filterType: 'type',
         tags: [PERK_TAGS.LUCK],
         isBoost: true,
+        stackable: true,
     },
 
     // ==================== NEW FILTER PERKS - TYPE EXCLUDE ====================
@@ -835,6 +855,7 @@ export const PERKS = {
         colorValue: 'W',
         value: 1,
         duration: -1,
+        stackable: true,
     },
 
     BLUE_MASTERY: {
@@ -849,6 +870,7 @@ export const PERKS = {
         colorValue: 'U',
         value: 1,
         duration: -1,
+        stackable: true,
     },
 
     BLACK_MASTERY: {
@@ -863,6 +885,7 @@ export const PERKS = {
         colorValue: 'B',
         value: 1,
         duration: -1,
+        stackable: true,
     },
 
     RED_MASTERY: {
@@ -877,6 +900,7 @@ export const PERKS = {
         colorValue: 'R',
         value: 1,
         duration: -1,
+        stackable: true,
     },
 
     GREEN_MASTERY: {
@@ -891,6 +915,7 @@ export const PERKS = {
         colorValue: 'G',
         value: 1,
         duration: -1,
+        stackable: true,
     },
 
     COLORLESS_MASTERY: {
@@ -905,6 +930,7 @@ export const PERKS = {
         colorValue: 'colorless',
         value: 1,
         duration: -1,
+        stackable: true,
     },
 };
 

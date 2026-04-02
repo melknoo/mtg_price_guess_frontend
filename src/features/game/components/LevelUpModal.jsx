@@ -168,7 +168,7 @@ const CATEGORY_STYLES = {
 };
 
 
-export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], onSelect, forceRelicMode = false }) {
+export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], onSelect, forceRelicMode = false, onSkip, onReroll, lives = 3, rerollKey = 0 }) {
   const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
@@ -184,7 +184,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
       ? generateRelicMilestoneOptions(activeRelics ?? [], hasFortune)
       : generateNormalOptions(activeRelics ?? [], activePerks ?? [], hasFortune);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show, activeRelics, activePerks, hasFortune, isRelicMilestone]);
+  }, [show, activeRelics, activePerks, hasFortune, isRelicMilestone, rerollKey]);
 
   if (!show || options.length === 0) return null;
 
@@ -416,11 +416,48 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
               })}
             </div>
 
+            {/* Skip / Reroll */}
+            {(onSkip || onReroll) && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex items-center justify-center gap-3 mt-4 sm:mt-6"
+              >
+                {onSkip && (
+                  <button
+                    onClick={onSkip}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-gray-300 text-sm hover:bg-white/10 hover:text-white transition"
+                  >
+                    <GameIcon name="next" color="gray" size={14} />
+                    Skip
+                  </button>
+                )}
+                {onReroll && (
+                  <button
+                    onClick={onReroll}
+                    disabled={lives <= 1}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition
+                      ${lives <= 1
+                        ? 'bg-white/5 border-white/10 text-gray-600 cursor-not-allowed'
+                        : 'bg-red-900/30 border-red-500/40 text-red-300 hover:bg-red-900/50 hover:text-red-200'
+                      }`}
+                  >
+                    <GameIcon name="reset" color={lives <= 1 ? 'gray' : 'red'} size={14} />
+                    Reroll
+                    <span className="flex items-center gap-1 text-xs opacity-80">
+                      (<GameIcon name="heart" color={lives <= 1 ? 'gray' : 'red'} size={11} /> 1)
+                    </span>
+                  </button>
+                )}
+              </motion.div>
+            )}
+
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="text-center text-gray-400 text-xs sm:text-sm mt-3 sm:mt-8"
+              className="text-center text-gray-400 text-xs sm:text-sm mt-3 sm:mt-4"
             >
               {isRelicMilestone
                 ? <span className="inline-flex items-center gap-1"><GameIcon name="gem" color="amber" size={13} /> Relics are permanent bonuses for your entire run.</span>

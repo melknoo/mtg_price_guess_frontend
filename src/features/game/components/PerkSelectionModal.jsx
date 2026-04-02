@@ -5,7 +5,7 @@ import GameIcon from '../../../shared/components/GameIcon';
 import TagIcons from '../../../shared/components/TagIcons';
 import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
-export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip = false }) {
+export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip = false, onSkip, onReroll, lives = 3 }) {
     const [isMinimized, setIsMinimized] = useState(false);
 
     useEffect(() => {
@@ -225,12 +225,47 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                 ))}
                             </div>
 
+                            {/* Skip / Reroll */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.4 }}
+                                className="flex items-center justify-center gap-3 mt-4 sm:mt-6"
+                            >
+                                {onSkip && (
+                                    <button
+                                        onClick={onSkip}
+                                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-gray-300 text-sm hover:bg-white/10 hover:text-white transition"
+                                    >
+                                        <GameIcon name="next" color="gray" size={14} />
+                                        Skip
+                                    </button>
+                                )}
+                                {onReroll && (
+                                    <button
+                                        onClick={onReroll}
+                                        disabled={lives <= 1}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition
+                                            ${lives <= 1
+                                                ? 'bg-white/5 border-white/10 text-gray-600 cursor-not-allowed'
+                                                : 'bg-red-900/30 border-red-500/40 text-red-300 hover:bg-red-900/50 hover:text-red-200'
+                                            }`}
+                                    >
+                                        <GameIcon name="reset" color={lives <= 1 ? 'gray' : 'red'} size={14} />
+                                        Reroll
+                                        <span className="flex items-center gap-1 text-xs opacity-80">
+                                            (<GameIcon name="heart" color={lives <= 1 ? 'gray' : 'red'} size={11} /> 1)
+                                        </span>
+                                    </button>
+                                )}
+                            </motion.div>
+
                             {/* Footer Hint */}
                             <motion.p
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.5 }}
-                                className="text-center text-gray-400 text-xs sm:text-sm mt-3 sm:mt-8"
+                                className="text-center text-gray-400 text-xs sm:text-sm mt-3 sm:mt-4"
                             >
                                 <span className="inline-flex items-center gap-1"><GameIcon name="light_bulb" color="gray" size={13} /> Tip: Choose wisely! Some perks can be stacked.</span>
                             </motion.p>

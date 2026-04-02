@@ -136,6 +136,8 @@ export default function Game({
   const [showRoadmap, setShowRoadmap] = useState(false);
   const [showFilterOdds, setShowFilterOdds] = useState(false);
   const [showRelicSelection, setShowRelicSelection] = useState(false);
+  const [levelUpRerollKey, setLevelUpRerollKey] = useState(0);
+  const [relicRerollKey, setRelicRerollKey] = useState(0);
 
   // Animated score counter
   const [displayScore, setDisplayScore] = useState(0);
@@ -1100,6 +1102,38 @@ export default function Game({
     cardLoader.setNextPair();
   }, [relicSystem, achievements, runLogger, level, setLives, cardLoader]);
 
+  const handlePerkSkip = useCallback(() => {
+    perkSystem.skipPerkSelection();
+    cardLoader.setNextPair();
+  }, [perkSystem, cardLoader]);
+
+  const handlePerkReroll = useCallback(() => {
+    if (lives <= 1) return;
+    setLives(l => l - 1);
+    perkSystem.rerollPerks();
+  }, [lives, perkSystem]);
+
+  const handleLevelUpSkip = useCallback(() => {
+    level.dismissLevelUp();
+  }, [level]);
+
+  const handleLevelUpReroll = useCallback(() => {
+    if (lives <= 1) return;
+    setLives(l => l - 1);
+    setLevelUpRerollKey(k => k + 1);
+  }, [lives]);
+
+  const handleRelicSkip = useCallback(() => {
+    setShowRelicSelection(false);
+    cardLoader.setNextPair();
+  }, [cardLoader]);
+
+  const handleRelicReroll = useCallback(() => {
+    if (lives <= 1) return;
+    setLives(l => l - 1);
+    setRelicRerollKey(k => k + 1);
+  }, [lives]);
+
   const handleSkipCard = useCallback(() => {
     if (perkSystem.hasPerk("skip_card")) {
       perkSystem.consumePerk("skip_card");
@@ -1439,6 +1473,10 @@ export default function Game({
         activePerks={perkSystem.activePerks}
         activeSynergies={synergyEngine.activeSynergies}
         onSelect={handleLevelUpSelect}
+        onSkip={handleLevelUpSkip}
+        onReroll={handleLevelUpReroll}
+        lives={lives}
+        rerollKey={levelUpRerollKey}
       />
 
       <LevelUpModal
@@ -1448,10 +1486,22 @@ export default function Game({
         activePerks={perkSystem.activePerks}
         activeSynergies={synergyEngine.activeSynergies}
         onSelect={handleRelicRoundSelect}
+        onSkip={handleRelicSkip}
+        onReroll={handleRelicReroll}
+        lives={lives}
+        rerollKey={relicRerollKey}
         forceRelicMode
       />
 
-      <PerkSelectionModal perks={perkSystem.availablePerks} onSelect={handlePerkSelect} show={perkSystem.showPerkSelection} hasDoubleDip={relicSystem.hasRelic('double_dip')} />
+      <PerkSelectionModal
+        perks={perkSystem.availablePerks}
+        onSelect={handlePerkSelect}
+        show={perkSystem.showPerkSelection}
+        hasDoubleDip={relicSystem.hasRelic('double_dip')}
+        onSkip={handlePerkSkip}
+        onReroll={handlePerkReroll}
+        lives={lives}
+      />
 
       <SynergyToast synergy={synergyToast} onDismiss={() => setSynergyToast(null)} />
 

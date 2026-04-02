@@ -15,11 +15,17 @@ export const usePerkSystem = () => {
     const usedIds = new Set();
 
     // Exclude permanent non-consumable perks that were already selected
+    // Stackable perks are never excluded — they can always re-appear
     const excludedIds = new Set(
       selectedPermanentPerks.filter(id => {
         const perk = allPerks.find(p => p.id === id);
-        return perk && perk.duration === -1 && !perk.consumable;
+        return perk && perk.duration === -1 && !perk.consumable && !perk.stackable;
       })
+    );
+
+    // IDs of stackable perks that are currently active (can re-appear in pool)
+    const stackableActiveIds = new Set(
+      activePerks.filter(p => p.stackable).map(p => p.id)
     );
 
     // Exclude base perks when their extended version is already active
@@ -43,11 +49,12 @@ export const usePerkSystem = () => {
 
     while (selectedPerks.length < PERK_CONFIG.PERKS_TO_CHOOSE && selectedPerks.length < allPerks.length) {
       const perk = getWeightedRandomPerk(
-        allPerks, 
-        usedIds, 
-        excludedIds, 
+        allPerks,
+        usedIds,
+        excludedIds,
         activeConsumableIds,
-        activeFilterTypes
+        activeFilterTypes,
+        stackableActiveIds
       );
       if (perk) {
         selectedPerks.push(perk);
@@ -73,15 +80,17 @@ export const usePerkSystem = () => {
     return selectedPerks;
   }, [selectedPermanentPerks, activePerks]);
 
-  const getWeightedRandomPerk = (perks, excludeIds, permanentExcludeIds, activeConsumableIds, activeFilterTypes) => {
+  const getWeightedRandomPerk = (perks, excludeIds, permanentExcludeIds, activeConsumableIds, activeFilterTypes, stackableActiveIds = new Set()) => {
     const availablePerks = perks.filter(p => {
       // Basic exclusions
       if (excludeIds.has(p.id)) return false;
       if (permanentExcludeIds.has(p.id)) return false;
       if (activeConsumableIds.has(p.id)) return false;
 
-      // Don't show filter perks if that filter type is already active
+      // Don't show filter perks if that filter type is already active —
+      // exception: stackable perks that are already active can re-appear
       if (p.type === PERK_TYPES.FILTER && activeFilterTypes.has(p.filterType)) {
+        if (p.stackable && stackableActiveIds.has(p.id)) return true;
         return false;
       }
 
@@ -112,6 +121,18 @@ export const usePerkSystem = () => {
     setAvailablePerks(perks);
     setShowPerkSelection(true);
   }, [generateRandomPerks]);
+
+  // Re-generate options while keeping the modal open (costs 1 life in Game.jsx)
+  const rerollPerks = useCallback(() => {
+    const perks = generateRandomPerks();
+    setAvailablePerks(perks);
+  }, [generateRandomPerks]);
+
+  // Close perk selection without picking anything
+  const skipPerkSelection = useCallback(() => {
+    setShowPerkSelection(false);
+    setAvailablePerks([]);
+  }, []);
 
   const selectPerk = useCallback((perk, { keepOpen = false, hasEternalFlame = false, hasUpgradeMaster = false, doubleDip = false } = {}) => {
     setActivePerks(prev => {
@@ -174,9 +195,14 @@ export const usePerkSystem = () => {
             };
           } else if (isSamePerk) {
             const newValue = computeStackedValue();
+            // Boost perks stack their boostPercent additively (e.g. 40+40=80%)
+            const newBoostPercent = perk.isBoost
+              ? (existing.boostPercent ?? 40) + (perk.boostPercent ?? 40)
+              : existing.boostPercent;
             updated[existingIndex] = {
               ...existing,
               value: newValue,
+              ...(newBoostPercent !== undefined ? { boostPercent: newBoostPercent } : {}),
               upgradeCount: (existing.upgradeCount || 1) + upgradeIncrement,
               name: existing.name.includes('+') ? existing.name : existing.name + '+',
             };
@@ -210,8 +236,8 @@ export const usePerkSystem = () => {
       return doubleDip ? applyOnce(afterFirst) : afterFirst;
     });
 
-    // Track permanent perks
-    if (perk.duration === -1 && !perk.consumable) {
+    // Track permanent perks (stackable perks are never tracked — they can always re-appear)
+    if (perk.duration === -1 && !perk.consumable && !perk.stackable) {
       setSelectedPermanentPerks(prev => {
         const idToAdd = getBasePerkId(perk.id);
         if (!prev.includes(idToAdd)) {
@@ -346,13 +372,15 @@ export const usePerkSystem = () => {
     showPerkSelection,
     availablePerks,
     triggerPerkSelection,
+    rerollPerks,
+    skipPerkSelection,
     selectPerk,
     decrementPerkDurations,
     consumePerk,
     hasPerk,
     getPerkValue,
     getPerksByEffect,
-    getActiveFilterPerks, // NEW
+    getActiveFilterPerks,
     trackCorrectAnswer,
     getHeartRegenProgress,
     correctAnswersForRegen,
