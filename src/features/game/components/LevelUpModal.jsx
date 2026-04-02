@@ -376,7 +376,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                             </div>
                           </div>
                         ) : (
-                          <h3 className="text-xl font-bold text-white text-center">{option.name}</h3>
+                          <h3 className="text-xl font-bold text-white text-center break-words hyphens-auto">{option.name}</h3>
                         )}
                       </div>
                       <p className="text-gray-200 text-center text-sm leading-relaxed mb-1">{option.description}</p>

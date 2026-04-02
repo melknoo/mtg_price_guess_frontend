@@ -154,7 +154,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                                     </span>
                                                     <TagIcons tags={perk.tags ?? []} size={16} />
                                                 </div>
-                                                <h3 className="text-sm font-bold text-white leading-tight">{perk.name}</h3>
+                                                <h3 className="text-sm font-bold text-white leading-tight break-words hyphens-auto">{perk.name}</h3>
                                                 <p className="text-gray-200 text-xs mt-0.5 leading-snug">{perk.description}</p>
                                                 <div className="mt-1">
                                                     {perk.duration > 0 && (
@@ -190,7 +190,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                                     ? <GameIcon name={ITEM_ICONS[perk.id].icon} color={ITEM_ICONS[perk.id].color} size={36} />
                                                     : <span className="text-7xl">{perk.icon}</span>}
                                                 </motion.div>
-                                                <h3 className="text-2xl font-bold text-white text-center">
+                                                <h3 className="text-2xl font-bold text-white text-center break-words hyphens-auto">
                                                     {perk.name}
                                                 </h3>
                                             </div>
