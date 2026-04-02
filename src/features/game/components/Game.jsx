@@ -30,6 +30,7 @@ import GameOverScreen from "./GameOverScreen";
 import PerkSelectionModal from "./PerkSelectionModal";
 import LevelUpModal from "./LevelUpModal";
 import ProgressionRoadmapModal from "./ProgressionRoadmapModal";
+import FilterOddsModal from "./FilterOddsModal";
 import SynergyToast from "./SynergyToast";
 import GameIcon from "../../../shared/components/GameIcon";
 import ActivePerksDisplay from "./ActivePerksDisplay";
@@ -133,6 +134,7 @@ export default function Game({
   const [fortressRegenCount, setFortressRegenCount] = useState(0); // Fortress unabhängiger Zähler
   const [masochistMult, setMasochistMult] = useState(0); // Masochist Synergy: permanent per damage
   const [showRoadmap, setShowRoadmap] = useState(false);
+  const [showFilterOdds, setShowFilterOdds] = useState(false);
   const [showRelicSelection, setShowRelicSelection] = useState(false);
 
   // Animated score counter
@@ -277,51 +279,73 @@ export default function Game({
       if (Math.abs(delta) >= 1) breakdown.push({ label, icon, delta, isMult });
     };
 
-    // Hermit: alle Synergy-Checks deaktiviert, dafür Relic-Boni ×2 am Ende
+    // Setup: gemeinsame Hilfswerte
     const hermitActive = relicSystem.hasRelic('hermit');
-    // Timeless: Bedingungschecks (Speed) nutzen effektive Antwortzeit
     const effectiveTimeLeft = relicSystem.hasRelic('timeless') ? getTimerDuration() - 0.5 : timeLeft;
     const currentDuration = getTimerDuration();
-
-    // --- Perk-Effekte ---
+    const effectiveLives = relicSystem.hasRelic('deaths_mask') ? 1 : lives;
     const multiplierPerk = perkSystem.activePerks.find(p => p.effect === 'point_multiplier');
-    const multiplier = multiplierPerk?.value ?? null;
-    if (multiplier) { const b = finalPoints; finalPoints *= multiplier; snap(multiplierPerk.name, multiplierPerk.icon, b, true); }
+
+    // ═══════════════════════════════════════════════════════
+    // PHASE A — PERK-FLATS (alle additiven Perk-Boni zuerst)
+    // ═══════════════════════════════════════════════════════
+    let flatPerkBonus = 0; // Summe der rohen Perk-Flats — für Alchemist & Treasure Hunter
+
     const flatPerk = perkSystem.activePerks.find(p => p.effect === 'flat_bonus');
-    const flatBonus = flatPerk?.value ?? null;
-    if (flatBonus) { const b = finalPoints; finalPoints += flatBonus; snap(flatPerk.name, flatPerk.icon, b); }
+    if (flatPerk?.value) { const b = finalPoints; finalPoints += flatPerk.value; flatPerkBonus += flatPerk.value; snap(flatPerk.name, flatPerk.icon, b); }
+
     // Color Mastery Perks: +N points wenn die korrekte Karte die passende Farbe hat
     if (winnerCard) {
       const cardColor = winnerCard.color || '';
-      const colorBonusPerks = perkSystem.activePerks.filter(p => p.effect === 'color_bonus');
-      colorBonusPerks.forEach(cbp => {
+      perkSystem.activePerks.filter(p => p.effect === 'color_bonus').forEach(cbp => {
         const matches = cbp.colorValue === 'colorless'
           ? (!cardColor || cardColor === 'colorless')
           : cardColor.includes(cbp.colorValue);
-        if (matches) { const b = finalPoints; finalPoints += cbp.value; snap(cbp.name, cbp.icon, b); }
+        if (matches) { const b = finalPoints; finalPoints += cbp.value; flatPerkBonus += cbp.value; snap(cbp.name, cbp.icon, b); }
       });
     }
+
     // Perfectionist Perk: effectiveTimeLeft für Timeless-Fake
     if (effectiveTimeLeft >= currentDuration - 1) {
       const perfectPerk = perkSystem.activePerks.find(p => p.effect === 'perfect_bonus');
-      const perfectBonus = perfectPerk?.value ?? null;
-      if (perfectBonus) {
-        const b = finalPoints; finalPoints += perfectBonus; snap(perfectPerk.name, perfectPerk.icon, b);
-        if (relicSystem.hasRelic('timeless') && timeLeft < currentDuration - 1) fakeBonus += finalPoints - b;
+      if (perfectPerk?.value) {
+        const b = finalPoints; finalPoints += perfectPerk.value; flatPerkBonus += perfectPerk.value; snap(perfectPerk.name, perfectPerk.icon, b);
+        if (relicSystem.hasRelic('timeless') && timeLeft < currentDuration - 1) fakeBonus += perfectPerk.value;
       }
     }
 
-    // --- Relic-Effekte ---
+    // ════════════════════════════════════════════════════════════
+    // PHASE B — PERK-MULTIPLIKATOR (nach den Flats — multipliziert Base + alle Perk-Flats)
+    // ════════════════════════════════════════════════════════════
+    if (multiplierPerk?.value) { const b = finalPoints; finalPoints *= multiplierPerk.value; snap(multiplierPerk.name, multiplierPerk.icon, b, true); }
+
+    // Referenzpunkt für Hermit/Minimalist: alles ab hier ist Relic-Anteil
+    const afterPerks = finalPoints;
+
+    // ════════════════════════════════════════════════════════════
+    // PHASE C — RELIC-FLATS (vor den Multiplikatoren → werden von Phase D multipliziert)
+    // ════════════════════════════════════════════════════════════
+
+    // Collector Bonus: +15 flat pro aktivem Relic
+    if (relicSystem.hasRelic('collector_bonus')) {
+      const b = finalPoints;
+      finalPoints += relicSystem.activeRelics.length * relicSystem.getRelicValue('per_relic_flat_bonus');
+      snap('Collector Bonus', '🏛️', b);
+    }
+
+    // Treasure Hunter: Perk-Flat-Boni werden als Relic-Flat hinzugefügt (danach multipliziert)
+    if (relicSystem.hasRelic('treasure_hunter') && flatPerkBonus > 0) {
+      const b = finalPoints;
+      finalPoints += flatPerkBonus * (relicSystem.getRelicValue('perk_bonus_amplifier') - 1);
+      snap('Treasure Hunter', '🗝️', b);
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // PHASE D — ALLE MULTIPLIKATOREN (Relics + Synergies)
+    // ════════════════════════════════════════════════════════════
+
     if (relicSystem.hasRelic('glass_cannon')) {
       const b = finalPoints; finalPoints *= relicSystem.getRelicValue('glass_cannon'); snap('Glass Cannon', '💥', b, true);
-    }
-    if (relicSystem.hasRelic('treasure_hunter')) {
-      const perkBonusOnly = finalPoints - basePoints;
-      if (perkBonusOnly > 0) {
-        const b = finalPoints;
-        finalPoints += perkBonusOnly * (relicSystem.getRelicValue('perk_bonus_amplifier') - 1);
-        snap('Treasure Hunter', '🗝️', b);
-      }
     }
     if (ironWillActive && relicSystem.hasRelic('iron_will')) {
       const b = finalPoints; finalPoints *= relicSystem.getRelicValue('comeback_bonus'); snap('Iron Will', '🛡️', b, true);
@@ -330,33 +354,19 @@ export default function Game({
       const b = finalPoints; finalPoints *= comboMultiplier; snap(`Combo ×${comboMultiplier.toFixed(2)}`, '🔗', b, true);
     }
 
-    // --- Synergy-Effekte (Hermit deaktiviert diese) ---
+    // Synergy-Effekte (Hermit deaktiviert diese)
     if (!hermitActive && synergyEngine.hasSynergy('gold_rush')) {
       const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('permanent_score_mult'); snap('Gold Rush', '💎💎', b, true);
     }
     // Berserker: effectiveLives — Deaths Mask macht es permanent aktiv
-    const effectiveLives = relicSystem.hasRelic('deaths_mask') ? 1 : lives;
     if (!hermitActive && synergyEngine.hasSynergy('berserker') && effectiveLives === 1) {
       const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('low_hp_bonus'); snap('Berserker', '😤', b, true);
       if (lives !== 1) fakeBonus += finalPoints - b; // Deaths Mask triggered this
     }
 
-    // === META-RELIC EFFEKTE ===
-    const afterPerks = finalPoints; // Referenzpunkt für Hermit/Minimalist Relic-Portion
-
-    // Amplifier: Relic-Boni 50% stärker
-    if (relicSystem.hasRelic('amplifier')) {
-      const b = finalPoints;
-      finalPoints += (finalPoints - basePoints) * (relicSystem.getRelicValue('mult_amplifier') - 1);
-      snap('Amplifier', '📡', b);
-    }
-
-    // Alchemist: Flat-Boni (Perks) → Multiplikator
-    if (relicSystem.hasRelic('alchemist')) {
-      const totalFlat = flatBonus || 0;
-      if (totalFlat > 0) {
-        const b = finalPoints; finalPoints *= 1 + (totalFlat * relicSystem.getRelicValue('flat_to_mult')); snap('Alchemist', '⚗️', b, true);
-      }
+    // Alchemist: Perk-Flat-Boni → Multiplikator (nutzt rohe flatPerkBonus-Summe)
+    if (relicSystem.hasRelic('alchemist') && flatPerkBonus > 0) {
+      const b = finalPoints; finalPoints *= 1 + (flatPerkBonus * relicSystem.getRelicValue('flat_to_mult')); snap('Alchemist', '⚗️', b, true);
     }
 
     // Risk & Reward: weniger Restzeit = höherer Multiplikator (nutzt echte Zeit, kein Fake)
@@ -380,13 +390,6 @@ export default function Game({
         : snowballMult;
       finalPoints *= 1 + (currentRound * finalMult);
       snap((!hermitActive && synergyEngine.hasSynergy('infinite_engine')) ? 'Snowball ∞' : 'Snowball', '☃️', b, true);
-    }
-
-    // Collector Bonus: +15 flat pro aktivem Relic
-    if (relicSystem.hasRelic('collector_bonus')) {
-      const b = finalPoints;
-      finalPoints += relicSystem.activeRelics.length * relicSystem.getRelicValue('per_relic_flat_bonus');
-      snap('Collector Bonus', '🏛️', b);
     }
 
     // Tag Master: +0.1× pro einzigartigen Tag
@@ -421,16 +424,6 @@ export default function Game({
       snap('Level Power', '📈', b, true);
     }
 
-    // Overkill: Score über Threshold → überschüssige Punkte verdoppelt
-    if (relicSystem.hasRelic('overkill')) {
-      const threshold = relicSystem.getRelicValue('overkill_bonus');
-      if (finalPoints > threshold) {
-        const b = finalPoints;
-        finalPoints = threshold + (finalPoints - threshold) * 2;
-        snap('Overkill', '💀', b);
-      }
-    }
-
     // Last Stand: effectiveLives — Deaths Mask macht es permanent aktiv
     if (relicSystem.hasRelic('last_stand') && effectiveLives === 1) {
       const b = finalPoints; finalPoints *= relicSystem.getRelicValue('last_stand_double'); snap('Last Stand', '⚔️', b, true);
@@ -452,7 +445,7 @@ export default function Game({
     // Mirror: Bei mind. 2 Multiplikatoren → +30% auf Gesamt
     if (relicSystem.hasRelic('mirror')) {
       const multCount = [
-        multiplier,
+        multiplierPerk?.value,
         comboMultiplier > 1,
         ironWillActive && relicSystem.hasRelic('iron_will'),
         effectiveLives === 1 && relicSystem.hasRelic('last_stand'),
@@ -480,24 +473,45 @@ export default function Game({
       }
     }
 
-    // Echo: Relic-Boni werden verdoppelt
+    // ════════════════════════════════════════════════════════════
+    // PHASE E — META / SPECIAL (nach allen Multiplikatoren)
+    // ════════════════════════════════════════════════════════════
+
+    // Overkill: Score über Threshold → überschüssige Punkte verdoppelt
+    if (relicSystem.hasRelic('overkill')) {
+      const threshold = relicSystem.getRelicValue('overkill_bonus');
+      if (finalPoints > threshold) {
+        const b = finalPoints;
+        finalPoints = threshold + (finalPoints - threshold) * 2;
+        snap('Overkill', '💀', b);
+      }
+    }
+
+    // Amplifier: Gesamt-Gain 50% stärker
+    if (relicSystem.hasRelic('amplifier')) {
+      const b = finalPoints;
+      finalPoints += (finalPoints - basePoints) * (relicSystem.getRelicValue('mult_amplifier') - 1);
+      snap('Amplifier', '📡', b);
+    }
+
+    // Echo: Gesamt-Gain verdoppeln
     if (relicSystem.hasRelic('echo')) {
       const b = finalPoints; finalPoints += (finalPoints - basePoints); snap('Echo', '🔁', b);
     }
 
-    // Hermit: Relic-Boni (alles über afterPerks) werden verdoppelt
+    // Hermit: Relic-Anteil (alles über afterPerks) verdoppeln
     if (hermitActive) {
       const relicBonus = finalPoints - afterPerks;
       if (relicBonus > 0) { const b = finalPoints; finalPoints += relicBonus; snap('Hermit', '🏚️', b); }
     }
 
-    // Minimalist: Relic-Boni werden verdreifacht (×3 total → add 2× extra)
+    // Minimalist: Relic-Anteil verdreifachen (×3 total → add 2× extra)
     if (relicSystem.hasRelic('minimalist')) {
       const relicBonus = finalPoints - afterPerks;
       if (relicBonus > 0) { const b = finalPoints; finalPoints += relicBonus * 2; snap('Minimalist', '🧹', b); }
     }
 
-    // Cheater Synergy: Fake-getriggerte Boni werden verdoppelt
+    // Cheater Synergy: Fake-getriggerte Boni verdoppeln
     if (!hermitActive && synergyEngine.hasSynergy('cheater') && fakeBonus > 0) {
       const b = finalPoints; finalPoints += fakeBonus; snap('Cheater', '🃏🃏', b);
     }
@@ -1281,6 +1295,17 @@ export default function Game({
             </div>
           </div>
 
+          {/* Filter Odds Button */}
+          {perkSystem.getActiveFilterPerks().length > 0 && (
+            <button
+              onClick={() => setShowFilterOdds(true)}
+              title="Card Pool Filter Odds"
+              className="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
+            >
+              <GameIcon name="magnifier" size={16} color="amber" />
+            </button>
+          )}
+
           {/* Roadmap Button */}
           <button
             onClick={() => setShowRoadmap(true)}
@@ -1388,6 +1413,13 @@ export default function Game({
           </button>
         )}
       </div>
+
+      <FilterOddsModal
+        show={showFilterOdds}
+        onClose={() => setShowFilterOdds(false)}
+        activeBoosts={cardLoader.activeBoosts}
+        activeFilters={cardLoader.activeFilters}
+      />
 
       <AnimatePresence>
         {showRoadmap && (
