@@ -61,6 +61,26 @@ function TagChips({ tags, small = false }) {
   );
 }
 
+const COLOR_VALUE_NAMES = { W: 'white', U: 'blue', B: 'black', R: 'red', G: 'green', colorless: 'colorless', multicolor: 'multicolor' };
+
+// Für stackable Perks: zeigt den aktuellen gestackten Wert statt dem statischen Definitions-Text
+function getDynamicDescription(item) {
+  if (!item.stackable) return item.description;
+
+  if (item.effect === 'color_bonus') {
+    const colorName = COLOR_VALUE_NAMES[item.colorValue] ?? item.colorValue ?? '';
+    const stacks = item.upgradeCount ?? 1;
+    return `+${item.value} point${item.value !== 1 ? 's' : ''} per correct ${colorName} card guess (${stacks}× stacked)`;
+  }
+
+  if (item.isBoost && item.boostPercent != null) {
+    const stacks = item.upgradeCount ?? 1;
+    return item.description.replace(/\d+%/, `${item.boostPercent}%`).replace('(stackable)', `(${stacks}× stacked)`);
+  }
+
+  return item.description;
+}
+
 function getDynamicSuffix(item, ctx) {
   const { relicsCount = 0, perksCount = 0, synergiesCount = 0, uniqueTagCount = 0, level = 1, currentRound = 0 } = ctx || {};
   switch (item.effect) {
@@ -384,7 +404,7 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
             <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-8 border-transparent border-r-gray-900" />
             {badge && <div className="text-xs font-bold mb-1 opacity-70">{badge}</div>}
             <div className="font-bold mb-1">{item.name}</div>
-            <div className="text-gray-300 text-xs">{item.description}</div>
+            <div className="text-gray-300 text-xs">{getDynamicDescription(item)}</div>
             {getDynamicSuffix(item, ctx) && (
               <div className="text-amber-300 text-xs font-semibold mt-1">{getDynamicSuffix(item, ctx)}</div>
             )}
@@ -486,7 +506,7 @@ function MobilePerkCard({ item, borderColor = "border-blue-400/60", gradientColo
               {tapHint && <span className="text-teal-300 text-xs opacity-70">▼</span>}
             </div>
             <div className="text-gray-200 text-xs mt-0.5">
-              {item.description}
+              {getDynamicDescription(item)}
               {getDynamicSuffix(item, ctx) && (
                 <span className="text-amber-300 font-semibold ml-1">{getDynamicSuffix(item, ctx)}</span>
               )}
