@@ -712,6 +712,15 @@ export default function Game({
         level.addXP(xpGained, scholarMult);
         achievements.trackLevel(level.level);
 
+        // Heart Regeneration Overflow: vorab berechnen damit es im Score-Breakdown erscheint
+        const regenResult = perkSystem.trackCorrectAnswer();
+        const _overflowMaxLives = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
+        if (regenResult.shouldRegenerate && lives >= _overflowMaxLives && relicSystem.hasRelic('overflow') && !synergyEngine.hasSynergy('ascension')) {
+          const overflowVal = relicSystem.getRelicValue('overflow_hp_to_score') ?? 100;
+          totalPoints += overflowVal;
+          extraBreakdown.push({ label: 'Overflow', icon: '🫀', delta: overflowVal });
+        }
+
         const newScore = score + totalPoints;
         setScore(newScore);
 
@@ -743,21 +752,20 @@ export default function Game({
         });
 
         let scoreMessage = `+${totalPoints} pts`;
-        // Heart Regeneration Perk — Overflow konvertiert bei vollem Leben
-        const regenResult = perkSystem.trackCorrectAnswer();
+        // Heart Regeneration Perk — Overflow-Score bereits oben in Breakdown integriert
         if (regenResult.shouldRegenerate) {
-          if (lives >= GAME_CONFIG.INITIAL_LIVES && relicSystem.hasRelic('overflow')) {
-            const hasAscension = synergyEngine.hasSynergy('ascension');
-            if (hasAscension) {
+          const maxLives = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
+          if (lives >= maxLives && relicSystem.hasRelic('overflow')) {
+            if (synergyEngine.hasSynergy('ascension')) {
+              // Ascension multipliziert den Gesamt-Score — kann nicht vorab in totalPoints
               const mult = synergyEngine.getSynergyValue('overflow_multiplier') ?? 1.5;
               setScore(prev => Math.floor(prev * mult));
-            } else {
-              setScore(prev => prev + (relicSystem.getRelicValue('overflow_hp_to_score') ?? 100));
+              scoreMessage += ` 🫀 ×${mult}`;
             }
-            scoreMessage += ` 🫀`;
+            // non-ascension: bereits in totalPoints + extraBreakdown oben
             flashRelic('overflow');
           } else {
-            setLives(prev => Math.min(prev + 1, GAME_CONFIG.INITIAL_LIVES));
+            setLives(prev => Math.min(prev + 1, maxLives));
             scoreMessage += ` 💖`;
           }
           flashRelic('heart_regeneration');
@@ -771,7 +779,8 @@ export default function Game({
           setFortressRegenCount(prev => {
             const next = prev + 1;
             if (next >= fortressThreshold) {
-              if (lives >= GAME_CONFIG.INITIAL_LIVES && relicSystem.hasRelic('overflow')) {
+              const maxLivesFortress = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
+              if (lives >= maxLivesFortress && relicSystem.hasRelic('overflow')) {
                 const hasAscension = synergyEngine.hasSynergy('ascension');
                 if (hasAscension) {
                   const mult = synergyEngine.getSynergyValue('overflow_multiplier') ?? 1.5;
@@ -781,7 +790,7 @@ export default function Game({
                 }
                 flashRelic('overflow');
               } else {
-                setLives(l => Math.min(l + 1, GAME_CONFIG.INITIAL_LIVES));
+                setLives(l => Math.min(l + 1, maxLivesFortress));
               }
               scoreMessage += ` 🏰`;
               flashRelic('fortress');
@@ -863,6 +872,7 @@ export default function Game({
 
           if (remainingLives <= 0) {
             setGameOver(true);
+            level.dismissLevelUp();
             if (!user?.guest) {
               saveGameSession({
                 score,
@@ -949,7 +959,8 @@ export default function Game({
     if (cardCounterInterval) {
       if (nextRound % cardCounterInterval === 0) {
         const hasAscension = synergyEngine.hasSynergy('ascension');
-        if (lives >= GAME_CONFIG.INITIAL_LIVES && relicSystem.hasRelic('overflow')) {
+        const maxLivesCC = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
+        if (lives >= maxLivesCC && relicSystem.hasRelic('overflow')) {
           if (hasAscension) {
             const mult = synergyEngine.getSynergyValue('overflow_multiplier') ?? 1.5;
             setScore(prev => Math.floor(prev * mult));
@@ -958,7 +969,7 @@ export default function Game({
           }
           flashRelic('overflow');
         } else {
-          setLives(prev => Math.min(prev + 1, GAME_CONFIG.INITIAL_LIVES));
+          setLives(prev => Math.min(prev + 1, maxLivesCC));
         }
         flashRelic('card_counter');
       } else {
@@ -1467,7 +1478,7 @@ export default function Game({
       </AnimatePresence>
 
       <LevelUpModal
-        show={level.showLevelUp}
+        show={level.showLevelUp && !gameOver}
         newLevel={level.level}
         activeRelics={relicSystem.activeRelics}
         activePerks={perkSystem.activePerks}

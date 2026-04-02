@@ -14,14 +14,10 @@ export const usePerkSystem = () => {
     const selectedPerks = [];
     const usedIds = new Set();
 
-    // Exclude permanent non-consumable perks that were already selected
-    // Stackable perks are never excluded — they can always re-appear
-    const excludedIds = new Set(
-      selectedPermanentPerks.filter(id => {
-        const perk = allPerks.find(p => p.id === id);
-        return perk && perk.duration === -1 && !perk.consumable && !perk.stackable;
-      })
-    );
+    // Exclude permanent perks that were already selected.
+    // selectPerk() only adds non-stackable, non-consumable perks to this list,
+    // including perks made permanent by Parasite (duration changed at pick-time).
+    const excludedIds = new Set(selectedPermanentPerks);
 
     // IDs of stackable perks that are currently active (can re-appear in pool)
     const stackableActiveIds = new Set(

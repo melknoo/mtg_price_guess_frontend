@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RELICS, RELIC_RARITY_WEIGHTS } from '../constants/relicDefinitions';
 import { PERKS, PERK_RARITY, getExtendedVersion } from '../constants/perkDefinitions';
@@ -178,13 +178,21 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
   const hasFortune = activeSynergies.some(s => s.effect === 'extra_pick_option');
   const isRelicMilestone = forceRelicMode;
 
-  const options = useMemo(() => {
-    if (!show) return [];
-    return isRelicMilestone
-      ? generateRelicMilestoneOptions(activeRelics ?? [], hasFortune)
-      : generateNormalOptions(activeRelics ?? [], activePerks ?? [], hasFortune);
+  const [options, setOptions] = useState([]);
+
+  useEffect(() => {
+    if (show) {
+      setOptions(
+        isRelicMilestone
+          ? generateRelicMilestoneOptions(activeRelics ?? [], hasFortune)
+          : generateNormalOptions(activeRelics ?? [], activePerks ?? [], hasFortune)
+      );
+    } else {
+      setOptions([]);
+    }
+  // Only re-generate when show turns true or rerollKey changes (explicit reroll)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show, activeRelics, activePerks, hasFortune, isRelicMilestone, rerollKey]);
+  }, [show, rerollKey]);
 
   if (!show || options.length === 0) return null;
 
