@@ -15,7 +15,6 @@ import {
   isChoiceCorrect,
   getMoreExpensiveCard,
   createErrorMessage,
-  formatPrice,
 } from "../utils/cardComparison";
 import {
   calculateTimeBonus,
@@ -972,21 +971,17 @@ export default function Game({
     const hasDoubleDip = relicSystem.hasRelic('double_dip');
     if (hasDoubleDip) flashRelic('double_dip');
 
-    if (perk.type === 'filter') {
+    if (perk.type === 'filter' && !perk.isBoost) {
+      // Hard-Filter (Exclude): Karten neu vom Backend laden
       const currentFilterPerks = perkSystem.getActiveFilterPerks();
-      const otherFilterPerks = currentFilterPerks.filter(p => p.filterType !== perk.filterType);
-      const allFilterPerks = [...otherFilterPerks, perk];
+      const otherFilterPerks = currentFilterPerks.filter(p => p.filterType !== perk.filterType && !p.isBoost);
+      const allHardFilterPerks = [...otherFilterPerks, perk];
       const filters = {};
-      allFilterPerks.forEach(filterPerk => {
+      allHardFilterPerks.forEach(filterPerk => {
         switch (filterPerk.effect) {
-          case FILTER_EFFECTS.COLOR:           filters.color = filterPerk.value; break;
           case FILTER_EFFECTS.COLOR_EXCLUDE:   filters.color_exclude = filterPerk.value; break;
-          case FILTER_EFFECTS.CMC:             filters.cmc = filterPerk.value; break;
           case FILTER_EFFECTS.CMC_EXCLUDE:     filters.cmc_exclude = filterPerk.value; break;
-          case FILTER_EFFECTS.BORDER:          filters.border_color = filterPerk.value; break;
-          case FILTER_EFFECTS.RARITY:          filters.rarity = filterPerk.value; break;
           case FILTER_EFFECTS.RARITY_EXCLUDE:  filters.rarity_exclude = filterPerk.value; break;
-          case FILTER_EFFECTS.TYPE:            filters.type = filterPerk.value; break;
           case FILTER_EFFECTS.TYPE_EXCLUDE:    filters.type_exclude = filterPerk.value; break;
           default: break;
         }
@@ -1178,14 +1173,7 @@ export default function Game({
     });
   }, []);
 
-  const showPriceHint = perkSystem.hasPerk("price_hint");
   const showSet = perkSystem.hasPerk("set_reveal");
-
-  const getPriceRange = useCallback(() => {
-    if (!showPriceHint || cardLoader.currentPair.length < 2) return null;
-    const prices = cardLoader.currentPair.map((c) => parseFloat(c.prices.eur));
-    return { min: Math.min(...prices), max: Math.max(...prices) };
-  }, [showPriceHint, cardLoader.currentPair]);
 
 
 
@@ -1323,16 +1311,6 @@ export default function Game({
         color={streak.getStreakColor()}
         streakBonus={streak.calculateStreakBonus()}
       />
-
-{showPriceHint && getPriceRange() && (
-        <div className="w-full max-w-xl mb-1 sm:mb-4">
-          <div className="bg-blue-500/20 border border-blue-400 rounded-lg px-2 py-1 sm:p-2">
-            <span className="text-blue-200 text-xs sm:text-sm font-semibold">
-              🔮 Price Range: {formatPrice(getPriceRange().min)} - {formatPrice(getPriceRange().max)}
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* Heart Regen Progress */}
       {perkSystem.getHeartRegenProgress() && (

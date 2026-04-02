@@ -26,15 +26,17 @@ export const PERK_RARITY = {
 
 // Filter-Effekt-Typen
 export const FILTER_EFFECTS = {
-    COLOR: 'color_filter',
+    // Hard-Filter (Backend): schließen Karten komplett aus
     COLOR_EXCLUDE: 'color_exclude_filter',
-    CMC: 'cmc_filter',
     CMC_EXCLUDE: 'cmc_exclude_filter',
-    BORDER: 'border_filter',
-    RARITY: 'rarity_filter',
     RARITY_EXCLUDE: 'rarity_exclude_filter',
-    TYPE: 'type_filter',
     TYPE_EXCLUDE: 'type_exclude_filter',
+    // Boost-Filter (Frontend): erhöhen Wahrscheinlichkeit einer Kartenart
+    COLOR_BOOST: 'color_boost_filter',
+    CMC_BOOST: 'cmc_boost_filter',
+    BORDER_BOOST: 'border_boost_filter',
+    RARITY_BOOST: 'rarity_boost_filter',
+    TYPE_BOOST: 'type_boost_filter',
 };
 
 export const PERKS = {
@@ -198,19 +200,6 @@ export const PERKS = {
     },
 
     // ==================== EXISTING UTILITY PERKS ====================
-    PRICE_HINT: {
-        id: 'price_hint',
-        name: 'Price Hint',
-        description: 'Shows the price range for the next 10 rounds',
-        icon: '🔮',
-        type: PERK_TYPES.UTILITY,
-        rarity: PERK_RARITY.COMMON,
-        tags: [PERK_TAGS.LUCK],
-        effect: 'price_range',
-        value: 1,
-        duration: 10,
-    },
-
     SLOW_TIME: {
         id: 'slow_time',
         name: 'Slow Motion',
@@ -268,96 +257,110 @@ export const PERKS = {
         consumable: true,
     },
 
-    // ==================== NEW FILTER PERKS - COLOR ====================
+    // ==================== NEW FILTER PERKS - COLOR BOOST ====================
     RED_FOCUS: {
         id: 'red_focus',
         name: 'Red Focus',
-        description: 'Only red cards appear',
+        description: 'Red cards appear 40% more often',
         icon: '🔴',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
-        effect: FILTER_EFFECTS.COLOR,
+        effect: FILTER_EFFECTS.COLOR_BOOST,
         value: 'R',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'color'
+        filterType: 'color',
+        isBoost: true,
     },
 
     GREEN_FOCUS: {
         id: 'green_focus',
         name: 'Green Focus',
-        description: 'Only green cards appear',
+        description: 'Green cards appear 40% more often',
         icon: '🟢',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
-        effect: FILTER_EFFECTS.COLOR,
+        effect: FILTER_EFFECTS.COLOR_BOOST,
         value: 'G',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'color'
+        filterType: 'color',
+        isBoost: true,
     },
 
     BLUE_FOCUS: {
         id: 'blue_focus',
         name: 'Blue Focus',
-        description: 'Only blue cards appear',
+        description: 'Blue cards appear 40% more often',
         icon: '🔵',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
-        effect: FILTER_EFFECTS.COLOR,
+        effect: FILTER_EFFECTS.COLOR_BOOST,
         value: 'U',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'color'
+        filterType: 'color',
+        isBoost: true,
     },
 
     BLACK_FOCUS: {
         id: 'black_focus',
         name: 'Black Focus',
-        description: 'Only black cards appear',
+        description: 'Black cards appear 40% more often',
         icon: '⚫',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
-        effect: FILTER_EFFECTS.COLOR,
+        effect: FILTER_EFFECTS.COLOR_BOOST,
         value: 'B',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'color'
+        filterType: 'color',
+        isBoost: true,
     },
 
     WHITE_FOCUS: {
         id: 'white_focus',
         name: 'White Focus',
-        description: 'Only white cards appear',
+        description: 'White cards appear 40% more often',
         icon: '⚪',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
-        effect: FILTER_EFFECTS.COLOR,
+        effect: FILTER_EFFECTS.COLOR_BOOST,
         value: 'W',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'color'
+        filterType: 'color',
+        isBoost: true,
     },
 
     MULTICOLOR_FOCUS: {
         id: 'multicolor_focus',
         name: 'Multicolor Focus',
-        description: 'Only multicolor cards (2+ colors) appear',
+        description: 'Multicolor cards appear 40% more often',
         icon: '🌈',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
-        effect: FILTER_EFFECTS.COLOR,
+        effect: FILTER_EFFECTS.COLOR_BOOST,
         value: 'multicolor',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'color'
+        filterType: 'color',
+        isBoost: true,
     },
 
     COLORLESS_FOCUS: {
         id: 'colorless_focus',
         name: 'Colorless Focus',
-        description: 'Only colorless/artifact cards appear',
+        description: 'Colorless/artifact cards appear 40% more often',
         icon: '⚙️',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
-        effect: FILTER_EFFECTS.COLOR,
+        effect: FILTER_EFFECTS.COLOR_BOOST,
         value: 'colorless',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'color'
+        filterType: 'color',
+        isBoost: true,
     },
 
     // ==================== FILTER PERKS - COLOR EXCLUDE ====================
@@ -459,44 +462,50 @@ export const PERKS = {
         tags: [PERK_TAGS.LUCK],
     },
 
-    // ==================== NEW FILTER PERKS - CMC ====================
+    // ==================== NEW FILTER PERKS - CMC BOOST ====================
     LOW_COST_FOCUS: {
         id: 'low_cost_focus',
         name: 'Low Cost Focus',
-        description: 'Only cards with CMC ≤ 3 appear',
+        description: 'Cards with CMC ≤ 3 appear 40% more often',
         icon: '1️⃣',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
-        effect: FILTER_EFFECTS.CMC,
+        effect: FILTER_EFFECTS.CMC_BOOST,
         value: { operator: '<=', threshold: 3 },
+        boostPercent: 40,
         duration: -1,
-        filterType: 'cmc'
+        filterType: 'cmc',
+        isBoost: true,
     },
 
     MID_COST_FOCUS: {
         id: 'mid_cost_focus',
         name: 'Mid Cost Focus',
-        description: 'Only cards with CMC 4–6 appear',
+        description: 'Cards with CMC 4–6 appear 40% more often',
         icon: '4️⃣',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
-        effect: FILTER_EFFECTS.CMC,
+        effect: FILTER_EFFECTS.CMC_BOOST,
         value: { operator: 'between', min: 4, max: 6 },
+        boostPercent: 40,
         duration: -1,
-        filterType: 'cmc'
+        filterType: 'cmc',
+        isBoost: true,
     },
 
     HIGH_COST_FOCUS: {
         id: 'high_cost_focus',
         name: 'High Cost Focus',
-        description: 'Only cards with CMC ≥ 7 appear',
+        description: 'Cards with CMC ≥ 7 appear 40% more often',
         icon: '7️⃣',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
-        effect: FILTER_EFFECTS.CMC,
+        effect: FILTER_EFFECTS.CMC_BOOST,
         value: { operator: '>=', threshold: 7 },
+        boostPercent: 40,
         duration: -1,
-        filterType: 'cmc'
+        filterType: 'cmc',
+        isBoost: true,
     },
 
     // ==================== FILTER PERKS - CMC EXCLUDE ====================
@@ -542,84 +551,96 @@ export const PERKS = {
         tags: [PERK_TAGS.LUCK],
     },
 
-    // ==================== NEW FILTER PERKS - BORDER ====================
+    // ==================== NEW FILTER PERKS - BORDER BOOST ====================
     BLACK_BORDER_FOCUS: {
         id: 'black_border_focus',
         name: 'Black Border Focus',
-        description: 'Only black border cards appear',
+        description: 'Black border cards appear 40% more often',
         icon: '🖤',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
-        effect: FILTER_EFFECTS.BORDER,
+        effect: FILTER_EFFECTS.BORDER_BOOST,
         value: 'black',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'border_color'
+        filterType: 'border_color',
+        isBoost: true,
     },
 
     WHITE_BORDER_FOCUS: {
         id: 'white_border_focus',
         name: 'White Border Focus',
-        description: 'Only white border cards appear',
+        description: 'White border cards appear 40% more often',
         icon: '🤍',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
-        effect: FILTER_EFFECTS.BORDER,
+        effect: FILTER_EFFECTS.BORDER_BOOST,
         value: 'white',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'border_color'
+        filterType: 'border_color',
+        isBoost: true,
     },
 
-    // ==================== NEW FILTER PERKS - RARITY ====================
+    // ==================== NEW FILTER PERKS - RARITY BOOST ====================
     COMMON_FOCUS: {
         id: 'common_focus',
         name: 'Common Focus',
-        description: 'Only common cards appear',
+        description: 'Common cards appear 40% more often',
         icon: '⬛',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
-        effect: FILTER_EFFECTS.RARITY,
+        effect: FILTER_EFFECTS.RARITY_BOOST,
         value: 'common',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'rarity'
+        filterType: 'rarity',
+        isBoost: true,
     },
 
     UNCOMMON_FOCUS: {
         id: 'uncommon_focus',
         name: 'Uncommon Focus',
-        description: 'Only uncommon cards appear',
+        description: 'Uncommon cards appear 40% more often',
         icon: '🔷',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
-        effect: FILTER_EFFECTS.RARITY,
+        effect: FILTER_EFFECTS.RARITY_BOOST,
         value: 'uncommon',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'rarity'
+        filterType: 'rarity',
+        isBoost: true,
     },
 
     RARE_FOCUS: {
         id: 'rare_focus',
         name: 'Rare Focus',
-        description: 'Only rare cards appear',
+        description: 'Rare cards appear 40% more often',
         icon: '🟡',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
-        effect: FILTER_EFFECTS.RARITY,
+        effect: FILTER_EFFECTS.RARITY_BOOST,
         value: 'rare',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'rarity'
+        filterType: 'rarity',
+        isBoost: true,
     },
 
     MYTHIC_FOCUS: {
         id: 'mythic_focus',
         name: 'Mythic Focus',
-        description: 'Only mythic rare cards appear',
+        description: 'Mythic rare cards appear 40% more often',
         icon: '🔶',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.EPIC,
-        effect: FILTER_EFFECTS.RARITY,
+        effect: FILTER_EFFECTS.RARITY_BOOST,
         value: 'mythic',
+        boostPercent: 40,
         duration: -1,
-        filterType: 'rarity'
+        filterType: 'rarity',
+        isBoost: true,
     },
 
     // ==================== FILTER PERKS - RARITY EXCLUDE ====================
@@ -679,61 +700,69 @@ export const PERKS = {
         tags: [PERK_TAGS.LUCK],
     },
 
-    // ==================== NEW FILTER PERKS - TYPE FOCUS ====================
+    // ==================== NEW FILTER PERKS - TYPE BOOST ====================
     CREATURE_FOCUS: {
         id: 'creature_focus',
         name: 'Creature Focus',
-        description: 'Only creature cards appear',
+        description: 'Creature cards appear 40% more often',
         icon: '⚔️',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.COMMON,
-        effect: FILTER_EFFECTS.TYPE,
+        effect: FILTER_EFFECTS.TYPE_BOOST,
         value: 'creature',
+        boostPercent: 40,
         duration: -1,
         filterType: 'type',
         tags: [PERK_TAGS.LUCK],
+        isBoost: true,
     },
 
     INSTANT_SORCERY_FOCUS: {
         id: 'instant_sorcery_focus',
         name: 'Spell Focus',
-        description: 'Only instants and sorceries appear',
+        description: 'Instants and sorceries appear 40% more often',
         icon: '⚡',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
-        effect: FILTER_EFFECTS.TYPE,
+        effect: FILTER_EFFECTS.TYPE_BOOST,
         value: 'instant_sorcery',
+        boostPercent: 40,
         duration: -1,
         filterType: 'type',
         tags: [PERK_TAGS.LUCK],
+        isBoost: true,
     },
 
     ARTIFACT_ENCHANTMENT_FOCUS: {
         id: 'artifact_enchantment_focus',
         name: 'Noncreature Focus',
-        description: 'Only artifacts and enchantments appear',
+        description: 'Artifacts and enchantments appear 40% more often',
         icon: '🔮',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.RARE,
-        effect: FILTER_EFFECTS.TYPE,
+        effect: FILTER_EFFECTS.TYPE_BOOST,
         value: 'artifact_enchantment',
+        boostPercent: 40,
         duration: -1,
         filterType: 'type',
         tags: [PERK_TAGS.LUCK],
+        isBoost: true,
     },
 
     LAND_FOCUS: {
         id: 'land_focus',
         name: 'Land Focus',
-        description: 'Only land cards appear',
+        description: 'Land cards appear 40% more often',
         icon: '🌍',
         type: PERK_TYPES.FILTER,
         rarity: PERK_RARITY.EPIC,
-        effect: FILTER_EFFECTS.TYPE,
+        effect: FILTER_EFFECTS.TYPE_BOOST,
         value: 'land',
+        boostPercent: 40,
         duration: -1,
         filterType: 'type',
         tags: [PERK_TAGS.LUCK],
+        isBoost: true,
     },
 
     // ==================== NEW FILTER PERKS - TYPE EXCLUDE ====================
