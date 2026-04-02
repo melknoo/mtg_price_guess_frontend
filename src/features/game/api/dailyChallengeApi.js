@@ -27,6 +27,8 @@ export const fetchDailyChallengeCards = async () => {
     cmc: card.cmc,
     border_color: card.border_color,
     rarity: card.rarity,
+    set_code: card.set,
+    set_name: card.edition || card.set,
   }));
 
   return {

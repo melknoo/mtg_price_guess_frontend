@@ -48,7 +48,9 @@ export const fetchRandomCards = async (count = 20, filters = {}) => {
       color: card.color,
       cmc: card.cmc,
       border_color: card.border_color,
-      rarity: card.rarity
+      rarity: card.rarity,
+      set_code: card.set,
+      set_name: card.edition || card.set
     }));
   } catch (error) {
     console.error('Error fetching cards:', error);

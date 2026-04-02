@@ -235,17 +235,17 @@ export const PERKS = {
         bonusDuration: 2,
     },
 
-    STATISTICS: {
-        id: 'statistics',
-        name: 'Statistics',
-        description: 'Shows the average price of both cards',
-        icon: '📊',
+    SET_REVEAL: {
+        id: 'set_reveal',
+        name: 'Set Reveal',
+        description: 'Shows the set of both cards for 7 rounds',
+        icon: '📖',
         type: PERK_TYPES.UTILITY,
         rarity: PERK_RARITY.COMMON,
         tags: [PERK_TAGS.LUCK],
-        effect: 'show_average',
+        effect: 'show_set',
         value: 1,
-        duration: 3,
+        duration: 7,
     },
 
     SKIP_CARD: {

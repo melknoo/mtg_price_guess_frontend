@@ -1172,7 +1172,7 @@ export default function Game({
   }, []);
 
   const showPriceHint = perkSystem.hasPerk("price_hint");
-  const showAverage = perkSystem.hasPerk("statistics");
+  const showSet = perkSystem.hasPerk("set_reveal");
 
   const getPriceRange = useCallback(() => {
     if (!showPriceHint || cardLoader.currentPair.length < 2) return null;
@@ -1180,11 +1180,6 @@ export default function Game({
     return { min: Math.min(...prices), max: Math.max(...prices) };
   }, [showPriceHint, cardLoader.currentPair]);
 
-  const getAveragePrice = useCallback(() => {
-    if (!showAverage || cardLoader.currentPair.length < 2) return null;
-    const prices = cardLoader.currentPair.map((c) => parseFloat(c.prices.eur));
-    return prices.reduce((a, b) => a + b, 0) / prices.length;
-  }, [showAverage, cardLoader.currentPair]);
 
   // Get active filter info for display
   const getActiveFilterInfo = useCallback(() => {
@@ -1329,20 +1324,13 @@ export default function Game({
         <FilterDisplay filters={getActiveFilterInfo()} />
       )}
 
-      {(showPriceHint || showAverage) && (
+      {showPriceHint && getPriceRange() && (
         <div className="w-full max-w-xl mb-1 sm:mb-4">
-          {showPriceHint && getPriceRange() && (
-            <div className="bg-blue-500/20 border border-blue-400 rounded-lg px-2 py-1 sm:p-2 mb-1 sm:mb-2">
-              <span className="text-blue-200 text-xs sm:text-sm font-semibold">
-                🔮 Price Range: {formatPrice(getPriceRange().min)} - {formatPrice(getPriceRange().max)}
-              </span>
-            </div>
-          )}
-          {showAverage && getAveragePrice() && (
-            <div className="bg-green-500/20 border border-green-400 rounded-lg px-2 py-1 sm:p-2">
-              <span className="text-green-200 text-xs sm:text-sm font-semibold">📊 Average: {formatPrice(getAveragePrice())}</span>
-            </div>
-          )}
+          <div className="bg-blue-500/20 border border-blue-400 rounded-lg px-2 py-1 sm:p-2">
+            <span className="text-blue-200 text-xs sm:text-sm font-semibold">
+              🔮 Price Range: {formatPrice(getPriceRange().min)} - {formatPrice(getPriceRange().max)}
+            </span>
+          </div>
         </div>
       )}
 
@@ -1377,6 +1365,7 @@ export default function Game({
           showPrices={showPrices}
           onChoice={handleChoice}
           onImageLoad={handleImageLoad}
+          showSet={showSet}
         />
       )}
 

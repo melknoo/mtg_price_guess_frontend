@@ -2,13 +2,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { formatPrice } from '../utils/cardComparison';
 
-export default function CardPair({ 
-  cards, 
-  selectedCard, 
-  correctIndex, 
-  showPrices, 
+export default function CardPair({
+  cards,
+  selectedCard,
+  correctIndex,
+  showPrices,
   onChoice,
-  onImageLoad 
+  onImageLoad,
+  showSet,
 }) {
   if (!cards || cards.length !== 2) {
     return null;
@@ -58,6 +59,13 @@ export default function CardPair({
                 className="w-full h-auto sm:max-h-[500px] object-contain"
                 onLoad={() => onImageLoad(index)}
               />
+
+              {/* Set Reveal Perk */}
+              {showSet && (
+                <div className="px-2 py-1 text-center bg-purple-900/80 text-purple-200 text-xs font-semibold truncate">
+                  📖 {card.set_name || card.set_code || card.set || '?'}
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

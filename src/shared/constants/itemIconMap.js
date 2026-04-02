@@ -21,7 +21,7 @@ export const ITEM_ICONS = {
   price_hint:                { icon: 'magnifier',  color: 'blue' },
   slow_time:                 { icon: 'time',       color: 'teal' },
   slow_time_extended:        { icon: 'time',       color: 'teal' },
-  statistics:                { icon: 'graph',      color: 'blue' },
+  set_reveal:                { icon: 'scroll',     color: 'purple' },
   skip_card:                 { icon: 'next',       color: 'amber' },
 
   // Farb-Filter Perks → monochrome circle als Farbmarker
