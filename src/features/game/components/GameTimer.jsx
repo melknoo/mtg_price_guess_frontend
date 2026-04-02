@@ -25,7 +25,7 @@ export default function GameTimer({ timeLeft, possiblePoints, progress }) {
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full max-w-xl h-4 bg-gray-700 rounded mb-6 overflow-hidden">
+      <div className="w-full max-w-xl h-4 bg-[#1e293b] rounded-sm mb-6 overflow-hidden border border-[#2d3a5c]">
         <div
           className="h-full bg-green-500 transition-all duration-100"
           style={{ width: `${progress}%` }}

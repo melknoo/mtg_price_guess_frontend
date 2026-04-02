@@ -20,3 +20,21 @@ html, body, #root {
 .pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
 }
+
+/* Pixel art scanline / dither overlay — apply to card surfaces for retro texture */
+.pixel-scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+}
+
+/* Force crisp pixel rendering on icon images */
+.pixel-render {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}

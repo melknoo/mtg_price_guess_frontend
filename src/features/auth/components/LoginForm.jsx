@@ -121,18 +121,18 @@ export default function LoginForm({ onForgotPassword }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 max-w-sm mx-auto bg-white/10 backdrop-blur-lg border border-white/20 p-6 rounded-xl shadow-2xl text-white"
+      className="space-y-4 max-w-sm mx-auto bg-[#111827] border-2 border-[#2d3a5c] p-6 rounded-sm shadow-pixel text-white"
     >
       <h2 className="text-xl font-bold mb-2 text-amber-200">{isLogin ? "Login" : "Registrieren"}</h2>
 
       {error && (
-        <div className="bg-red-500/20 text-red-300 p-2 rounded mb-2 text-sm">
+        <div className="bg-red-900/30 text-red-300 border-2 border-red-700 p-2 rounded-sm mb-2 text-sm">
           {error}
         </div>
       )}
 
       {showWarning && (
-        <div className="bg-yellow-500/20 text-yellow-200 p-2 rounded mb-2 text-sm">
+        <div className="bg-yellow-900/30 text-yellow-200 border-2 border-yellow-700 p-2 rounded-sm mb-2 text-sm">
           ⚠️ Still ${3 - failedAttempts} attempt(s) until captcha verification
         </div>
       )}
@@ -140,7 +140,7 @@ export default function LoginForm({ onForgotPassword }) {
       {isLogin && (
         <input
           placeholder="Username or Email"
-          className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
+          className="w-full p-2 bg-[#0a0e1a] border-2 border-[#2d3a5c] rounded-sm text-white placeholder-white/40 focus:outline-none focus:border-amber-500"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
@@ -152,7 +152,7 @@ export default function LoginForm({ onForgotPassword }) {
           <input
             placeholder="Email"
             type="email"
-            className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
+            className="w-full p-2 bg-[#0a0e1a] border-2 border-[#2d3a5c] rounded-sm text-white placeholder-white/40 focus:outline-none focus:border-amber-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -161,7 +161,7 @@ export default function LoginForm({ onForgotPassword }) {
           <input
             placeholder="Username"
             type="text"
-            className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
+            className="w-full p-2 bg-[#0a0e1a] border-2 border-[#2d3a5c] rounded-sm text-white placeholder-white/40 focus:outline-none focus:border-amber-500"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
@@ -171,7 +171,7 @@ export default function LoginForm({ onForgotPassword }) {
 
       <PasswordInput
         placeholder="Password"
-        className="w-full p-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-amber-400/60"
+        className="w-full p-2 bg-[#0a0e1a] border-2 border-[#2d3a5c] rounded-sm text-white placeholder-white/40 focus:outline-none focus:border-amber-500"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required

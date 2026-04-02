@@ -18,8 +18,8 @@ export default function GameOverScreen({
   bestComboMultiplier = 1,
 }) {
   return (
-    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-10 p-4">
-      <div className="bg-[#0d1b3e]/95 border border-white/20 rounded-2xl shadow-2xl p-8 flex flex-col items-center text-center max-w-sm w-full overflow-y-auto max-h-[90vh]">
+    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-10 p-4">
+      <div className="bg-[#0d1b3e] border-2 border-[#2d3a5c] rounded-sm shadow-pixel p-8 flex flex-col items-center text-center max-w-sm w-full overflow-y-auto max-h-[90vh]">
         <h2 className="text-2xl mb-2 font-bold text-amber-200">❌ Wrong Guess!</h2>
         <p className="mb-3 text-white/80">{message}</p>
 
@@ -33,7 +33,7 @@ export default function GameOverScreen({
         )}
 
         {/* Roguelike Run-Summary */}
-        <div className="w-full bg-white/5 border border-white/10 rounded-xl p-3 mb-4 text-left">
+        <div className="w-full bg-[#111827] border-2 border-[#2d3a5c]/60 rounded-sm p-3 mb-4 text-left">
           <div className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-2">Run Summary</div>
 
           <div className="flex items-center gap-2 mb-1">
@@ -50,7 +50,7 @@ export default function GameOverScreen({
               <div className="text-xs text-amber-400 font-semibold mb-1">⭐ Relics ({relics.length})</div>
               <div className="flex flex-wrap gap-1">
                 {relics.map(r => (
-                  <span key={r.id} title={r.description} className="inline-flex items-center gap-1 bg-amber-500/20 border border-amber-400/40 rounded px-1.5 py-0.5 text-xs text-amber-200">
+                  <span key={r.id} title={r.description} className="inline-flex items-center gap-1 bg-amber-500/20 border border-amber-400/40 rounded-sm px-1.5 py-0.5 text-xs text-amber-200">
                     {ITEM_ICONS[r.id]
                       ? <GameIcon name={ITEM_ICONS[r.id].icon} color={ITEM_ICONS[r.id].color} size={12} />
                       : r.icon} {r.name}
@@ -65,7 +65,7 @@ export default function GameOverScreen({
               <div className="text-xs text-teal-400 font-semibold mb-1">🔗 Synergies ({synergies.length})</div>
               <div className="flex flex-wrap gap-1">
                 {synergies.map(s => (
-                  <span key={s.id} title={s.description} className="inline-flex items-center gap-1 bg-teal-500/20 border border-teal-400/40 rounded px-1.5 py-0.5 text-xs text-teal-200">
+                  <span key={s.id} title={s.description} className="inline-flex items-center gap-1 bg-teal-500/20 border border-teal-400/40 rounded-sm px-1.5 py-0.5 text-xs text-teal-200">
                     {ITEM_ICONS[s.id]
                       ? <GameIcon name={ITEM_ICONS[s.id].icon} color={ITEM_ICONS[s.id].color} size={12} />
                       : s.icon} {s.name}
@@ -78,14 +78,14 @@ export default function GameOverScreen({
 
         <button
           onClick={onRestart}
-          className="w-full bg-emerald-700 hover:bg-emerald-600 px-6 py-3 rounded-xl text-white text-lg font-semibold transition active:scale-95"
+          className="w-full bg-emerald-700 hover:bg-emerald-600 border-2 border-emerald-400 px-6 py-3 rounded-sm text-white text-lg font-semibold transition shadow-pixel active:scale-95"
         >
           Restart
         </button>
 
         <button
           onClick={onBack}
-          className="mt-3 w-full bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-xl text-white/80 text-lg transition active:scale-95"
+          className="mt-3 w-full bg-[#111827] hover:bg-[#1e293b] border-2 border-[#2d3a5c] px-6 py-3 rounded-sm text-white/80 text-lg transition shadow-pixel-sm active:scale-95"
         >
           Back to Menu
         </button>
@@ -93,7 +93,7 @@ export default function GameOverScreen({
         {isGuest && !showRegister && (
           <button
             onClick={onShowRegister}
-            className="mt-3 w-full bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-xl text-white text-lg font-semibold transition active:scale-95"
+            className="mt-3 w-full bg-amber-600 hover:bg-amber-500 border-2 border-amber-800 px-6 py-3 rounded-sm text-white text-lg font-semibold transition shadow-pixel active:scale-95"
           >
             Register & Save Score
           </button>

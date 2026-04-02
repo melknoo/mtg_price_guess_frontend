@@ -43,7 +43,7 @@ export default function CardPair({
             ${getBorderClass(index)}
           `}
         >
-          <div className="bg-white text-black rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-white text-black rounded-sm shadow-pixel overflow-hidden">
             <div className="p-0">
               {/* Preis anzeigen wenn aufgedeckt */}
               {showPrices && (

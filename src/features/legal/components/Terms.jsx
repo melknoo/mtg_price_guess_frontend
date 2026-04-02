@@ -6,15 +6,15 @@ export default function Terms({ onBack }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full h-full bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col"
+      className="w-full h-full bg-[#0a0e1a] text-white flex flex-col"
     >
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl">
+        <div className="max-w-4xl mx-auto bg-[#111827] border-2 border-[#2d3a5c] rounded-sm p-8 shadow-pixel">
         <h1 className="text-4xl font-bold mb-6">Terms and Conditions</h1>
         
         <div className="space-y-6 text-gray-200">
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">1. Scope</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">1. Scope</h2>
             <p>
               These Terms and Conditions apply to the use of the online game 
               "Magic Price Duel". By registering and using the game, you agree 
@@ -23,7 +23,7 @@ export default function Terms({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">2. Service Description</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">2. Service Description</h2>
             <p className="mb-3">
               "Magic Price Duel" is a free browser game where users can test their knowledge of 
               Magic: The Gathering card prices.
@@ -36,7 +36,7 @@ export default function Terms({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">3. Registration and User Account</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">3. Registration and User Account</h2>
             <p className="mb-3">Registration is required to use certain features:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Truthful information must be provided during registration</li>
@@ -48,7 +48,7 @@ export default function Terms({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">4. Usage Rules</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">4. Usage Rules</h2>
             <p className="mb-3">The following is prohibited when using the game:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Use of bots, cheats, or other manipulation programs</li>
@@ -60,7 +60,7 @@ export default function Terms({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">5. Highscores and Leaderboards</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">5. Highscores and Leaderboards</h2>
             <p className="mb-3">
               Highscores are automatically saved and displayed on the public leaderboard:
             </p>
@@ -72,7 +72,7 @@ export default function Terms({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">6. Availability</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">6. Availability</h2>
             <p>
               We strive for high availability of the game, but cannot guarantee 100% 
               accessibility. There is no claim to constant availability. 
@@ -81,7 +81,7 @@ export default function Terms({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">7. Liability</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">7. Liability</h2>
             <p className="mb-3">Our liability is limited as follows:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>We are liable without limitation for intent and gross negligence</li>
@@ -92,7 +92,7 @@ export default function Terms({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">8. Intellectual Property</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">8. Intellectual Property</h2>
             <div className="space-y-3">
               <p>
                 Magic: The Gathering, all card names, images, and the MTG logo are property of 
@@ -107,7 +107,7 @@ export default function Terms({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">9. Changes to Terms</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">9. Changes to Terms</h2>
             <p>
               We reserve the right to change these terms at any time. Changes will be 
               published on this page. Continued use after changes constitutes acceptance of the new 
@@ -116,7 +116,7 @@ export default function Terms({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">10. Account Deletion</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">10. Account Deletion</h2>
             <p className="mb-3">
               You can delete your account at any time:
             </p>
@@ -128,7 +128,7 @@ export default function Terms({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">11. Final Provisions</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">11. Final Provisions</h2>
             <p className="mb-3">
               The law of the Federal Republic of Germany applies. Should individual provisions of these 
               terms be invalid, this does not affect the validity of the remaining provisions.
@@ -145,7 +145,7 @@ export default function Terms({ onBack }) {
         {onBack && (
           <button
             onClick={onBack}
-            className="mt-8 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
+            className="mt-8 bg-[#111827] hover:bg-[#1e293b] border-2 border-[#2d3a5c] px-6 py-3 rounded-sm transition shadow-pixel-sm"
           >
             Back
           </button>

@@ -4,7 +4,7 @@ import GameIcon from "../../../shared/components/GameIcon";
 
 function StatCard({ icon, color = "white", label, value, sub }) {
   return (
-    <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-center">
+    <div className="bg-[#111827] border-2 border-[#2d3a5c] rounded-sm p-4 text-center">
       <div className="mb-1 flex justify-center">
         <GameIcon name={icon} size={24} color={color} />
       </div>
@@ -27,9 +27,9 @@ function ScoreBar({ game, maxScore }) {
   return (
     <div className="flex items-center gap-3">
       <div className="w-14 text-xs text-amber-300/70 text-right shrink-0">{date}</div>
-      <div className="flex-1 bg-white/10 rounded-full h-5 overflow-hidden">
+      <div className="flex-1 bg-[#1e293b] border border-[#2d3a5c] rounded-sm h-5 overflow-hidden">
         <div
-          className={`h-full rounded-full flex items-center justify-end pr-2 transition-all ${
+          className={`h-full rounded-sm flex items-center justify-end pr-2 transition-all ${
             isDaily ? "bg-yellow-500" : "bg-blue-600/80"
           }`}
           style={{ width: `${Math.max(pct, 4)}%` }}
@@ -71,7 +71,7 @@ export default function StatsDisplay({ onBack }) {
       )}
 
       {error && (
-        <div className="bg-red-500/20 text-red-300 rounded-xl p-4 text-center">
+        <div className="bg-red-900/30 text-red-300 border-2 border-red-700 rounded-sm p-4 text-center">
           {error}
         </div>
       )}
@@ -116,7 +116,7 @@ export default function StatsDisplay({ onBack }) {
 
           {/* Score-Verlauf */}
           {stats.recent_games && stats.recent_games.length > 0 && (
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4">
+            <div className="bg-[#111827] border-2 border-[#2d3a5c] rounded-sm p-4">
               <h3 className="text-sm font-semibold text-amber-200/80 mb-3">
                 Letzte Spiele{" "}
                 <span className="text-amber-400/60 font-normal">
@@ -138,7 +138,7 @@ export default function StatsDisplay({ onBack }) {
 
           {/* Daily Challenge */}
           {stats.daily_challenge && (
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+            <div className="bg-[#111827] border-2 border-yellow-600/50 rounded-sm p-4">
               <h3 className="text-sm font-semibold text-yellow-300 mb-3">
                 <span className="inline-flex items-center gap-2">
                   <GameIcon name="time" size={16} color="yellow" />
@@ -172,7 +172,7 @@ export default function StatsDisplay({ onBack }) {
 
       <button
         onClick={onBack}
-        className="mt-2 w-full bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded text-white transition"
+        className="mt-2 w-full bg-[#111827] hover:bg-[#1e293b] border-2 border-[#2d3a5c] px-6 py-3 rounded-sm text-white transition shadow-pixel-sm"
       >
         Back to Menu
       </button>

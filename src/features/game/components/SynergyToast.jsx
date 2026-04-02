@@ -17,7 +17,7 @@ export default function SynergyToast({ synergy, onDismiss }) {
           className="fixed top-[30%] sm:bottom-24 sm:top-auto left-4 z-[60] cursor-pointer"
           onClick={onDismiss}
         >
-          <div className="relative overflow-hidden bg-gradient-to-r from-teal-600 to-cyan-700 border-2 border-teal-300 rounded-xl p-2 sm:p-4 sm:pr-6 min-w-[200px] sm:min-w-[280px] max-w-[260px] sm:max-w-[350px] shadow-xl shadow-teal-500/50">
+          <div className="relative overflow-hidden bg-teal-900 border-2 border-teal-400 rounded-sm p-2 sm:p-4 sm:pr-6 min-w-[200px] sm:min-w-[280px] max-w-[260px] sm:max-w-[350px] shadow-pixel">
             {/* Shine */}
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"

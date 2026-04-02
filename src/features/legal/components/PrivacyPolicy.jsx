@@ -6,19 +6,19 @@ export default function PrivacyPolicy({ onBack }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full h-full bg-gradient-to-br from-purple-900 to-indigo-900 text-white flex flex-col"
+      className="w-full h-full bg-[#0a0e1a] text-white flex flex-col"
     >
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl">
+        <div className="max-w-4xl mx-auto bg-[#111827] border-2 border-[#2d3a5c] rounded-sm p-8 shadow-pixel">
         <h1 className="text-4xl font-bold mb-6">Privacy Policy</h1>
         
         <div className="space-y-6 text-gray-200">
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">1. Controller</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">1. Controller</h2>
             <p>
               Responsible for data processing on this website:
             </p>
-            <div className="bg-white/5 p-4 rounded-lg mt-2">
+            <div className="bg-[#0a0e1a] p-4 rounded-sm border border-[#2d3a5c] mt-2">
               <p>[YOUR NAME]</p>
               <p>[YOUR ADDRESS]</p>
               <p>Email: [YOUR EMAIL]</p>
@@ -26,7 +26,7 @@ export default function PrivacyPolicy({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">2. Collection and Storage of Personal Data</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">2. Collection and Storage of Personal Data</h2>
             <p className="mb-3">When using our game, we collect the following data:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li><strong>Email Address:</strong> For creating and managing your account</li>
@@ -37,7 +37,7 @@ export default function PrivacyPolicy({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">3. Legal Basis</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">3. Legal Basis</h2>
             <p>
               Processing is based on Art. 6 para. 1 lit. b GDPR for the fulfillment 
               of the usage contract (provision of the game and account functions).
@@ -45,7 +45,7 @@ export default function PrivacyPolicy({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">4. Storage Duration</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">4. Storage Duration</h2>
             <p>
               Your data is stored as long as your account is active. When deleting your 
               account, all personal data will be deleted.
@@ -53,7 +53,7 @@ export default function PrivacyPolicy({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">5. Disclosure to Third Parties</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">5. Disclosure to Third Parties</h2>
             <p className="mb-3">We use the following external services:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li><strong>Fly.io:</strong> Backend hosting (servers in [REGION])</li>
@@ -62,7 +62,7 @@ export default function PrivacyPolicy({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">6. Cookies and Local Storage</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">6. Cookies and Local Storage</h2>
             <p className="mb-3">We use the following technologies:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li><strong>Local Storage:</strong> Storage of authentication token (technically necessary)</li>
@@ -71,7 +71,7 @@ export default function PrivacyPolicy({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">7. Your Rights</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">7. Your Rights</h2>
             <p className="mb-3">You have the following rights:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li><strong>Access:</strong> Right to information about your stored data</li>
@@ -84,7 +84,7 @@ export default function PrivacyPolicy({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">8. Data Security</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">8. Data Security</h2>
             <p>
               We use HTTPS encryption for data transmission and store passwords 
               only as hash. However, we cannot guarantee absolute security.
@@ -92,11 +92,11 @@ export default function PrivacyPolicy({ onBack }) {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3 text-purple-300">9. Contact for Privacy Inquiries</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-cyan-400">9. Contact for Privacy Inquiries</h2>
             <p>
               For questions about privacy or to exercise your rights, contact us at:
             </p>
-            <div className="bg-white/5 p-4 rounded-lg mt-2">
+            <div className="bg-[#0a0e1a] p-4 rounded-sm border border-[#2d3a5c] mt-2">
               <p>Email: [YOUR EMAIL]</p>
             </div>
           </section>
@@ -111,7 +111,7 @@ export default function PrivacyPolicy({ onBack }) {
         {onBack && (
           <button
             onClick={onBack}
-            className="mt-8 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
+            className="mt-8 bg-[#111827] hover:bg-[#1e293b] border-2 border-[#2d3a5c] px-6 py-3 rounded-sm transition shadow-pixel-sm"
           >
             Back
           </button>

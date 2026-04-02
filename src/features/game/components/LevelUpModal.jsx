@@ -154,10 +154,10 @@ function getOptionDynamicHint(option, activeRelicsCount) {
 
 // Rarity → Hintergrundfarbe, Borderfarbe, Glow, Rarity-Badge
 const RARITY_STYLES = {
-  common:    { gradient: 'from-slate-800 to-slate-900/90',   borderColor: 'border-slate-400',  glow: 'group-hover:shadow-slate-400/30', badge: 'bg-slate-500 text-white' },
-  rare:      { gradient: 'from-blue-900 to-blue-900/90',     borderColor: 'border-blue-400',   glow: 'group-hover:shadow-blue-400/40',  badge: 'bg-blue-500 text-white' },
-  epic:      { gradient: 'from-purple-900 to-purple-900/90', borderColor: 'border-purple-400', glow: 'group-hover:shadow-purple-500/40', badge: 'bg-purple-500 text-white' },
-  legendary: { gradient: 'from-amber-900 to-amber-900/90',   borderColor: 'border-amber-300',  glow: 'group-hover:shadow-amber-400/50', badge: 'bg-amber-400 text-black' },
+  common:    { gradient: 'bg-[#111827]',  borderColor: 'border-gray-500',   glow: 'group-hover:brightness-110', badge: 'bg-gray-500 text-white' },
+  rare:      { gradient: 'bg-[#0c1a3a]',  borderColor: 'border-blue-500',   glow: 'group-hover:brightness-110', badge: 'bg-blue-500 text-white' },
+  epic:      { gradient: 'bg-[#1a0a2e]',  borderColor: 'border-purple-500', glow: 'group-hover:brightness-110', badge: 'bg-purple-500 text-white' },
+  legendary: { gradient: 'bg-[#1a1500]',  borderColor: 'border-yellow-500', glow: 'group-hover:brightness-110', badge: 'bg-yellow-500 text-black' },
 };
 
 // Kategorie → Borderbreite + Badge-Style
@@ -203,7 +203,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => setIsMinimized(prev => !prev)}
-          className="fixed bottom-12 right-4 z-[60] bg-black/80 text-white text-sm px-4 py-2 rounded-full border border-white/20 shadow-2xl backdrop-blur hover:bg-black/70 transition"
+          className="fixed bottom-12 right-4 z-[60] bg-black/80 text-white text-sm px-4 py-2 rounded-sm border-2 border-[#2d3a5c] shadow-pixel hover:bg-black/70 transition"
         >
           {isMinimized ? 'Show Reward' : 'Hide Reward'}
         </motion.button>
@@ -214,7 +214,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className={`fixed inset-0 backdrop-blur-sm flex items-start justify-center z-50 overflow-y-auto ${isRelicMilestone ? 'bg-amber-950/70' : 'bg-black/80'}`}
+          className={`fixed inset-0 flex items-start justify-center z-50 overflow-y-auto ${isRelicMilestone ? 'bg-amber-950/75' : 'bg-black/75'}`}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -269,25 +269,25 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                     whileTap={{ scale: 0.97 }}
                     onClick={() => onSelect(option)}
                     className={`
-                      relative cursor-pointer group overflow-hidden
-                      bg-gradient-to-br ${rStyle.gradient}
-                      ${cStyle.borderWidth} ${isRelicMilestone ? 'border-amber-400' : rStyle.borderColor} rounded-xl sm:rounded-2xl
+                      relative cursor-pointer group overflow-hidden pixel-scanlines
+                      ${rStyle.gradient}
+                      ${cStyle.borderWidth} ${isRelicMilestone ? 'border-amber-400' : rStyle.borderColor} rounded-sm
                       p-3 sm:p-6
-                      shadow-2xl transition-all duration-300
-                      hover:shadow-xl ${isRelicMilestone ? 'group-hover:shadow-amber-400/50' : rStyle.glow}
+                      shadow-pixel transition-all duration-200
+                      ${rStyle.glow}
                     `}
                   >
                     {/* Relic: diagonales Muster-Overlay */}
                     {isRelicMilestone && (
                       <div
-                        className="absolute inset-0 pointer-events-none rounded-xl sm:rounded-2xl"
+                        className="absolute inset-0 pointer-events-none rounded-sm"
                         style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(251,191,36,0.07) 0px, rgba(251,191,36,0.07) 1px, transparent 1px, transparent 9px)' }}
                       />
                     )}
                     {/* Relic: pulsierender innerer Glow-Ring */}
                     {isRelicMilestone && (
                       <motion.div
-                        className="absolute inset-0 rounded-xl sm:rounded-2xl pointer-events-none"
+                        className="absolute inset-0 rounded-sm pointer-events-none"
                         animate={{ opacity: [0.35, 0.7, 0.35] }}
                         transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut', delay: index * 0.3 }}
                         style={{ boxShadow: 'inset 0 0 18px rgba(251,191,36,0.35)' }}
@@ -309,7 +309,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap gap-1 mb-1">
                           <TagIcons tags={option.tags ?? []} size={16} />
-                          <span className={`${rStyle.badge} px-1.5 py-0.5 rounded-full text-xs font-bold uppercase`}>
+                          <span className={`${rStyle.badge} px-1.5 py-0.5 rounded-sm text-xs font-bold uppercase`}>
                             {option.rarity}
                           </span>
                         </div>
@@ -340,7 +340,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                         {newSynergies.length > 0 && (
                           <div className="mt-1.5 flex flex-col gap-1">
                             {newSynergies.map(s => (
-                              <div key={s.id} className="flex items-center gap-1 bg-teal-500/20 border border-teal-400/60 rounded-md px-1.5 py-0.5">
+                              <div key={s.id} className="flex items-center gap-1 bg-teal-500/20 border border-teal-400/60 rounded-sm px-1.5 py-0.5">
                                 {ITEM_ICONS[s.id]
                                   ? <GameIcon name={ITEM_ICONS[s.id].icon} color={ITEM_ICONS[s.id].color} size={14} />
                                   : <span className="text-sm leading-none">{s.icon}</span>}
@@ -358,7 +358,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                         <TagIcons tags={option.tags ?? []} size={16} />
                       </div>
                       <div className="absolute top-3 right-4">
-                        <span className={`${rStyle.badge} px-2 py-0.5 rounded-full text-xs font-bold uppercase`}>
+                        <span className={`${rStyle.badge} px-2 py-0.5 rounded-sm text-xs font-bold uppercase`}>
                           {option.rarity}
                         </span>
                       </div>
@@ -384,24 +384,24 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                         <p className="text-amber-300 text-center text-xs font-semibold mb-4">{getOptionDynamicHint(option, (activeRelics ?? []).length)}</p>
                       )}
                       {option.category === 'item' && option.duration > 0 && (
-                        <div className="bg-black/30 rounded-lg p-2 text-center">
+                        <div className="bg-black/30 rounded-sm p-2 text-center border border-white/10">
                           <span className="inline-flex items-center gap-1 text-yellow-300 text-xs font-semibold"><GameIcon name="time" color="amber" size={11} /> {option.duration} {option.duration === 1 ? 'Runde' : 'Runden'}</span>
                         </div>
                       )}
                       {option.category === 'item' && option.duration === -1 && (
-                        <div className="bg-black/30 rounded-lg p-2 text-center">
+                        <div className="bg-black/30 rounded-sm p-2 text-center border border-white/10">
                           <span className="inline-flex items-center gap-1 text-green-300 text-xs font-semibold"><GameIcon name="ring" color="green" size={11} /> Permanent</span>
                         </div>
                       )}
                       {option.category === 'relic' && (
-                        <div className="bg-black/30 rounded-lg p-2 text-center">
+                        <div className="bg-black/30 rounded-sm p-2 text-center border border-white/10">
                           <span className="inline-flex items-center gap-1 text-amber-300 text-xs font-semibold"><GameIcon name="ring" color="amber" size={11} /> Permanent (ganzer Run)</span>
                         </div>
                       )}
                       {newSynergies.length > 0 && (
                         <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + 0.1 * index }} className="mt-3 flex flex-col gap-1">
                           {newSynergies.map(s => (
-                            <div key={s.id} className="flex items-center gap-1.5 bg-teal-500/20 border border-teal-400/60 rounded-lg px-2 py-1">
+                            <div key={s.id} className="flex items-center gap-1.5 bg-teal-500/20 border border-teal-400/60 rounded-sm px-2 py-1">
                               {ITEM_ICONS[s.id]
                                 ? <GameIcon name={ITEM_ICONS[s.id].icon} color={ITEM_ICONS[s.id].color} size={16} />
                                 : <span className="text-base leading-none">{s.icon}</span>}
@@ -416,8 +416,8 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                     </div>
 
                     {/* Hover-Glow */}
-                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white/10" />
+                    <div className="absolute inset-0 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      <div className="absolute inset-0 rounded-sm bg-white/10" />
                     </div>
                   </motion.div>
                 );
@@ -435,7 +435,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                 {onSkip && (
                   <button
                     onClick={onSkip}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-gray-300 text-sm hover:bg-white/10 hover:text-white transition"
+                    className="flex items-center gap-2 px-4 py-2 rounded-sm bg-[#111827] border-2 border-[#2d3a5c] text-gray-300 text-sm hover:bg-[#1e293b] hover:text-white transition shadow-pixel-sm"
                   >
                     <GameIcon name="next" color="gray" size={14} />
                     Skip
@@ -445,10 +445,10 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                   <button
                     onClick={onReroll}
                     disabled={lives <= 1}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition
+                    className={`flex items-center gap-2 px-4 py-2 rounded-sm border-2 text-sm transition shadow-pixel-sm
                       ${lives <= 1
-                        ? 'bg-white/5 border-white/10 text-gray-600 cursor-not-allowed'
-                        : 'bg-red-900/30 border-red-500/40 text-red-300 hover:bg-red-900/50 hover:text-red-200'
+                        ? 'bg-[#111827] border-gray-700 text-gray-600 cursor-not-allowed'
+                        : 'bg-red-950 border-red-700 text-red-300 hover:bg-red-900 hover:text-red-200'
                       }`}
                   >
                     <GameIcon name="reset" color={lives <= 1 ? 'gray' : 'red'} size={14} />

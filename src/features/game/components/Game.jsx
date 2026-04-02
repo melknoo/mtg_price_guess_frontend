@@ -42,7 +42,7 @@ function ScoreTooltip({ message, breakdown }) {
   const [open, setOpen] = useState(false);
 
   const panel = (
-    <div className="w-64 bg-gray-900/95 border border-gray-600 rounded-xl p-3 shadow-2xl">
+    <div className="w-64 bg-[#111827] border-2 border-[#2d3a5c] rounded-sm p-3 shadow-pixel">
       <p className="text-xs font-bold text-gray-300 mb-2 border-b border-gray-600 pb-1">Score Breakdown</p>
       {breakdown.items.map((item, i) => (
         <div key={i} className="flex justify-between items-center text-xs py-0.5">
@@ -69,10 +69,10 @@ function ScoreTooltip({ message, breakdown }) {
     <div className="relative group">
       <button
         onClick={() => setOpen(s => !s)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-150 active:scale-95
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border-2 transition-all duration-150 active:scale-95
           ${open
-            ? 'bg-green-500/20 border-green-400/60 shadow-sm shadow-green-500/20'
-            : 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20 hover:border-green-400/50'
+            ? 'bg-green-500/20 border-green-400 shadow-pixel-sm'
+            : 'bg-green-500/10 border-green-600 hover:bg-green-500/20 hover:border-green-400'
           }`}
       >
         <span className="text-green-400 font-bold text-sm sm:text-base leading-none">{message}</span>
@@ -1253,7 +1253,7 @@ export default function Game({
       {/* Mobile: single compact row */}
       <div className="flex sm:hidden flex-row w-full justify-between items-center mb-1 gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="bg-white/10 backdrop-blur-lg rounded-lg px-2 py-1 border border-white/20 shrink-0">
+          <div className="bg-[#111827] rounded-sm px-2 py-1 border-2 border-[#2d3a5c] shrink-0">
             <span className="text-amber-300 text-xs font-semibold">🎯 R{currentRound}</span>
           </div>
           <div className="relative min-w-0">
@@ -1280,7 +1280,7 @@ export default function Game({
       <div className="hidden sm:flex sm:mb-1 flex-row w-full max-w-2xl justify-between">
         <div className="sm:w-3/4 flex md:text-left sm:flex-row flex-col">
           <div className="flex items-center justify-start gap-4 mb-2">
-            <div className="bg-white/10 sm:mb-auto backdrop-blur-lg rounded-lg px-4 py-2 border border-white/20">
+            <div className="bg-[#111827] sm:mb-auto rounded-sm px-4 py-2 border-2 border-[#2d3a5c]">
               <span className="text-amber-300 text-sm font-semibold">🎯 Round {currentRound}</span>
             </div>
           </div>
@@ -1318,7 +1318,7 @@ export default function Game({
               initial={{ scale: 1.4, boxShadow: "0 0 16px #fbbf24" }}
               animate={{ scale: 1, boxShadow: "0 0 0px transparent" }}
               transition={{ duration: 0.6 }}
-              className="bg-amber-500/20 border border-amber-400/50 rounded-lg px-3 py-1 shrink-0"
+              className="bg-[#111827] border-2 border-amber-600 rounded-sm px-3 py-1 shrink-0"
             >
               <span className="text-amber-300 text-sm font-bold">⭐ Level {level.level}</span>
             </motion.div>
@@ -1330,9 +1330,9 @@ export default function Game({
               <span>XP</span>
               <span>{level.xp} / {level.xpToNextLevel}</span>
             </div>
-            <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-[#1e293b] rounded-sm overflow-hidden border border-[#2d3a5c]">
               <motion.div
-                className="h-full bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full"
+                className="h-full bg-yellow-500 rounded-sm"
                 initial={false}
                 animate={{ width: `${(level.xp / level.xpToNextLevel) * 100}%` }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
@@ -1385,7 +1385,7 @@ export default function Game({
       {/* Heart Regen Progress */}
       {perkSystem.getHeartRegenProgress() && (
         <div className="w-full max-w-xl mb-1 sm:mb-4">
-          <div className="bg-pink-500/20 border border-pink-400 rounded-lg px-2 py-1 sm:p-2">
+          <div className="bg-[#111827] border-2 border-pink-500 rounded-sm px-2 py-1 sm:p-2">
             <div className="flex items-center justify-between mb-1">
               <span className="text-pink-200 text-xs sm:text-sm font-semibold">
                 💖 Heart Regen: {perkSystem.getHeartRegenProgress().current}/{perkSystem.getHeartRegenProgress().threshold}
@@ -1421,9 +1421,9 @@ export default function Game({
       {!gameOver && !perkSystem.showPerkSelection && (
         <div className="text-gray-400 hidden sm:block text-sm mt-2 text-center">
           {selectedCard === null && !showPrices ? (
-            <span>⌨️ Press <kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">1</kbd>/<kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">A</kbd> for left, <kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">2</kbd>/<kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">D</kbd> for right</span>
+            <span>⌨️ Press <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">1</kbd>/<kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">A</kbd> for left, <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">2</kbd>/<kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">D</kbd> for right</span>
           ) : selectedCard !== null ? (
-            <span>⌨️ Press <kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">Space</kbd> or <kbd className="bg-gray-700 px-2 py-0.5 rounded mx-1">Enter</kbd> to continue</span>
+            <span>⌨️ Press <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">Space</kbd> or <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">Enter</kbd> to continue</span>
           ) : null}
         </div>
       )}
@@ -1432,7 +1432,7 @@ export default function Game({
         {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
           <button
             onClick={handleSkipCard}
-            className="bg-yellow-500 text-lg font-semibold hover:bg-yellow-600 active:scale-95 text-white px-6 py-4 rounded-xl transition shadow-lg hover:shadow-xl"
+            className="bg-yellow-600 text-lg font-semibold hover:bg-yellow-500 active:scale-95 text-white px-6 py-4 rounded-sm transition shadow-pixel border-2 border-yellow-400"
             title="Press S to skip"
           >
             ⭐ Skip{(() => { const sc = perkSystem.activePerks.find(p => p.id === 'skip_card'); return sc && sc.value > 1 ? ` (×${sc.value})` : ''; })()}
@@ -1446,12 +1446,13 @@ export default function Game({
             className={`text-xl sm:text-2xl w-full sm:w-auto sm:min-w-[250px] font-bold text-white
               px-6 py-5 sm:px-6 sm:py-6
               [@media(max-height:500px)]:py-2 [@media(max-height:500px)]:text-base
-              rounded-xl sm:rounded
+              rounded-sm
+              border-2
               transition-all duration-150
               active:scale-[0.97]
               ${(perkSystem.showPerkSelection || level.showLevelUp)
-                ? "bg-amber-600/50 cursor-not-allowed shadow-none"
-                : "bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-500/30 hover:shadow-amber-400/40"
+                ? "bg-amber-700/50 border-amber-800 cursor-not-allowed shadow-none"
+                : "bg-amber-600 border-amber-800 hover:bg-amber-500 shadow-pixel"
               }`}
           >
             Next →

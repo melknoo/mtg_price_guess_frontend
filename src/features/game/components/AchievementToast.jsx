@@ -5,33 +5,33 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const rarityStyles = {
   COMMON: {
-    bg: 'from-gray-600 to-gray-800',
+    bg: 'bg-gray-800',
     border: 'border-gray-400',
-    glow: '',
+    glow: 'shadow-pixel',
     text: 'text-gray-200'
   },
   UNCOMMON: {
-    bg: 'from-green-600 to-green-800',
+    bg: 'bg-green-900',
     border: 'border-green-400',
-    glow: 'shadow-lg shadow-green-500/50',
+    glow: 'shadow-pixel',
     text: 'text-green-200'
   },
   RARE: {
-    bg: 'from-blue-600 to-blue-800',
+    bg: 'bg-blue-900',
     border: 'border-blue-400',
-    glow: 'shadow-lg shadow-blue-500/50',
+    glow: 'shadow-pixel',
     text: 'text-blue-200'
   },
   EPIC: {
-    bg: 'from-purple-600 to-purple-800',
+    bg: 'bg-purple-900',
     border: 'border-purple-400',
-    glow: 'shadow-xl shadow-purple-500/60',
+    glow: 'shadow-pixel',
     text: 'text-purple-200'
   },
   LEGENDARY: {
-    bg: 'from-yellow-500 to-amber-700',
-    border: 'border-yellow-300',
-    glow: 'shadow-2xl shadow-yellow-400/70',
+    bg: 'bg-amber-900',
+    border: 'border-yellow-400',
+    glow: 'shadow-pixel',
     text: 'text-yellow-100'
   }
 };
@@ -62,9 +62,9 @@ export default function AchievementToast({ achievement, onDismiss }) {
         >
           <div className={`
             relative overflow-hidden
-            bg-gradient-to-r ${style.bg}
+            ${style.bg}
             border-2 ${style.border}
-            rounded-xl p-4 pr-6
+            rounded-sm p-4 pr-6
             min-w-[280px] max-w-[350px]
             ${style.glow}
           `}>
@@ -134,8 +134,8 @@ export default function AchievementToast({ achievement, onDismiss }) {
                   className="mt-2"
                 >
                   <span className={`
-                    text-xs px-2 py-0.5 rounded-full 
-                    bg-black/30 ${style.text} font-semibold
+                    text-xs px-2 py-0.5 rounded-sm
+                    bg-black/30 ${style.text} font-semibold border border-current/30
                   `}>
                     {achievement.rarity?.name || 'Common'}
                   </span>

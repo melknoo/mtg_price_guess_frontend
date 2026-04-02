@@ -28,16 +28,16 @@ const TAG_STYLES = {
 // Rarity-basiertes Styling für die Sidebar-Karten
 function getItemRarityStyle(item, isRelic = false) {
   const gradients = {
-    common:    'from-slate-800/90 to-slate-900/90',
-    rare:      'from-blue-900/90 to-indigo-950/90',
-    epic:      'from-purple-900/90 to-purple-950/90',
-    legendary: 'from-amber-900/90 to-yellow-950/90',
+    common:    'bg-[#111827]',
+    rare:      'bg-[#0c1a3a]',
+    epic:      'bg-[#1a0a2e]',
+    legendary: 'bg-[#1a1500]',
   };
   const borders = {
-    common:    isRelic ? 'border-slate-400/70' : 'border-slate-500/50',
-    rare:      isRelic ? 'border-blue-400/80'  : 'border-blue-500/50',
-    epic:      isRelic ? 'border-purple-400/80' : 'border-purple-500/50',
-    legendary: isRelic ? 'border-amber-300/90' : 'border-amber-400/60',
+    common:    isRelic ? 'border-gray-400' : 'border-gray-500',
+    rare:      isRelic ? 'border-blue-400' : 'border-blue-500',
+    epic:      isRelic ? 'border-purple-400' : 'border-purple-500',
+    legendary: isRelic ? 'border-yellow-400' : 'border-yellow-500',
   };
   return {
     gradient:    gradients[item.rarity] ?? gradients.common,
@@ -158,7 +158,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
     <>
       {/* Desktop: Fixed Sidebar — only shown when there are active bonuses */}
       <div className={`hidden ${totalCount > 0 ? 'md:flex' : ''} fixed left-0 top-0 bottom-0 z-[55] flex-col`}>
-        <div className="bg-[#0d1b3e]/95 backdrop-blur-sm p-2 shadow-2xl border-r-2 border-amber-400/40 flex flex-col h-full">
+        <div className="bg-[#0d1b3e] p-2 shadow-pixel border-r-2 border-amber-500/60 flex flex-col h-full">
           <h3 className="text-[10px] font-bold text-amber-300/70 mb-2 text-center whitespace-nowrap shrink-0 uppercase tracking-widest">
             Boni
           </h3>
@@ -222,7 +222,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="fixed bottom-0 left-0 right-0 z-[67] bg-[#0d1b3e] border-t border-amber-400/40 rounded-t-2xl shadow-2xl flex flex-col max-h-[70vh]"
+                className="fixed bottom-0 left-0 right-0 z-[67] bg-[#0d1b3e] border-t-2 border-amber-500/60 rounded-t-sm shadow-pixel flex flex-col max-h-[70vh]"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
@@ -273,7 +273,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                               exit={{ height: 0, opacity: 0 }}
                               className="overflow-hidden"
                             >
-                              <div className="bg-teal-900/40 rounded-b-lg px-2 pb-2 border-x border-b border-teal-400/40 -mt-0.5">
+                              <div className="bg-teal-900/40 rounded-b-sm px-2 pb-2 border-x border-b border-teal-400/40 -mt-0.5">
                                 <div className="text-xs text-teal-300 font-semibold pt-1.5 mb-1">Aktiviert durch:</div>
                                 {contributors.map(c => (
                                   <div key={c.id} className="flex items-center gap-1.5 text-xs text-gray-200 py-0.5">
@@ -362,7 +362,7 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
       <motion.div
         animate={triggered ? { scale: [1, 1.18, 0.96, 1] } : ticking ? { scale: [1, 1.06, 1] } : {}}
         transition={{ duration: triggered ? 0.4 : 0.25, ease: 'easeInOut' }}
-        className={`relative bg-gradient-to-br ${gradientColor} rounded-lg p-2 border ${borderColor} shadow-md min-w-[80px] overflow-hidden`}
+        className={`relative ${gradientColor} rounded-sm p-2 border-2 ${borderColor} shadow-pixel-sm min-w-[80px] overflow-hidden`}
       >
         {/* Heller Inner-Flash */}
         <AnimatePresence>
@@ -400,7 +400,7 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
       {/* Tooltip via Portal — nicht vom overflow-y:auto der Sidebar abgeschnitten */}
       {tooltipStyle && createPortal(
         <div style={tooltipStyle} className="pointer-events-none">
-          <div className={`bg-gray-900 text-white text-sm rounded-lg px-4 py-3 shadow-2xl border-2 ${borderColor} w-52 relative`}>
+          <div className={`bg-[#0a0e1a] text-white text-sm rounded-sm px-4 py-3 shadow-pixel border-2 ${borderColor} w-52 relative`}>
             <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-8 border-transparent border-r-gray-900" />
             {badge && <div className="text-xs font-bold mb-1 opacity-70">{badge}</div>}
             <div className="font-bold mb-1">{item.name}</div>
@@ -480,7 +480,7 @@ function MobilePerkCard({ item, borderColor = "border-blue-400/60", gradientColo
       <motion.div
         animate={triggered ? { scale: [1, 1.12, 0.97, 1] } : ticking ? { scale: [1, 1.04, 1] } : {}}
         transition={{ duration: triggered ? 0.35 : 0.2, ease: 'easeInOut' }}
-        className={`relative bg-gradient-to-br ${gradientColor} rounded-lg p-2 border-2 ${borderColor} shadow-md overflow-hidden ${onTap ? 'cursor-pointer active:opacity-80' : ''}`}
+        className={`relative ${gradientColor} rounded-sm p-2 border-2 ${borderColor} shadow-pixel-sm overflow-hidden ${onTap ? 'cursor-pointer active:opacity-80' : ''}`}
         onClick={onTap}
       >
         <AnimatePresence>
