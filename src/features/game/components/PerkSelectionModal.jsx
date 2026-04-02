@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PERK_RARITY, PERK_CONFIG } from '../constants/perkDefinitions';
 import GameIcon from '../../../shared/components/GameIcon';
+import TagIcons from '../../../shared/components/TagIcons';
 import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
 export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip = false }) {
@@ -99,7 +100,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                     transition={{ delay: 0.1 }}
                                     className="text-xl sm:text-4xl font-bold text-white mb-1"
                                 >
-                                    ✨ Choose Your Bonus!
+                                    <span className="inline-flex items-center gap-2"><GameIcon name="glow" color="amber" size={28} /> Choose Your Bonus!</span>
                                 </motion.h2>
                                 <motion.p
                                     initial={{ y: -20, opacity: 0 }}
@@ -116,7 +117,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                         transition={{ delay: 0.3 }}
                                         className="mt-2 inline-flex items-center gap-2 bg-amber-500/20 border border-amber-400/50 rounded-full px-4 py-1"
                                     >
-                                        <span className="text-amber-300 font-bold text-sm">✌️ Double Dip — your pick will be applied twice!</span>
+                                        <span className="inline-flex items-center gap-1.5 text-amber-300 font-bold text-sm"><GameIcon name="duplicate" color="amber" size={14} /> Double Dip — your pick will be applied twice!</span>
                                     </motion.div>
                                 )}
                             </div>
@@ -147,19 +148,20 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                                 : <span className="text-4xl">{perk.icon}</span>}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex flex-wrap gap-1 mb-1">
+                                                <div className="flex flex-wrap items-center gap-1.5 mb-1">
                                                     <span className={`${getRarityBadgeColor(perk.rarity)} px-1.5 py-0.5 rounded-full text-xs font-bold uppercase`}>
                                                         {getRarityLabel(perk.rarity)}
                                                     </span>
+                                                    <TagIcons tags={perk.tags ?? []} size={16} />
                                                 </div>
                                                 <h3 className="text-sm font-bold text-white leading-tight">{perk.name}</h3>
                                                 <p className="text-gray-200 text-xs mt-0.5 leading-snug">{perk.description}</p>
                                                 <div className="mt-1">
                                                     {perk.duration > 0 && (
-                                                        <span className="text-yellow-300 text-xs">⏱️ {perk.duration} {perk.duration === 1 ? 'Round' : 'Rounds'}</span>
+                                                        <span className="inline-flex items-center gap-1 text-yellow-300 text-xs"><GameIcon name="time" color="amber" size={11} /> {perk.duration} {perk.duration === 1 ? 'Round' : 'Rounds'}</span>
                                                     )}
                                                     {perk.duration === -1 && (
-                                                        <span className="text-green-300 text-xs">♾️ Permanent</span>
+                                                        <span className="inline-flex items-center gap-1 text-green-300 text-xs"><GameIcon name="ring" color="green" size={11} /> Permanent</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -167,7 +169,10 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
 
                                         {/* Desktop: vertical layout (original) */}
                                         <div className="hidden md:block">
-                                            {/* Rarity Badge */}
+                                            {/* Tag Icons top-left, Rarity Badge top-right */}
+                                            <div className="absolute top-4 left-4 flex gap-1">
+                                                <TagIcons tags={perk.tags ?? []} size={16} />
+                                            </div>
                                             <div className="absolute top-4 right-4">
                                                 <span className={`${getRarityBadgeColor(perk.rarity)} px-3 py-1 rounded-full text-xs font-bold uppercase`}>
                                                     {getRarityLabel(perk.rarity)}
@@ -198,15 +203,15 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                             {/* Duration Info */}
                                             {perk.duration > 0 && (
                                                 <div className="bg-black/30 rounded-lg p-2 text-center">
-                                                    <span className="text-yellow-300 text-xs font-semibold">
-                                                        ⏱️ {perk.duration} {perk.duration === 1 ? 'Round' : 'Rounds'}
+                                                    <span className="inline-flex items-center gap-1 text-yellow-300 text-xs font-semibold">
+                                                        <GameIcon name="time" color="amber" size={11} /> {perk.duration} {perk.duration === 1 ? 'Round' : 'Rounds'}
                                                     </span>
                                                 </div>
                                             )}
                                             {perk.duration === -1 && (
                                                 <div className="bg-black/30 rounded-lg p-2 text-center">
-                                                    <span className="text-green-300 text-xs font-semibold">
-                                                        ♾️ Permanent (this game)
+                                                    <span className="inline-flex items-center gap-1 text-green-300 text-xs font-semibold">
+                                                        <GameIcon name="ring" color="green" size={11} /> Permanent (this game)
                                                     </span>
                                                 </div>
                                             )}
@@ -227,7 +232,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                 transition={{ delay: 0.5 }}
                                 className="text-center text-gray-400 text-xs sm:text-sm mt-3 sm:mt-8"
                             >
-                                💡 Tip: Choose wisely! Some perks can be stacked.
+                                <span className="inline-flex items-center gap-1"><GameIcon name="light_bulb" color="gray" size={13} /> Tip: Choose wisely! Some perks can be stacked.</span>
                             </motion.p>
                         </motion.div>
                     </motion.div>

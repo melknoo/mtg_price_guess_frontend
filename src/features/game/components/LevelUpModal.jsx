@@ -4,6 +4,7 @@ import { RELICS, RELIC_RARITY_WEIGHTS } from '../constants/relicDefinitions';
 import { PERKS, PERK_RARITY, getExtendedVersion } from '../constants/perkDefinitions';
 import { SYNERGIES } from '../constants/synergyDefinitions';
 import GameIcon from '../../../shared/components/GameIcon';
+import TagIcons from '../../../shared/components/TagIcons';
 import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
 // Gewichteter Zufalls-Pick aus einem Array von Objekten mit `rarity`-Property
@@ -161,12 +162,13 @@ const RARITY_STYLES = {
   legendary: { gradient: 'from-amber-900/90 to-yellow-950/90',  borderColor: 'border-amber-300',  glow: 'group-hover:shadow-amber-400/50', badge: 'bg-amber-400 text-black' },
 };
 
-// Kategorie → Borderbreite + Badge-Label + Badge-Style
+// Kategorie → Borderbreite + Badge-Style
 const CATEGORY_STYLES = {
-  relic:   { borderWidth: 'border-4', badgeLabel: '⭐ Relic',   badgeStyle: 'bg-amber-500/20 text-amber-200 border border-amber-400/40' },
-  item:    { borderWidth: 'border-2', badgeLabel: '🎮 Item',    badgeStyle: 'bg-blue-500/20 text-blue-200 border border-blue-400/40' },
-  upgrade: { borderWidth: 'border-2', badgeLabel: '⬆️ Upgrade', badgeStyle: 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40' },
+  relic:   { borderWidth: 'border-4', badgeStyle: 'bg-amber-500/20 border border-amber-400/40' },
+  item:    { borderWidth: 'border-2', badgeStyle: 'bg-blue-500/20 border border-blue-400/40' },
+  upgrade: { borderWidth: 'border-2', badgeStyle: 'bg-emerald-500/20 border border-emerald-400/40' },
 };
+
 
 export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], onSelect }) {
   const [isMinimized, setIsMinimized] = useState(false);
@@ -220,9 +222,9 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-                className="inline-block text-3xl sm:text-5xl mb-1 sm:mb-3"
+                className="inline-block mb-1 sm:mb-3"
               >
-                {isRelicMilestone ? '🌟' : '⭐'}
+                <GameIcon name="star" color={isRelicMilestone ? 'amber' : 'white'} size={isRelicMilestone ? 52 : 44} />
               </motion.div>
               <motion.h2
                 initial={{ y: -20, opacity: 0 }}
@@ -275,9 +277,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap gap-1 mb-1">
-                          <span className={`${cStyle.badgeStyle} px-1.5 py-0.5 rounded-full text-xs font-bold`}>
-                            {cStyle.badgeLabel}
-                          </span>
+                          <TagIcons tags={option.tags ?? []} size={16} />
                           <span className={`${rStyle.badge} px-1.5 py-0.5 rounded-full text-xs font-bold uppercase`}>
                             {option.rarity}
                           </span>
@@ -297,13 +297,13 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                         )}
                         <div className="mt-1">
                           {option.category === 'item' && option.duration > 0 && (
-                            <span className="text-yellow-300 text-xs">⏱️ {option.duration} Runden</span>
+                            <span className="inline-flex items-center gap-1 text-yellow-300 text-xs"><GameIcon name="time" color="amber" size={11} /> {option.duration} Runden</span>
                           )}
                           {option.category === 'item' && option.duration === -1 && (
-                            <span className="text-green-300 text-xs">♾️ Permanent</span>
+                            <span className="inline-flex items-center gap-1 text-green-300 text-xs"><GameIcon name="ring" color="green" size={11} /> Permanent</span>
                           )}
                           {option.category === 'relic' && (
-                            <span className="text-amber-300 text-xs">♾️ Ganzer Run</span>
+                            <span className="inline-flex items-center gap-1 text-amber-300 text-xs"><GameIcon name="ring" color="amber" size={11} /> Ganzer Run</span>
                           )}
                         </div>
                         {newSynergies.length > 0 && (
@@ -313,7 +313,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                                 {ITEM_ICONS[s.id]
                                   ? <GameIcon name={ITEM_ICONS[s.id].icon} color={ITEM_ICONS[s.id].color} size={14} />
                                   : <span className="text-sm leading-none">{s.icon}</span>}
-                                <span className="text-teal-200 text-xs font-bold truncate">🔗 {s.name}</span>
+                                <span className="inline-flex items-center gap-1 text-teal-200 text-xs font-bold truncate"><GameIcon name="follow" color="teal" size={11} /> {s.name}</span>
                               </div>
                             ))}
                           </div>
@@ -323,10 +323,8 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
 
                     {/* Desktop: vertical layout (original) */}
                     <div className="hidden md:block">
-                      <div className="absolute top-3 left-4">
-                        <span className={`${cStyle.badgeStyle} px-2 py-0.5 rounded-full text-xs font-bold`}>
-                          {cStyle.badgeLabel}
-                        </span>
+                      <div className="absolute top-3 left-4 flex gap-1">
+                        <TagIcons tags={option.tags ?? []} size={16} />
                       </div>
                       <div className="absolute top-3 right-4">
                         <span className={`${rStyle.badge} px-2 py-0.5 rounded-full text-xs font-bold uppercase`}>
@@ -356,17 +354,17 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                       )}
                       {option.category === 'item' && option.duration > 0 && (
                         <div className="bg-black/30 rounded-lg p-2 text-center">
-                          <span className="text-yellow-300 text-xs font-semibold">⏱️ {option.duration} {option.duration === 1 ? 'Runde' : 'Runden'}</span>
+                          <span className="inline-flex items-center gap-1 text-yellow-300 text-xs font-semibold"><GameIcon name="time" color="amber" size={11} /> {option.duration} {option.duration === 1 ? 'Runde' : 'Runden'}</span>
                         </div>
                       )}
                       {option.category === 'item' && option.duration === -1 && (
                         <div className="bg-black/30 rounded-lg p-2 text-center">
-                          <span className="text-green-300 text-xs font-semibold">♾️ Permanent</span>
+                          <span className="inline-flex items-center gap-1 text-green-300 text-xs font-semibold"><GameIcon name="ring" color="green" size={11} /> Permanent</span>
                         </div>
                       )}
                       {option.category === 'relic' && (
                         <div className="bg-black/30 rounded-lg p-2 text-center">
-                          <span className="text-amber-300 text-xs font-semibold">♾️ Permanent (ganzer Run)</span>
+                          <span className="inline-flex items-center gap-1 text-amber-300 text-xs font-semibold"><GameIcon name="ring" color="amber" size={11} /> Permanent (ganzer Run)</span>
                         </div>
                       )}
                       {newSynergies.length > 0 && (
@@ -377,7 +375,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                                 ? <GameIcon name={ITEM_ICONS[s.id].icon} color={ITEM_ICONS[s.id].color} size={16} />
                                 : <span className="text-base leading-none">{s.icon}</span>}
                               <div className="flex-1 min-w-0">
-                                <span className="text-teal-200 text-xs font-bold">🔗 Aktiviert: {s.name}</span>
+                                <span className="inline-flex items-center gap-1 text-teal-200 text-xs font-bold"><GameIcon name="follow" color="teal" size={11} /> Aktiviert: {s.name}</span>
                                 <p className="text-teal-300/70 text-xs truncate">{s.description}</p>
                               </div>
                             </div>
@@ -402,8 +400,8 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
               className="text-center text-gray-400 text-xs sm:text-sm mt-3 sm:mt-8"
             >
               {isRelicMilestone
-                ? '⭐ Relics are permanent bonuses for your entire run.'
-                : '💡 Relics every 7 levels — Items are temporary perks.'}
+                ? <span className="inline-flex items-center gap-1"><GameIcon name="star" color="amber" size={13} /> Relics are permanent bonuses for your entire run.</span>
+                : <span className="inline-flex items-center gap-1"><GameIcon name="light_bulb" color="gray" size={13} /> Relics every 7 levels — Items are temporary perks.</span>}
             </motion.p>
           </motion.div>
         </motion.div>

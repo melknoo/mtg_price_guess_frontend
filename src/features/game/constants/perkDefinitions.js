@@ -916,6 +916,6 @@ export const RARITY_WEIGHTS = {
 
 // Config
 export const PERK_CONFIG = {
-    ROUNDS_BETWEEN_PERKS: 3,
+    ROUNDS_BETWEEN_PERKS: 5,
     PERKS_TO_CHOOSE: 3,
 };
