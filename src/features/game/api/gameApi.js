@@ -30,6 +30,21 @@ export const fetchRandomCards = async (count = 20, filters = {}) => {
     if (filters.rarity) {
       params.rarity = filters.rarity;
     }
+    if (filters.color_exclude) {
+      params.color_exclude = filters.color_exclude;
+    }
+    if (filters.rarity_exclude) {
+      params.rarity_exclude = filters.rarity_exclude;
+    }
+    if (filters.cmc_exclude) {
+      params.cmc_exclude = filters.cmc_exclude;
+    }
+    if (filters.type) {
+      params.type = filters.type;
+    }
+    if (filters.type_exclude) {
+      params.type_exclude = filters.type_exclude;
+    }
 
     const response = await apiClient.get('/api/random-cards', { params });
 
@@ -49,6 +64,7 @@ export const fetchRandomCards = async (count = 20, filters = {}) => {
       cmc: card.cmc,
       border_color: card.border_color,
       rarity: card.rarity,
+      type_line: card.type_line,
       set_code: card.set,
       set_name: card.edition || card.set
     }));

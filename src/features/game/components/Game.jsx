@@ -21,6 +21,7 @@ import {
   calculateTimeBonus,
 } from "../utils/scoreCalculator";
 import { GAME_CONFIG, SCORE_CONFIG } from "../../../shared/utils/constants";
+import { FILTER_EFFECTS } from "../constants/perkDefinitions";
 import { motion, AnimatePresence } from "framer-motion";
 import GameTimer from "./GameTimer";
 import StreakDisplay from "./StreakDisplay";
@@ -34,47 +35,6 @@ import ActivePerksDisplay from "./ActivePerksDisplay";
 import RegisterWithScore from "../../auth/components/RegisterWithScore";
 import DebugPanel from "./DebugPanel";
 
-function FilterDisplay({ filters }) {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <div className="w-full max-w-xl mb-1 sm:mb-4">
-      {/* Mobile: compact pill, tap to expand */}
-      <div className="sm:hidden">
-        <button
-          onClick={() => setExpanded(s => !s)}
-          className="flex items-center gap-1.5 bg-indigo-500/20 border border-indigo-400 rounded-full px-3 py-1 mb-1"
-        >
-          <span className="text-indigo-200 text-xs font-semibold">
-            {filters.map(f => f.icon).join(' ')}
-          </span>
-          <span className="text-indigo-300 text-xs font-bold">{filters.length} Filter</span>
-          <span className="text-indigo-400 text-xs">{expanded ? '▴' : '▾'}</span>
-        </button>
-        {expanded && (
-          <div className="mt-1">
-            {filters.map((filter, index) => (
-              <div key={index} className="bg-indigo-500/20 border border-indigo-400 rounded-lg px-2 py-1 mb-1">
-                <span className="text-indigo-200 text-xs font-semibold">
-                  {filter.icon} {filter.name}: {filter.description}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      {/* Desktop: always full */}
-      <div className="hidden sm:block">
-        {filters.map((filter, index) => (
-          <div key={index} className="bg-indigo-500/20 border border-indigo-400 rounded-lg p-2 mb-2">
-            <span className="text-indigo-200 text-sm font-semibold">
-              {filter.icon} {filter.name}: {filter.description}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function ScoreTooltip({ message, breakdown }) {
   const [open, setOpen] = useState(false);
@@ -304,7 +264,7 @@ export default function Game({
     speed: getTimerSpeed(),
   });
 
-  const applyPerkEffects = useCallback((basePoints, timeLeft) => {
+  const applyPerkEffects = useCallback((basePoints, timeLeft, winnerCard = null) => {
     let finalPoints = basePoints;
     const breakdown = [];
     let fakeBonus = 0; // Tracking für Cheater: Bonus der durch gefakte Bedingungen entstand
@@ -327,6 +287,17 @@ export default function Game({
     const flatPerk = perkSystem.activePerks.find(p => p.effect === 'flat_bonus');
     const flatBonus = flatPerk?.value ?? null;
     if (flatBonus) { const b = finalPoints; finalPoints += flatBonus; snap(flatPerk.name, flatPerk.icon, b); }
+    // Color Mastery Perks: +N points wenn die korrekte Karte die passende Farbe hat
+    if (winnerCard) {
+      const cardColor = winnerCard.color || '';
+      const colorBonusPerks = perkSystem.activePerks.filter(p => p.effect === 'color_bonus');
+      colorBonusPerks.forEach(cbp => {
+        const matches = cbp.colorValue === 'colorless'
+          ? (!cardColor || cardColor === 'colorless')
+          : cardColor.includes(cbp.colorValue);
+        if (matches) { const b = finalPoints; finalPoints += cbp.value; snap(cbp.name, cbp.icon, b); }
+      });
+    }
     // Perfectionist Perk: effectiveTimeLeft für Timeless-Fake
     if (effectiveTimeLeft >= currentDuration - 1) {
       const perfectPerk = perkSystem.activePerks.find(p => p.effect === 'perfect_bonus');
@@ -595,7 +566,8 @@ export default function Game({
 
         const basePoints = timeBonus + streakBonus;
         const hadDoublePoints = !!perkSystem.getPerkValue("point_multiplier");
-        const { total: applied, breakdown: perkBreakdown } = applyPerkEffects(basePoints, timer.timeLeft);
+        const winnerCard = cardLoader.currentPair[correctCardIndex];
+        const { total: applied, breakdown: perkBreakdown } = applyPerkEffects(basePoints, timer.timeLeft, winnerCard);
         let totalPoints = applied;
         const extraBreakdown = [];
 
@@ -999,10 +971,18 @@ export default function Game({
       const allFilterPerks = [...otherFilterPerks, perk];
       const filters = {};
       allFilterPerks.forEach(filterPerk => {
-        if (filterPerk.filterType === 'color') filters.color = filterPerk.value;
-        else if (filterPerk.filterType === 'cmc') filters.cmc = filterPerk.value;
-        else if (filterPerk.filterType === 'border_color') filters.border_color = filterPerk.value;
-        else if (filterPerk.filterType === 'rarity') filters.rarity = filterPerk.value;
+        switch (filterPerk.effect) {
+          case FILTER_EFFECTS.COLOR:           filters.color = filterPerk.value; break;
+          case FILTER_EFFECTS.COLOR_EXCLUDE:   filters.color_exclude = filterPerk.value; break;
+          case FILTER_EFFECTS.CMC:             filters.cmc = filterPerk.value; break;
+          case FILTER_EFFECTS.CMC_EXCLUDE:     filters.cmc_exclude = filterPerk.value; break;
+          case FILTER_EFFECTS.BORDER:          filters.border_color = filterPerk.value; break;
+          case FILTER_EFFECTS.RARITY:          filters.rarity = filterPerk.value; break;
+          case FILTER_EFFECTS.RARITY_EXCLUDE:  filters.rarity_exclude = filterPerk.value; break;
+          case FILTER_EFFECTS.TYPE:            filters.type = filterPerk.value; break;
+          case FILTER_EFFECTS.TYPE_EXCLUDE:    filters.type_exclude = filterPerk.value; break;
+          default: break;
+        }
       });
       const newCards = await cardLoader.preloadCards(filters);
       perkSystem.selectPerk(perk, { hasEternalFlame, hasUpgradeMaster, doubleDip: hasDoubleDip });
@@ -1181,17 +1161,6 @@ export default function Game({
   }, [showPriceHint, cardLoader.currentPair]);
 
 
-  // Get active filter info for display
-  const getActiveFilterInfo = useCallback(() => {
-    const filterPerks = perkSystem.getActiveFilterPerks();
-    if (filterPerks.length === 0) return null;
-
-    return filterPerks.map(perk => ({
-      name: perk.name,
-      icon: perk.icon,
-      description: perk.description
-    }));
-  }, [perkSystem]);
 
   if (cardLoader.error) {
     return (
@@ -1319,12 +1288,7 @@ export default function Game({
         streakBonus={streak.calculateStreakBonus()}
       />
 
-      {/* Active Filter Display */}
-      {getActiveFilterInfo() && (
-        <FilterDisplay filters={getActiveFilterInfo()} />
-      )}
-
-      {showPriceHint && getPriceRange() && (
+{showPriceHint && getPriceRange() && (
         <div className="w-full max-w-xl mb-1 sm:mb-4">
           <div className="bg-blue-500/20 border border-blue-400 rounded-lg px-2 py-1 sm:p-2">
             <span className="text-blue-200 text-xs sm:text-sm font-semibold">

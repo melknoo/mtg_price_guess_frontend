@@ -20,26 +20,26 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
     const getRarityColor = (rarity) => {
         switch (rarity) {
             case PERK_RARITY.COMMON:
-                return 'from-gray-600 to-gray-700 border-gray-400';
+                return 'from-slate-800/90 to-slate-900/90 border-slate-400';
             case PERK_RARITY.RARE:
-                return 'from-blue-600 to-blue-700 border-blue-400';
+                return 'from-blue-900/90 to-indigo-950/90 border-blue-400';
             case PERK_RARITY.EPIC:
-                return 'from-purple-600 to-purple-700 border-purple-400';
+                return 'from-purple-900/90 to-purple-950/90 border-purple-400';
             default:
-                return 'from-gray-600 to-gray-700 border-gray-400';
+                return 'from-slate-800/90 to-slate-900/90 border-slate-400';
         }
     };
 
     const getRarityBadgeColor = (rarity) => {
         switch (rarity) {
             case PERK_RARITY.COMMON:
-                return 'bg-gray-500 text-white';
+                return 'bg-slate-500 text-white';
             case PERK_RARITY.RARE:
                 return 'bg-blue-500 text-white';
             case PERK_RARITY.EPIC:
                 return 'bg-purple-500 text-white';
             default:
-                return 'bg-gray-500 text-white';
+                return 'bg-slate-500 text-white';
         }
     };
 

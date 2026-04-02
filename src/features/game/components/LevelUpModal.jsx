@@ -20,15 +20,16 @@ function weightedRandomPick(items, weights, excludeIds = new Set()) {
   return available[0];
 }
 
-// Generiert 3 (oder 4 mit Fortune-Synergy) Optionen: 1 Relic · 1 Item · 1 Upgrade/Relic [· 1 Bonus]
-function generateOptions(activeRelics, activePerks, hasForture = false) {
+const RELIC_MILESTONE_INTERVAL = 7;
+
+// Relic-Milestone: Nur Relics zur Wahl (alle 7 Level)
+function generateRelicMilestoneOptions(activeRelics, hasForture = false) {
   const usedIds = new Set();
   const options = [];
 
   const allRelics = Object.values(RELICS);
   const ownedRelicIds = new Set(activeRelics.map(r => r.id));
 
-  // Hilfsfunktion: nächstes Relic das noch nicht in usedIds und nicht owned ist
   const pickRelic = () => {
     const excludeIds = new Set([...ownedRelicIds, ...usedIds]);
     const pick = weightedRandomPick(allRelics, RELIC_RARITY_WEIGHTS, excludeIds);
@@ -38,10 +39,20 @@ function generateOptions(activeRelics, activePerks, hasForture = false) {
     }
   };
 
-  // --- Slot 1: Relic ---
+  pickRelic();
+  pickRelic();
   pickRelic();
 
-  // --- Slot 2: Item (zufälliger Perk, kein Filter-Perk, kein bereits aktiver permanent-Perk) ---
+  if (hasForture) pickRelic();
+
+  return options;
+}
+
+// Normaler Level-Up: 3x Perk/Upgrade, kein Relic
+function generateNormalOptions(activeRelics, activePerks, hasForture = false) {
+  const usedIds = new Set();
+  const options = [];
+
   const activePerkIds = new Set(activePerks.map(p => p.id));
   const itemCandidates = Object.values(PERKS).filter(p =>
     p.type !== 'filter' &&
@@ -53,13 +64,19 @@ function generateOptions(activeRelics, activePerks, hasForture = false) {
     [PERK_RARITY.RARE]: 30,
     [PERK_RARITY.EPIC]: 15,
   };
-  const itemPick = weightedRandomPick(itemCandidates, perkWeights, usedIds);
-  if (itemPick) {
-    options.push({ ...itemPick, category: 'item' });
-    usedIds.add(itemPick.id);
-  }
 
-  // --- Slot 3: Upgrade (Extended-Version eines aktiven Perks) oder 2. Relic ---
+  const pickPerk = () => {
+    const pick = weightedRandomPick(itemCandidates, perkWeights, usedIds);
+    if (pick) {
+      options.push({ ...pick, category: 'item' });
+      usedIds.add(pick.id);
+    }
+  };
+
+  // --- Slot 1: Perk ---
+  pickPerk();
+
+  // --- Slot 2: Perk oder Upgrade ---
   const upgradeCandidates = activePerks
     .filter(p => !p.isExtended)
     .map(p => {
@@ -73,13 +90,28 @@ function generateOptions(activeRelics, activePerks, hasForture = false) {
     options.push(upgradePick);
     usedIds.add(upgradePick.id);
   } else {
-    pickRelic();
+    pickPerk();
   }
 
-  // --- Slot 4 (Fortune-Synergy): Extra-Option ---
-  if (hasForture) {
-    pickRelic();
+  // --- Slot 3: weiterer Perk oder Upgrade ---
+  const remainingUpgrades = activePerks
+    .filter(p => !p.isExtended && !usedIds.has(getExtendedVersion(p.id)?.id))
+    .map(p => {
+      const ext = getExtendedVersion(p.id);
+      return ext && !usedIds.has(ext.id) ? { ...ext, upgradeFrom: p.name, category: 'upgrade' } : null;
+    })
+    .filter(Boolean);
+
+  if (remainingUpgrades.length > 0) {
+    const upgradePick = remainingUpgrades[Math.floor(Math.random() * remainingUpgrades.length)];
+    options.push(upgradePick);
+    usedIds.add(upgradePick.id);
+  } else {
+    pickPerk();
   }
+
+  // --- Slot 4 (Fortune-Synergy): Extra Perk ---
+  if (hasForture) pickPerk();
 
   return options;
 }
@@ -121,36 +153,19 @@ function getOptionDynamicHint(option, activeRelicsCount) {
   return null;
 }
 
-// --- Styling-Helfer pro Kategorie ---
-const CATEGORY_STYLES = {
-  relic: {
-    border: 'border-amber-400',
-    gradient: 'from-amber-700 to-yellow-800',
-    badge: 'bg-amber-500 text-white',
-    badgeLabel: '⭐ Relic',
-    glow: 'group-hover:shadow-amber-500/40',
-  },
-  item: {
-    border: 'border-blue-400',
-    gradient: 'from-blue-700 to-indigo-800',
-    badge: 'bg-blue-500 text-white',
-    badgeLabel: '🎮 Item',
-    glow: 'group-hover:shadow-blue-500/40',
-  },
-  upgrade: {
-    border: 'border-emerald-400',
-    gradient: 'from-emerald-700 to-teal-800',
-    badge: 'bg-emerald-500 text-white',
-    badgeLabel: '⬆️ Upgrade',
-    glow: 'group-hover:shadow-emerald-500/40',
-  },
+// Rarity → Hintergrundfarbe, Borderfarbe, Glow, Rarity-Badge
+const RARITY_STYLES = {
+  common:    { gradient: 'from-slate-800/90 to-slate-900/90',   borderColor: 'border-slate-400',  glow: 'group-hover:shadow-slate-400/30', badge: 'bg-slate-500 text-white' },
+  rare:      { gradient: 'from-blue-900/90 to-indigo-950/90',   borderColor: 'border-blue-400',   glow: 'group-hover:shadow-blue-400/40',  badge: 'bg-blue-500 text-white' },
+  epic:      { gradient: 'from-purple-900/90 to-purple-950/90', borderColor: 'border-purple-400', glow: 'group-hover:shadow-purple-500/40', badge: 'bg-purple-500 text-white' },
+  legendary: { gradient: 'from-amber-900/90 to-yellow-950/90',  borderColor: 'border-amber-300',  glow: 'group-hover:shadow-amber-400/50', badge: 'bg-amber-400 text-black' },
 };
 
-const RARITY_BADGE = {
-  common: 'bg-gray-500 text-white',
-  rare: 'bg-blue-500 text-white',
-  epic: 'bg-purple-500 text-white',
-  legendary: 'bg-amber-400 text-black',
+// Kategorie → Borderbreite + Badge-Label + Badge-Style
+const CATEGORY_STYLES = {
+  relic:   { borderWidth: 'border-4', badgeLabel: '⭐ Relic',   badgeStyle: 'bg-amber-500/20 text-amber-200 border border-amber-400/40' },
+  item:    { borderWidth: 'border-2', badgeLabel: '🎮 Item',    badgeStyle: 'bg-blue-500/20 text-blue-200 border border-blue-400/40' },
+  upgrade: { borderWidth: 'border-2', badgeLabel: '⬆️ Upgrade', badgeStyle: 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40' },
 };
 
 export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], onSelect }) {
@@ -161,12 +176,15 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
   }, [show]);
 
   const hasFortune = activeSynergies.some(s => s.effect === 'extra_pick_option');
+  const isRelicMilestone = newLevel % RELIC_MILESTONE_INTERVAL === 0;
 
   const options = useMemo(() => {
     if (!show) return [];
-    return generateOptions(activeRelics ?? [], activePerks ?? [], hasFortune);
+    return isRelicMilestone
+      ? generateRelicMilestoneOptions(activeRelics ?? [], hasFortune)
+      : generateNormalOptions(activeRelics ?? [], activePerks ?? [], hasFortune);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show, activeRelics, activePerks, hasFortune]);
+  }, [show, activeRelics, activePerks, hasFortune, isRelicMilestone]);
 
   if (!show || options.length === 0) return null;
 
@@ -204,15 +222,15 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                 transition={{ type: 'spring', stiffness: 300, damping: 15 }}
                 className="inline-block text-3xl sm:text-5xl mb-1 sm:mb-3"
               >
-                ⭐
+                {isRelicMilestone ? '🌟' : '⭐'}
               </motion.div>
               <motion.h2
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.1 }}
-                className="text-xl sm:text-4xl font-bold text-amber-300 mb-1"
+                className={`text-xl sm:text-4xl font-bold mb-1 ${isRelicMilestone ? 'text-yellow-200' : 'text-amber-300'}`}
               >
-                Level Up! — Level {newLevel}
+                {isRelicMilestone ? `Relic Milestone! — Level ${newLevel}` : `Level Up! — Level ${newLevel}`}
               </motion.h2>
               <motion.p
                 initial={{ y: -10, opacity: 0 }}
@@ -220,14 +238,15 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                 transition={{ delay: 0.2 }}
                 className="text-gray-300 text-sm sm:text-lg"
               >
-                Choose a reward!
+                {isRelicMilestone ? 'Choose a permanent relic for your run!' : 'Choose a reward!'}
               </motion.p>
             </div>
 
             {/* Option Cards */}
-            <div className={`grid grid-cols-1 gap-2 sm:gap-6 ${hasFortune ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+            <div className={`grid grid-cols-1 gap-2 sm:gap-6 ${(hasFortune) ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
               {options.map((option, index) => {
-                const style = CATEGORY_STYLES[option.category] ?? CATEGORY_STYLES.item;
+                const rStyle = RARITY_STYLES[option.rarity] ?? RARITY_STYLES.common;
+                const cStyle = CATEGORY_STYLES[option.category] ?? CATEGORY_STYLES.item;
                 const newSynergies = getNewSynergiesForOption(option, activeRelics ?? [], activePerks ?? [], activeSynergies);
                 return (
                   <motion.div
@@ -240,11 +259,11 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                     onClick={() => onSelect(option)}
                     className={`
                       relative cursor-pointer group
-                      bg-gradient-to-br ${style.gradient}
-                      border-2 sm:border-4 ${style.border} rounded-xl sm:rounded-2xl
+                      bg-gradient-to-br ${rStyle.gradient}
+                      ${cStyle.borderWidth} ${rStyle.borderColor} rounded-xl sm:rounded-2xl
                       p-3 sm:p-6
                       shadow-2xl transition-all duration-300
-                      hover:shadow-xl ${style.glow}
+                      hover:shadow-xl ${rStyle.glow}
                     `}
                   >
                     {/* Mobile: horizontal layout */}
@@ -256,10 +275,10 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap gap-1 mb-1">
-                          <span className={`${style.badge} px-1.5 py-0.5 rounded-full text-xs font-bold`}>
-                            {style.badgeLabel}
+                          <span className={`${cStyle.badgeStyle} px-1.5 py-0.5 rounded-full text-xs font-bold`}>
+                            {cStyle.badgeLabel}
                           </span>
-                          <span className={`${RARITY_BADGE[option.rarity] ?? 'bg-gray-500 text-white'} px-1.5 py-0.5 rounded-full text-xs font-bold uppercase`}>
+                          <span className={`${rStyle.badge} px-1.5 py-0.5 rounded-full text-xs font-bold uppercase`}>
                             {option.rarity}
                           </span>
                         </div>
@@ -305,12 +324,12 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                     {/* Desktop: vertical layout (original) */}
                     <div className="hidden md:block">
                       <div className="absolute top-3 left-4">
-                        <span className={`${style.badge} px-2 py-0.5 rounded-full text-xs font-bold`}>
-                          {style.badgeLabel}
+                        <span className={`${cStyle.badgeStyle} px-2 py-0.5 rounded-full text-xs font-bold`}>
+                          {cStyle.badgeLabel}
                         </span>
                       </div>
                       <div className="absolute top-3 right-4">
-                        <span className={`${RARITY_BADGE[option.rarity] ?? 'bg-gray-500 text-white'} px-2 py-0.5 rounded-full text-xs font-bold uppercase`}>
+                        <span className={`${rStyle.badge} px-2 py-0.5 rounded-full text-xs font-bold uppercase`}>
                           {option.rarity}
                         </span>
                       </div>
@@ -382,7 +401,9 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
               transition={{ delay: 0.5 }}
               className="text-center text-gray-400 text-xs sm:text-sm mt-3 sm:mt-8"
             >
-              💡 Relics are permanent — Items are temporary perks.
+              {isRelicMilestone
+                ? '⭐ Relics are permanent bonuses for your entire run.'
+                : '💡 Relics every 7 levels — Items are temporary perks.'}
             </motion.p>
           </motion.div>
         </motion.div>

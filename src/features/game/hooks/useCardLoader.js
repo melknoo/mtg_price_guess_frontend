@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { fetchRandomCards } from '../api/gameApi';
 import { GAME_CONFIG } from '../../../shared/utils/constants';
+import { FILTER_EFFECTS } from '../constants/perkDefinitions';
 
 export const useCardLoader = () => {
   const [cachedCards, setCachedCards] = useState([]);
@@ -17,14 +18,36 @@ export const useCardLoader = () => {
     const filters = {};
 
     filterPerks.forEach(perk => {
-      if (perk.filterType === 'color') {
-        filters.color = perk.value;
-      } else if (perk.filterType === 'cmc') {
-        filters.cmc = perk.value;
-      } else if (perk.filterType === 'border_color') {
-        filters.border_color = perk.value;
-      } else if (perk.filterType === 'rarity') {
-        filters.rarity = perk.value;
+      switch (perk.effect) {
+        case FILTER_EFFECTS.COLOR:
+          filters.color = perk.value;
+          break;
+        case FILTER_EFFECTS.COLOR_EXCLUDE:
+          filters.color_exclude = perk.value;
+          break;
+        case FILTER_EFFECTS.CMC:
+          filters.cmc = perk.value;
+          break;
+        case FILTER_EFFECTS.CMC_EXCLUDE:
+          filters.cmc_exclude = perk.value;
+          break;
+        case FILTER_EFFECTS.BORDER:
+          filters.border_color = perk.value;
+          break;
+        case FILTER_EFFECTS.RARITY:
+          filters.rarity = perk.value;
+          break;
+        case FILTER_EFFECTS.RARITY_EXCLUDE:
+          filters.rarity_exclude = perk.value;
+          break;
+        case FILTER_EFFECTS.TYPE:
+          filters.type = perk.value;
+          break;
+        case FILTER_EFFECTS.TYPE_EXCLUDE:
+          filters.type_exclude = perk.value;
+          break;
+        default:
+          break;
       }
     });
 

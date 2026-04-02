@@ -25,6 +25,26 @@ const TAG_STYLES = {
   sacrifice: { bg: 'bg-red-500/40',    text: 'text-red-200',    label: 'sacr' },
 };
 
+// Rarity-basiertes Styling für die Sidebar-Karten
+function getItemRarityStyle(item, isRelic = false) {
+  const gradients = {
+    common:    'from-slate-800/90 to-slate-900/90',
+    rare:      'from-blue-900/90 to-indigo-950/90',
+    epic:      'from-purple-900/90 to-purple-950/90',
+    legendary: 'from-amber-900/90 to-yellow-950/90',
+  };
+  const borders = {
+    common:    isRelic ? 'border-slate-400/70' : 'border-slate-500/50',
+    rare:      isRelic ? 'border-blue-400/80'  : 'border-blue-500/50',
+    epic:      isRelic ? 'border-purple-400/80' : 'border-purple-500/50',
+    legendary: isRelic ? 'border-amber-300/90' : 'border-amber-400/60',
+  };
+  return {
+    gradient:    gradients[item.rarity] ?? gradients.common,
+    borderColor: borders[item.rarity] ?? borders.common,
+  };
+}
+
 function TagChips({ tags, small = false }) {
   if (!tags?.length) return null;
   return (
@@ -124,12 +144,14 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
           </h3>
           <div className="flex flex-col gap-2 overflow-y-auto pr-0.5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
             <AnimatePresence>
-              {perks.map((perk) => (
-                <DesktopPerkCard key={perk.id} item={perk} borderColor="border-blue-400/60" gradientColor="from-blue-900/80 to-indigo-900/80" ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />
-              ))}
-              {relics.map((relic) => (
-                <DesktopPerkCard key={relic.id} item={relic} borderColor="border-amber-400/60" gradientColor="from-amber-900/80 to-yellow-900/80" badge="⭐" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />
-              ))}
+              {perks.map((perk) => {
+                const s = getItemRarityStyle(perk, false);
+                return <DesktopPerkCard key={perk.id} item={perk} borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />;
+              })}
+              {relics.map((relic) => {
+                const s = getItemRarityStyle(relic, true);
+                return <DesktopPerkCard key={relic.id} item={relic} borderColor={s.borderColor} gradientColor={s.gradient} badge="⭐" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />;
+              })}
               {synergies.map((syn) => (
                 <DesktopPerkCard
                   key={syn.id}
@@ -195,15 +217,17 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                       <p className="text-xs">Pick perks every 5 rounds · earn relics on level-up.</p>
                     </div>
                   )}
-                  {perks.map((perk) => (
-                    <MobilePerkCard key={perk.id} item={perk} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />
-                  ))}
+                  {perks.map((perk) => {
+                    const s = getItemRarityStyle(perk, false);
+                    return <MobilePerkCard key={perk.id} item={perk} borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />;
+                  })}
                   {relics.length > 0 && (
                     <div className="text-xs text-amber-300/70 font-bold uppercase tracking-wider mt-1 mb-0.5">⭐ Relics</div>
                   )}
-                  {relics.map((relic) => (
-                    <MobilePerkCard key={relic.id} item={relic} borderColor="border-amber-400/60" gradientColor="from-amber-900/80 to-yellow-900/80" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />
-                  ))}
+                  {relics.map((relic) => {
+                    const s = getItemRarityStyle(relic, true);
+                    return <MobilePerkCard key={relic.id} item={relic} borderColor={s.borderColor} gradientColor={s.gradient} triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />;
+                  })}
                   {synergies.length > 0 && (
                     <div className="text-xs text-teal-300/70 font-bold uppercase tracking-wider mt-1 mb-0.5">🔗 Synergies</div>
                   )}

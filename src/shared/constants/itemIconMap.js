@@ -33,10 +33,24 @@ export const ITEM_ICONS = {
   multicolor_focus:          { icon: 'color_correction', color: 'amber' },
   colorless_focus:           { icon: 'gear',       color: 'gray' },
 
+  // Color Exclude Perks (disable-Icon in Farbe des ausgeschlossenen Farbe)
+  no_red:                    { icon: 'disable',    color: 'red' },
+  no_green:                  { icon: 'disable',    color: 'green' },
+  no_blue:                   { icon: 'disable',    color: 'blue' },
+  no_black:                  { icon: 'disable',    color: 'dark' },
+  no_white:                  { icon: 'disable',    color: 'white' },
+  no_multicolor:             { icon: 'disable',    color: 'amber' },
+  no_colorless:              { icon: 'disable',    color: 'gray' },
+
   // CMC Filter Perks
   low_cost_focus:            { icon: 'coin',       color: 'green' },
   mid_cost_focus:            { icon: 'coin',       color: 'amber' },
   high_cost_focus:           { icon: 'coin',       color: 'red' },
+
+  // CMC Exclude Perks (lock = gesperrt/ausgeschlossen)
+  no_low_cost:               { icon: 'lock',       color: 'green' },
+  no_mid_cost:               { icon: 'lock',       color: 'amber' },
+  no_high_cost:              { icon: 'lock',       color: 'red' },
 
   // Border Focus Perks
   black_border_focus:        { icon: 'square',     color: 'gray' },
@@ -47,6 +61,32 @@ export const ITEM_ICONS = {
   uncommon_focus:            { icon: 'triangle',   color: 'white' },
   rare_focus:                { icon: 'star',       color: 'amber' },
   mythic_focus:              { icon: 'gem',        color: 'orange' },
+
+  // Rarity Exclude Perks (visibility_off = verborgen/ausgeschlossen)
+  no_common:                 { icon: 'visibility_off', color: 'gray' },
+  no_uncommon:               { icon: 'visibility_off', color: 'white' },
+  no_rare:                   { icon: 'visibility_off', color: 'amber' },
+  no_mythic:                 { icon: 'visibility_off', color: 'orange' },
+
+  // Type Focus Perks
+  creature_focus:            { icon: 'sword',      color: 'red' },          // Kreaturen kämpfen
+  instant_sorcery_focus:     { icon: 'thunder',    color: 'blue' },         // Zauber = Blitz
+  artifact_enchantment_focus:{ icon: 'gear',       color: 'amber' },        // Artefakte = mechanisch
+  land_focus:                { icon: 'map',        color: 'green' },        // Länder = Terrain
+
+  // Type Exclude Perks (gleiche Icons wie Focus, aber gray = deaktiviert)
+  no_lands:                  { icon: 'map',        color: 'gray' },
+  no_creatures:              { icon: 'sword',      color: 'gray' },
+  no_instants_sorceries:     { icon: 'thunder',    color: 'gray' },
+  no_artifacts_enchantments: { icon: 'gear',       color: 'gray' },
+
+  // Color Mastery Perks (MTG-Farbidentität: thematische Icons)
+  white_mastery:             { icon: 'glow',       color: 'white' },        // Plains = Licht
+  blue_mastery:              { icon: 'drop',       color: 'blue' },         // Island = Wasser
+  black_mastery:             { icon: 'skull',      color: 'dark' },         // Swamp = Tod
+  red_mastery:               { icon: 'canon',      color: 'red' },          // Mountain = Aggression
+  green_mastery:             { icon: 'tree',       color: 'green' },        // Forest = Natur
+  colorless_mastery:         { icon: 'circle',     color: 'gray' },         // Void = leerer Kreis
 
   // ─── RELICS ──────────────────────────────────────────────────────────────
 
