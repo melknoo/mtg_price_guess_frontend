@@ -482,6 +482,38 @@ export const RELICS = {
     effect: 'disable_perks_extra_relic',
     value: 1,
   },
+
+  // ── Neue Relics für Gold/Synergy-Slot-System ──
+  SYNERGY_EXPANDER: {
+    id: 'synergy_expander',
+    name: 'Synergy Expander',
+    description: 'Unlocks a 4th synergy slot — you can have one more active synergy simultaneously',
+    icon: '🔓',
+    rarity: RELIC_RARITY.LEGENDARY,
+    tags: [RELIC_TAGS.SCORE, RELIC_TAGS.LUCK],
+    effect: 'synergy_slot_expand',
+    value: 1,
+  },
+  GOLD_WELLSPRING: {
+    id: 'gold_wellspring',
+    name: 'Gold Wellspring',
+    description: 'Earn +5 bonus Gold per correct answer (stacks with base earn)',
+    icon: '💎',
+    rarity: RELIC_RARITY.RARE,
+    tags: [RELIC_TAGS.SCORE, RELIC_TAGS.LUCK],
+    effect: 'bonus_gold_per_answer',
+    value: 5,
+  },
+  HOARDER: {
+    id: 'hoarder',
+    name: 'Hoarder',
+    description: 'Relics beyond 6 cost only 10 Gold instead of 25, but all relic score bonuses are 25% weaker',
+    icon: '🗃️',
+    rarity: RELIC_RARITY.EPIC,
+    tags: [RELIC_TAGS.SCORE, RELIC_TAGS.LUCK],
+    effect: 'hoarder_discount',
+    value: 0.75, // Multiplikator für Relic-Boni
+  },
 };
 
 export const RELIC_RARITY_WEIGHTS = {

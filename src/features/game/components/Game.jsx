@@ -8,6 +8,7 @@ import { usePerkSystem } from "../hooks/usePerkSystem";
 import { useLevel } from "../hooks/useLevel";
 import { useRelicSystem } from "../hooks/useRelicSystem";
 import { useSynergyEngine } from "../hooks/useSynergyEngine";
+import { useGold } from "../hooks/useGold";
 import { updateHighscore } from "../api/gameApi";
 import { saveGameSession, saveRunLog } from "../api/statsApi";
 import useRunLogger from "../hooks/useRunLogger";
@@ -32,6 +33,7 @@ import LevelUpModal from "./LevelUpModal";
 import ProgressionRoadmapModal from "./ProgressionRoadmapModal";
 import FilterOddsModal from "./FilterOddsModal";
 import SynergyToast from "./SynergyToast";
+import SynergyConflictModal from "./SynergyConflictModal";
 import GameIcon from "../../../shared/components/GameIcon";
 import ActivePerksDisplay from "./ActivePerksDisplay";
 import RegisterWithScore from "../../auth/components/RegisterWithScore";
@@ -138,6 +140,7 @@ export default function Game({
   const [showRelicSelection, setShowRelicSelection] = useState(false);
   const [levelUpRerollKey, setLevelUpRerollKey] = useState(0);
   const [relicRerollKey, setRelicRerollKey] = useState(0);
+  const [synergyConflictQueue, setSynergyConflictQueue] = useState([]); // Queue wartender Synergy-Konflikte
 
   // Animated score counter
   const [displayScore, setDisplayScore] = useState(0);
@@ -190,6 +193,7 @@ export default function Game({
   const level = useLevel();
   const relicSystem = useRelicSystem();
   const runLogger = useRunLogger();
+  const gold = useGold();
 
   // Blinkt ein Relic kurz auf (1.2s) — visuelles Feedback wenn es triggert
   const flashRelic = useCallback((id) => {
@@ -211,16 +215,20 @@ export default function Game({
     console.log('[Synergy ACTIVATED]', synergy.name, '— permanent for this run');
     setSynergyToast(synergy);
     setTimeout(() => setSynergyToast(null), 4000);
-    achievements.trackSynergyActivated(
-      // activeSynergies.length ist hier nicht direkt verfügbar, wird im Engine-Effect getrackt
-      1 // Dummy — trackSynergyActivated zählt selbst hoch und prüft max
-    );
+    achievements.trackSynergyActivated(1);
   }, [achievements]);
+
+  // Synergy-Konflikt-Callback — wenn alle 3 Slots belegt sind
+  const handleSynergyConflict = useCallback((synergy) => {
+    console.log('[Synergy CONFLICT]', synergy.name, '— waiting for slot');
+    setSynergyConflictQueue(prev => [...prev, synergy]);
+  }, []);
 
   const synergyEngine = useSynergyEngine(
     relicSystem.activeRelics,
     perkSystem.activePerks,
-    handleNewSynergy
+    handleNewSynergy,
+    handleSynergyConflict
   );
 
   // Timer mit Perk-Modifikationen
@@ -265,8 +273,8 @@ export default function Game({
 
   const timer = useGameTimer({
     onTimeUp: () => handleChoiceRef.current?.(-1),
-    // Timer pausiert bei Perk-Auswahl UND Level-Up (analog zu showPerkSelection)
-    enabled: !showPrices && selectedCard === null && !level.showLevelUp,
+    // Timer pausiert bei Perk-Auswahl, Level-Up und Synergy-Konflikt-Modal
+    enabled: !showPrices && selectedCard === null && !level.showLevelUp && synergyConflictQueue.length === 0,
     duration: getTimerDuration(),
     speed: getTimerSpeed(),
   });
@@ -601,6 +609,13 @@ export default function Game({
 
         streak.incrementStreak();
 
+        // --- Gold verdienen ---
+        const baseGoldPerAnswer = 3 + (relicSystem.getRelicValue('bonus_gold_per_answer') ?? 0);
+        gold.addGold(baseGoldPerAnswer);
+        const newStreakValueForGold = streak.streak + 1;
+        if (newStreakValueForGold % 10 === 0 && newStreakValueForGold > 0) gold.addGold(25); // +25 bei 10er Streak
+        else if (newStreakValueForGold % 5 === 0 && newStreakValueForGold > 0) gold.addGold(10); // +10 bei 5er Streak
+
         // --- XP-Vergabe ---
         let xpGained = 10; // Richtige Antwort: Basis-XP
         const currentDuration = getTimerDuration();
@@ -892,7 +907,7 @@ export default function Game({
 
       perkSystem.decrementPerkDurations(relicSystem.hasRelic('perk_recycler'));
     },
-    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult, runLogger, saveCurrentRun]
+    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult, runLogger, saveCurrentRun, gold]
   );
 
   // Update handleChoiceRef when handleChoice changes
@@ -921,6 +936,14 @@ export default function Game({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // +15 Gold bei Level-Up
+  useEffect(() => {
+    if (level.showLevelUp) {
+      gold.addGold(15);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level.showLevelUp]);
 
   // Update filters when filter perks change
   useEffect(() => {
@@ -1061,6 +1084,12 @@ export default function Game({
     const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
     const hasUpgradeMaster = relicSystem.hasRelic('upgrade_master');
     if (pick.category === 'relic') {
+      // Soft-Cap: ab 6 Relics kostet jedes weitere Gold (Hoarder: 10 statt 25)
+      const RELIC_FREE_CAP = 6;
+      if (relicSystem.activeRelics.length >= RELIC_FREE_CAP) {
+        const relicCost = relicSystem.hasRelic('hoarder') ? 10 : 25;
+        if (!gold.spendGold(relicCost)) return; // nicht genug Gold → abbrechen
+      }
       // Blueprint: kopiert Effekt eines zufälligen anderen Relics
       if (pick.effect === 'blueprint_copy') {
         const otherRelics = relicSystem.activeRelics.filter(r => r.id !== 'blueprint');
@@ -1091,10 +1120,15 @@ export default function Game({
       runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'upgrade', offered_ids: [] });
     }
     level.dismissLevelUp();
-  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound]);
+  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold]);
 
   const handleRelicRoundSelect = useCallback((pick) => {
     console.log('[RelicRound]', pick.name, `(${pick.id})`);
+    // Soft-Cap: ab 6 Relics kostet jedes weitere 25 Gold
+    const RELIC_FREE_CAP = 6;
+    if (relicSystem.activeRelics.length >= RELIC_FREE_CAP) {
+      if (!gold.spendGold(25)) return; // nicht genug Gold → abbrechen
+    }
     if (pick.effect === 'blueprint_copy') {
       const otherRelics = relicSystem.activeRelics.filter(r => r.id !== 'blueprint');
       if (otherRelics.length > 0) {
@@ -1111,7 +1145,7 @@ export default function Game({
     runLogger.logRelicSelected({ level: level.level, relic_id: pick.id, relic_name: pick.name });
     setShowRelicSelection(false);
     cardLoader.setNextPair();
-  }, [relicSystem, achievements, runLogger, level, setLives, cardLoader]);
+  }, [relicSystem, achievements, runLogger, level, setLives, cardLoader, gold]);
 
   const handlePerkSkip = useCallback(() => {
     perkSystem.skipPerkSelection();
@@ -1119,20 +1153,18 @@ export default function Game({
   }, [perkSystem, cardLoader]);
 
   const handlePerkReroll = useCallback(() => {
-    if (lives <= 1) return;
-    setLives(l => l - 1);
+    if (!gold.spendGold(10)) return;
     perkSystem.rerollPerks();
-  }, [lives, perkSystem]);
+  }, [gold, perkSystem]);
 
   const handleLevelUpSkip = useCallback(() => {
     level.dismissLevelUp();
   }, [level]);
 
   const handleLevelUpReroll = useCallback(() => {
-    if (lives <= 1) return;
-    setLives(l => l - 1);
+    if (!gold.spendGold(15)) return;
     setLevelUpRerollKey(k => k + 1);
-  }, [lives]);
+  }, [gold]);
 
   const handleRelicSkip = useCallback(() => {
     setShowRelicSelection(false);
@@ -1140,10 +1172,9 @@ export default function Game({
   }, [cardLoader]);
 
   const handleRelicReroll = useCallback(() => {
-    if (lives <= 1) return;
-    setLives(l => l - 1);
+    if (!gold.spendGold(15)) return;
     setRelicRerollKey(k => k + 1);
-  }, [lives]);
+  }, [gold]);
 
   const handleSkipCard = useCallback(() => {
     if (perkSystem.hasPerk("skip_card")) {
@@ -1211,6 +1242,8 @@ export default function Game({
     level.reset();
     relicSystem.reset();
     synergyEngine.reset();
+    gold.reset();
+    setSynergyConflictQueue([]);
     setComboMultiplier(1);
     setIronWillActive(false);
     setNextRoundDouble(false);
@@ -1222,7 +1255,7 @@ export default function Game({
 
     await cardLoader.preloadCards();
     await cardLoader.setNextPair();
-  }, [setScore, streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, achievements, runLogger, saveCurrentRun]);
+  }, [setScore, streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, gold, achievements, runLogger, saveCurrentRun]);
 
   const handleImageLoad = useCallback((index) => {
     setImagesLoaded((prev) => {
@@ -1339,6 +1372,20 @@ export default function Game({
               />
             </div>
           </div>
+
+          {/* Gold-Anzeige */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={gold.gold}
+              initial={{ scale: 1.2 }}
+              animate={{ scale: 1 }}
+              className="shrink-0 flex items-center gap-1 bg-[#111827] border-2 border-yellow-700 rounded-sm px-2 py-1"
+              title="Gold — earned from correct answers and streaks"
+            >
+              <GameIcon name="coin" color="amber" size={14} />
+              <span className="text-yellow-300 text-xs font-bold">{gold.gold}</span>
+            </motion.div>
+          </AnimatePresence>
 
           {/* Filter Odds Button */}
           {perkSystem.getActiveFilterPerks().length > 0 && (
@@ -1484,10 +1531,11 @@ export default function Game({
         activeRelics={relicSystem.activeRelics}
         activePerks={perkSystem.activePerks}
         activeSynergies={synergyEngine.activeSynergies}
+        maxSynergySlots={synergyEngine.maxSynergySlots}
         onSelect={handleLevelUpSelect}
         onSkip={handleLevelUpSkip}
         onReroll={handleLevelUpReroll}
-        lives={lives}
+        gold={gold.gold}
         rerollKey={levelUpRerollKey}
       />
 
@@ -1497,12 +1545,23 @@ export default function Game({
         activeRelics={relicSystem.activeRelics}
         activePerks={perkSystem.activePerks}
         activeSynergies={synergyEngine.activeSynergies}
+        maxSynergySlots={synergyEngine.maxSynergySlots}
         onSelect={handleRelicRoundSelect}
         onSkip={handleRelicSkip}
         onReroll={handleRelicReroll}
-        lives={lives}
+        gold={gold.gold}
         rerollKey={relicRerollKey}
         forceRelicMode
+      />
+
+      <SynergyConflictModal
+        show={synergyConflictQueue.length > 0}
+        pendingSynergy={synergyConflictQueue[0] ?? null}
+        activeSynergies={synergyEngine.permanentSynergies}
+        onResolve={(dropId, pending) => {
+          synergyEngine.resolveConflict(dropId, pending);
+          setSynergyConflictQueue(prev => prev.slice(1));
+        }}
       />
 
       <PerkSelectionModal
