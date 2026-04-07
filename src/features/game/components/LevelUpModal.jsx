@@ -56,7 +56,7 @@ function generateNormalOptions(activeRelics, activePerks, hasForture = false) {
   const itemCandidates = Object.values(PERKS).filter(p =>
     p.type !== 'filter' &&
     !p.isExtended &&
-    !activePerkIds.has(p.id)
+    (!activePerkIds.has(p.id) || p.stackable)
   );
   const perkWeights = {
     [PERK_RARITY.COMMON]: 50,
