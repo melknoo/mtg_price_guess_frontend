@@ -30,7 +30,7 @@ export default function CardPair({
   const isClickable = selectedCard === null;
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:mt-0 mt-auto max-w-lg sm:max-w-2xl w-full">
+    <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:mt-0 max-w-lg sm:max-w-2xl w-full">
       {cards.map((card, index) => (
         <motion.div
           key={card.id}
