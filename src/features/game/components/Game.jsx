@@ -1011,7 +1011,7 @@ export default function Game({
     } else {
       cardLoader.setNextPair();
     }
-  }, [currentRound, achievements, perkSystem, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, setScore, synergyEngine]);
+  }, [currentRound, achievements, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, setScore, synergyEngine]);
 
   const handlePerkSelect = useCallback(async (perk) => {
     const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
