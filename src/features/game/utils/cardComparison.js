@@ -29,5 +29,9 @@ export const getMoreExpensiveCard = (card1, card2) => {
 };
 
 export const createErrorMessage = (correctCard) => {
-  return `❌ Wrong! ${correctCard.name} (${correctCard.set}) was more expensive: ${formatPrice(correctCard.prices.eur)}`;
+  return `❌ Wrong! ${correctCard.name} was more expensive: ${formatPrice(correctCard.prices.eur)}`;
+};
+
+export const createErrorData = (correctCard) => {
+  return { name: correctCard.name, price: formatPrice(correctCard.prices.eur) };
 };

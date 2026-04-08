@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "../../auth/context/AuthContext";
 import { useAchievementContext } from "../context/AchievementContext";
 import { useGameTimer } from "../hooks/useGameTimer";
@@ -16,6 +17,7 @@ import {
   isChoiceCorrect,
   getMoreExpensiveCard,
   createErrorMessage,
+  createErrorData,
 } from "../utils/cardComparison";
 import {
   calculateTimeBonus,
@@ -59,6 +61,7 @@ export default function Game({
   const [correctIndex, setCorrectIndex] = useState(null);
   const [showPrices, setShowPrices] = useState(false);
   const [message, setMessage] = useState("");
+  const [wrongData, setWrongData] = useState(null); // { name, price } for styled wrong-answer banner
   const [scoreBreakdown, setScoreBreakdown] = useState(null);
   const [imagesLoaded, setImagesLoaded] = useState([false, false]);
   const [currentRound, setCurrentRound] = useState(1);
@@ -84,23 +87,24 @@ export default function Game({
   // Combo-Animation: blockiert Level-Up/Relic-Modals bis die Combo-Sequenz fertig ist
   const [comboAnimationDone, setComboAnimationDone] = useState(true);
 
-  // Animated score counter
+  // Animated score counter — only animates after combo popup dismisses
   const [displayScore, setDisplayScore] = useState(0);
   const [scoreGain, setScoreGain] = useState(null);
   const displayScoreRef = useRef(0);
   const scoreAnimRef = useRef(null);
   const scoreGainTimerRef = useRef(null);
+  const pendingScoreRef = useRef(null); // holds score to animate until popup is gone
 
-  useEffect(() => {
-    if (score === 0) {
+  const animateToScore = useCallback((end) => {
+    if (end === 0) {
       if (scoreAnimRef.current) cancelAnimationFrame(scoreAnimRef.current);
       displayScoreRef.current = 0;
       setDisplayScore(0);
       setScoreGain(null);
+      pendingScoreRef.current = null;
       return;
     }
     const start = displayScoreRef.current;
-    const end = score;
     const delta = end - start;
     if (delta <= 0) return;
 
@@ -125,8 +129,21 @@ export default function Game({
       }
     };
     scoreAnimRef.current = requestAnimationFrame(animate);
-    return () => { if (scoreAnimRef.current) cancelAnimationFrame(scoreAnimRef.current); };
-  }, [score]);
+  }, []);
+
+  // When score resets to 0, reset immediately
+  useEffect(() => {
+    if (score === 0) animateToScore(0);
+  }, [score, animateToScore]);
+
+  // Called when combo popup fully disappears — now animate the score
+  const handleComboComplete = useCallback(() => {
+    setComboAnimationDone(true);
+    if (pendingScoreRef.current !== null) {
+      animateToScore(pendingScoreRef.current);
+      pendingScoreRef.current = null;
+    }
+  }, [animateToScore]);
 
   // Custom Hooks
   const cardLoader = useCardLoader();
@@ -686,6 +703,7 @@ export default function Game({
 
         const newScore = score + totalPoints;
         setScore(newScore);
+        pendingScoreRef.current = newScore; // animate after combo popup dismisses
 
         achievements.trackCorrectAnswer(
           timer.timeLeft,
@@ -821,6 +839,7 @@ export default function Game({
 
           const correctCard = getMoreExpensiveCard(card1, card2);
           setMessage(createErrorMessage(correctCard));
+          setWrongData(createErrorData(correctCard));
 
           runLogger.logRound({
             n: currentRound,
@@ -926,7 +945,13 @@ export default function Game({
 
   const handleNextPair = useCallback(() => {
     setComboAnimationDone(true); // Safety: unlock modals when player advances early
+    // Flush pending score animation if player skipped the combo reveal
+    if (pendingScoreRef.current !== null) {
+      animateToScore(pendingScoreRef.current);
+      pendingScoreRef.current = null;
+    }
     setMessage("");
+    setWrongData(null);
     setScoreBreakdown(null);
     const nextRound = currentRound + 1;
     setCurrentRound(nextRound);
@@ -961,7 +986,7 @@ export default function Game({
     } else {
       cardLoader.setNextPair();
     }
-  }, [currentRound, achievements, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, setScore, synergyEngine]);
+  }, [currentRound, achievements, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, setScore, synergyEngine, animateToScore]);
 
   const handlePerkSelect = useCallback(async (perk) => {
     const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
@@ -1175,6 +1200,7 @@ export default function Game({
     runLoggedRef.current = false;
     setScore(0);
     setMessage("");
+    setWrongData(null);
     setScoreBreakdown(null);
     setComboAnimationDone(true);
     setGameOver(false);
@@ -1424,20 +1450,34 @@ export default function Game({
         </div>
       )}
 
-      {/* Bottom row: score breakdown left + buttons right (desktop) / stacked (mobile) */}
-      <div className="mt-1 w-full max-w-lg sm:max-w-2xl flex flex-col sm:flex-row sm:items-end sm:gap-4 gap-2 pb-1 sm:pb-2 pl-14 sm:pl-0">
+      {/* Bottom row: score breakdown left + buttons right (desktop) / buttons only in flow (mobile) */}
+      <div className="mt-1 w-full max-w-lg sm:max-w-2xl relative pb-1 sm:pb-2 sm:flex sm:flex-row sm:items-end sm:gap-4">
 
-        {/* Score breakdown — desktop: inline left, mobile: via portal inside ScoreComboReveal */}
-        <div className={scoreBreakdown ? 'flex-1 min-w-0' : ''}>
+        {/* Score breakdown / wrong banner — fixed above next button on mobile, flex-1 inline on desktop */}
+        <div className="sm:static sm:flex-1 sm:min-w-0 hidden sm:block">
           <ScoreComboReveal
             breakdown={scoreBreakdown}
             visible={selectedCard !== null && !gameOver}
-            onComplete={() => setComboAnimationDone(true)}
+            onComplete={handleComboComplete}
           />
+          {/* Wrong answer banner */}
+          {wrongData && !gameOver && !scoreBreakdown && (
+            <div className="flex items-center gap-3 px-3 py-2 rounded-sm border border-red-700/60 bg-red-950/40">
+              <span className="text-red-400 text-lg font-black shrink-0">✗</span>
+              <div className="min-w-0">
+                <span className="text-red-300 text-xs uppercase tracking-widest font-bold block">Wrong!</span>
+                <span className="text-white text-sm font-semibold block">
+                  <span className="text-amber-300">{wrongData.name}</span>
+                  <span className="text-gray-400 font-normal"> was more expensive — </span>
+                  <span className="text-green-300 font-bold">{wrongData.price}</span>
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Buttons */}
-        <div className="flex gap-4 items-center justify-center sm:justify-end sm:shrink-0">
+        {/* Buttons — desktop inline */}
+        <div className="hidden sm:flex gap-4 items-center sm:shrink-0">
           {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
             <button
               onClick={handleSkipCard}
@@ -1447,18 +1487,11 @@ export default function Game({
               ⭐ Skip{(() => { const sc = perkSystem.activePerks.find(p => p.id === 'skip_card'); return sc && sc.value > 1 ? ` (×${sc.value})` : ''; })()}
             </button>
           )}
-
           {selectedCard !== null && !gameOver && (
             <button
               onClick={handleNextPair}
               disabled={perkSystem.showPerkSelection || level.showLevelUp}
-              className={`text-xl sm:text-2xl w-full sm:w-auto sm:min-w-[200px] font-bold text-white
-                px-6 py-5 sm:px-6 sm:py-6
-                [@media(max-height:500px)]:py-2 [@media(max-height:500px)]:text-base
-                rounded-sm
-                border-2
-                transition-all duration-150
-                active:scale-[0.97]
+              className={`text-2xl min-w-[200px] font-bold text-white px-6 py-6 rounded-sm border-2 transition-all duration-150 active:scale-[0.97]
                 ${(perkSystem.showPerkSelection || level.showLevelUp)
                   ? "bg-amber-700/50 border-amber-800 cursor-not-allowed shadow-none"
                   : "bg-amber-600 border-amber-800 hover:bg-amber-500 shadow-pixel"
@@ -1468,6 +1501,59 @@ export default function Game({
             </button>
           )}
         </div>
+
+        {/* Buttons — mobile fixed bottom-right via portal */}
+        {createPortal(
+          <div className="sm:hidden fixed bottom-4 right-4 flex flex-col gap-2 items-end z-30" style={{bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)'}}>
+            {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
+              <button
+                onClick={handleSkipCard}
+                className="bg-yellow-600 text-base font-semibold hover:bg-yellow-500 active:scale-95 text-white px-5 py-3 rounded-sm transition shadow-pixel border-2 border-yellow-400"
+              >
+                ⭐ Skip{(() => { const sc = perkSystem.activePerks.find(p => p.id === 'skip_card'); return sc && sc.value > 1 ? ` (×${sc.value})` : ''; })()}
+              </button>
+            )}
+            {selectedCard !== null && !gameOver && (
+              <button
+                onClick={handleNextPair}
+                disabled={perkSystem.showPerkSelection || level.showLevelUp}
+                className={`text-xl font-bold text-white px-6 py-4 rounded-sm border-2 transition-all duration-150 active:scale-[0.97]
+                  ${(perkSystem.showPerkSelection || level.showLevelUp)
+                    ? "bg-amber-700/50 border-amber-800 cursor-not-allowed shadow-none"
+                    : "bg-amber-600 border-amber-800 hover:bg-amber-500 shadow-pixel"
+                  }`}
+              >
+                Next →
+              </button>
+            )}
+          </div>,
+          document.body
+        )}
+
+        {/* Mobile: score breakdown + wrong banner fixed above next button */}
+        {createPortal(
+          <div className="sm:hidden fixed right-0 left-0 px-4 pointer-events-none z-20" style={{bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6rem)'}}>
+            <ScoreComboReveal
+              breakdown={scoreBreakdown}
+              visible={selectedCard !== null && !gameOver}
+              suppressOverlay
+            />
+            {wrongData && !gameOver && !scoreBreakdown && (
+              <div className="flex items-center gap-3 px-3 py-2 rounded-sm border border-red-700/60 bg-red-950/90">
+                <span className="text-red-400 text-lg font-black shrink-0">✗</span>
+                <div className="min-w-0">
+                  <span className="text-red-300 text-xs uppercase tracking-widest font-bold block">Wrong!</span>
+                  <span className="text-white text-sm font-semibold block">
+                    <span className="text-amber-300">{wrongData.name}</span>
+                    <span className="text-gray-400 font-normal"> was more expensive — </span>
+                    <span className="text-green-300 font-bold">{wrongData.price}</span>
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>,
+          document.body
+        )}
       </div>
 
       <FilterOddsModal
@@ -1565,16 +1651,6 @@ export default function Game({
             />
           )}
         </GameOverScreen>
-      )}
-
-      {/* Wrong-answer message — only shown when no score breakdown (correct answers use ScoreComboReveal) */}
-      <div className="w-full sm:min-h-[2.5rem] pt-1 pb-2 sm:pb-0 hidden sm:flex items-center sm:justify-center">
-        {message && !gameOver && !scoreBreakdown && (
-          <p className="text-base sm:text-xl transition-all duration-500 sm:text-center">{message}</p>
-        )}
-      </div>
-      {message && !gameOver && !scoreBreakdown && (
-        <p className="sm:hidden text-base transition-all duration-500 pt-1 pb-2 pl-14">{message}</p>
       )}
 
       {process.env.NODE_ENV === 'development' && (

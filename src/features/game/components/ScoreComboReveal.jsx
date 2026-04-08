@@ -55,7 +55,7 @@ function getTotalTier(pts) {
   };
 }
 
-export default function ScoreComboReveal({ breakdown, visible, onComplete }) {
+export default function ScoreComboReveal({ breakdown, visible, onComplete, suppressOverlay = false }) {
   const [revealedCount, setRevealedCount] = useState(0);
   const [showTotal, setShowTotal] = useState(false);   // overlay pop (auto-dismisses)
   const [showTotalLine, setShowTotalLine] = useState(false); // inline total row (stays)
@@ -147,7 +147,7 @@ export default function ScoreComboReveal({ breakdown, visible, onComplete }) {
 
   const comboItemsJSX = (
     <>
-      <div className="flex flex-col gap-px max-h-[120px] overflow-hidden">
+      <div className="flex flex-col gap-px">
         <AnimatePresence initial={false}>
           {visibleItems.map((item, i) => (
             <motion.div
@@ -196,20 +196,10 @@ export default function ScoreComboReveal({ breakdown, visible, onComplete }) {
     </>
   );
 
-  // Mobile: portal so cards never shift
-  const mobilePortal = createPortal(
-    <div className="sm:hidden fixed bottom-[88px] left-0 right-0 flex flex-col items-center pointer-events-none z-40 px-4">
-      <div className="w-full max-w-2xl">{comboItemsJSX}</div>
-    </div>,
-    document.body
-  );
-
   return (
     <>
-      {mobilePortal}
-      {/* Desktop: inline, rendered by parent in the bottom row */}
-      <div className="hidden sm:block w-full">{comboItemsJSX}</div>
-      {totalOverlay}
+      <div className="w-full">{comboItemsJSX}</div>
+      {!suppressOverlay && totalOverlay}
     </>
   );
 }
