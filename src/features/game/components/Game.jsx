@@ -38,68 +38,7 @@ import GameIcon from "../../../shared/components/GameIcon";
 import ActivePerksDisplay from "./ActivePerksDisplay";
 import RegisterWithScore from "../../auth/components/RegisterWithScore";
 import DebugPanel from "./DebugPanel";
-
-
-function ScoreTooltip({ message, breakdown }) {
-  const [open, setOpen] = useState(false);
-
-  const panel = (
-    <div className="w-64 bg-[#111827] border-2 border-[#2d3a5c] rounded-sm p-3 shadow-pixel">
-      <p className="text-xs font-bold text-gray-300 mb-2 border-b border-gray-600 pb-1">Score Breakdown</p>
-      {breakdown.items.map((item, i) => (
-        <div key={i} className="flex justify-between items-center text-xs py-0.5">
-          <span className={item.delta === 0 ? 'text-gray-500' : 'text-gray-300'}>
-            {item.isMult
-              ? <span className="text-blue-400 font-bold mr-0.5">×</span>
-              : <span className="text-green-500/60 mr-0.5">+</span>
-            }
-            {item.icon} {item.label}
-          </span>
-          <span className={item.delta === 0 ? 'text-gray-500' : item.isMult ? 'text-blue-300 font-semibold' : 'text-green-400 font-semibold'}>
-            {item.delta === 0 ? '—' : `+${item.delta}`}
-          </span>
-        </div>
-      ))}
-      <div className="flex justify-between items-center text-sm font-bold mt-2 pt-2 border-t border-gray-600">
-        <span className="text-white">Total</span>
-        <span className="text-green-400">+{breakdown.total}</span>
-      </div>
-    </div>
-  );
-
-  const chip = (panelDir) => (
-    <div className="relative group">
-      <button
-        onClick={() => setOpen(s => !s)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border-2 transition-all duration-150 active:scale-95
-          ${open
-            ? 'bg-green-500/20 border-green-400 shadow-pixel-sm'
-            : 'bg-green-500/10 border-green-600 hover:bg-green-500/20 hover:border-green-400'
-          }`}
-      >
-        <span className="text-green-400 font-bold text-sm sm:text-base leading-none">{message}</span>
-        <span className={`text-green-500/70 text-xs transition-transform duration-150 ${open ? 'rotate-180' : ''}`}>▾</span>
-      </button>
-      <div className={`absolute ${panelDir === 'down' ? 'top-full mt-2' : 'bottom-full mb-2'} left-0 z-50 transition-all duration-150 pointer-events-none
-        ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0'}`}>
-        {panel}
-      </div>
-    </div>
-  );
-
-  return (
-    <>
-      {/* Mobile: fixed top-left, panel opens downward */}
-      <div className="sm:hidden fixed top-3 left-3 z-[64]">
-        {chip('down')}
-      </div>
-      {/* Desktop: in normal flow, panel opens upward */}
-      <div className="hidden sm:block">
-        {chip('up')}
-      </div>
-    </>
-  );
-}
+import ScoreComboReveal from "./ScoreComboReveal";
 
 export default function Game({
   score,
@@ -141,6 +80,9 @@ export default function Game({
   const [levelUpRerollKey, setLevelUpRerollKey] = useState(0);
   const [relicRerollKey, setRelicRerollKey] = useState(0);
   const [synergyConflictQueue, setSynergyConflictQueue] = useState([]); // Queue wartender Synergy-Konflikte
+
+  // Combo-Animation: blockiert Level-Up/Relic-Modals bis die Combo-Sequenz fertig ist
+  const [comboAnimationDone, setComboAnimationDone] = useState(true);
 
   // Animated score counter
   const [displayScore, setDisplayScore] = useState(0);
@@ -566,10 +508,11 @@ export default function Game({
       if (correct) {
         correctCountRef.current++;
         // Reverse Timer: invertiert Time-Bonus (wenig Restzeit → hoher Bonus)
+        const relicEventQueue = [];
         let timeBonus;
         if (relicSystem.hasRelic('reverse_timer')) {
           timeBonus = calculateTimeBonus(getTimerDuration() - timer.timeLeft);
-          flashRelic('reverse_timer');
+          relicEventQueue.push({ id: 'reverse_timer', type: 'flash' });
         } else {
           timeBonus = calculateTimeBonus(timer.timeLeft);
         }
@@ -604,7 +547,7 @@ export default function Game({
           totalPoints *= relicSystem.getRelicValue('perfect_next_double') ?? 2;
           extraBreakdown.push({ label: 'Perfectionist Echo', icon: '✨🔁', delta: Math.round(totalPoints - _nrd) });
           setNextRoundDouble(false);
-          flashRelic('perfectionist_echo');
+          relicEventQueue.push({ id: 'perfectionist_echo', type: 'flash' });
         }
 
         streak.incrementStreak();
@@ -627,7 +570,7 @@ export default function Game({
         // MOMENTUM Relic: +2 XP pro Streak-Stufe
         if (relicSystem.hasRelic('momentum')) {
           xpGained += newStreakValue * relicSystem.getRelicValue('streak_xp_scaling');
-          flashRelic('momentum');
+          relicEventQueue.push({ id: 'momentum', type: 'flash' });
         }
         // PRICE_SENSE Relic: 1.5x XP bei >€10 Preisdifferenz
         if (relicSystem.hasRelic('price_sense') && cardLoader.currentPair.length === 2) {
@@ -635,15 +578,15 @@ export default function Game({
           const diff = Math.abs(prices[0] - prices[1]);
           if (diff > relicSystem.getRelicValue('price_diff_xp_bonus') || diff > 10) {
             xpGained = Math.floor(xpGained * relicSystem.getRelicValue('price_diff_xp_bonus'));
-            flashRelic('price_sense');
+            relicEventQueue.push({ id: 'price_sense', type: 'flash' });
           }
         }
         // QUICK_LEARNER Relic: +50% XP für Antworten unter 3 Sekunden (effectiveTime für Timeless)
         const effectiveAnswerTimeLeft = getEffectiveAnswerTime(timer.timeLeft);
         if (relicSystem.hasRelic('quick_learner') && effectiveAnswerTimeLeft > currentDuration - 3) {
           xpGained = Math.floor(xpGained * relicSystem.getRelicValue('speed_xp_bonus'));
-          flashRelic('quick_learner');
-          if (relicSystem.hasRelic('timeless')) flashRelic('timeless');
+          relicEventQueue.push({ id: 'quick_learner', type: 'flash' });
+          if (relicSystem.hasRelic('timeless')) relicEventQueue.push({ id: 'timeless', type: 'flash' });
         }
         // Berserker Synergy: 2x XP bei 1 Leben (effectiveLives für Deaths Mask)
         if (synergyEngine.hasSynergy('berserker') && getEffectiveLives() === 1) {
@@ -658,18 +601,18 @@ export default function Game({
           if (newMultiplier > bestComboMultiplierRef.current) {
             bestComboMultiplierRef.current = newMultiplier;
           }
-          if (newStreakValue % 3 === 0) flashRelic('combo_master');
+          if (newStreakValue % 3 === 0) relicEventQueue.push({ id: 'combo_master', type: 'flash' });
         }
 
         // Iron Will zurücksetzen nach Verwendung
         if (ironWillActive) {
-          if (relicSystem.hasRelic('iron_will')) flashRelic('iron_will');
+          if (relicSystem.hasRelic('iron_will')) relicEventQueue.push({ id: 'iron_will', type: 'flash' });
           setIronWillActive(false);
         }
 
         // Treasure Hunter: flashen wenn Perk-Boni vorhanden
         if (relicSystem.hasRelic('treasure_hunter') && totalPoints > basePoints) {
-          flashRelic('treasure_hunter');
+          relicEventQueue.push({ id: 'treasure_hunter', type: 'flash' });
         }
 
         // XP Converter: überschüssige XP nach Level-Up → Score
@@ -681,7 +624,7 @@ export default function Game({
             const xpBonus = overflow * (relicSystem.getRelicValue('xp_to_score') ?? 2);
             totalPoints += xpBonus;
             extraBreakdown.push({ label: 'XP Converter', icon: '💱', delta: xpBonus });
-            flashRelic('xp_converter');
+            relicEventQueue.push({ id: 'xp_converter', type: 'flash' });
           }
         }
 
@@ -695,32 +638,37 @@ export default function Game({
         // Perfectionist Echo trigger: effectiveTime für Timeless
         if (relicSystem.hasRelic('perfectionist_echo') && effectiveAnswerTimeLeft >= getTimerDuration() - 1) {
           setNextRoundDouble(true);
-          tickRelic('perfectionist_echo');
+          relicEventQueue.push({ id: 'perfectionist_echo', type: 'tick' });
         }
 
-        // Meta-Relic visual flashes
-        if (relicSystem.hasRelic('snowball')) flashRelic('snowball');
-        if (relicSystem.hasRelic('risk_reward')) tickRelic('risk_reward');
-        if (relicSystem.hasRelic('echo') && totalPoints > basePoints) flashRelic('echo');
-        if (relicSystem.hasRelic('amplifier') && totalPoints > basePoints) tickRelic('amplifier');
-        if (relicSystem.hasRelic('collector_bonus')) tickRelic('collector_bonus');
-        if (relicSystem.hasRelic('synergy_chain') && synergyEngine.activeSynergies.length > 0) flashRelic('synergy_chain');
-        if (relicSystem.hasRelic('perk_mastery') && perkSystem.activePerks.length > 0) tickRelic('perk_mastery');
-        if (relicSystem.hasRelic('tag_master')) tickRelic('tag_master');
-        if (relicSystem.hasRelic('level_power')) tickRelic('level_power');
-        if (relicSystem.hasRelic('overkill') && totalPoints > 100) flashRelic('overkill');
-        if (relicSystem.hasRelic('last_stand') && getEffectiveLives() === 1) flashRelic('last_stand');
-        if (relicSystem.hasRelic('chain_reaction') && (ironWillActive || comboMultiplier > 1.15)) flashRelic('chain_reaction');
-        if (relicSystem.hasRelic('synergy_amp') && synergyEngine.activeSynergies.length > 0) tickRelic('synergy_amp');
+        // Meta-Relic visual flashes — in queue for sequential combo effect
+        if (relicSystem.hasRelic('snowball')) relicEventQueue.push({ id: 'snowball', type: 'flash' });
+        if (relicSystem.hasRelic('risk_reward')) relicEventQueue.push({ id: 'risk_reward', type: 'tick' });
+        if (relicSystem.hasRelic('echo') && totalPoints > basePoints) relicEventQueue.push({ id: 'echo', type: 'flash' });
+        if (relicSystem.hasRelic('amplifier') && totalPoints > basePoints) relicEventQueue.push({ id: 'amplifier', type: 'tick' });
+        if (relicSystem.hasRelic('collector_bonus')) relicEventQueue.push({ id: 'collector_bonus', type: 'tick' });
+        if (relicSystem.hasRelic('synergy_chain') && synergyEngine.activeSynergies.length > 0) relicEventQueue.push({ id: 'synergy_chain', type: 'flash' });
+        if (relicSystem.hasRelic('perk_mastery') && perkSystem.activePerks.length > 0) relicEventQueue.push({ id: 'perk_mastery', type: 'tick' });
+        if (relicSystem.hasRelic('tag_master')) relicEventQueue.push({ id: 'tag_master', type: 'tick' });
+        if (relicSystem.hasRelic('level_power')) relicEventQueue.push({ id: 'level_power', type: 'tick' });
+        if (relicSystem.hasRelic('overkill') && totalPoints > 100) relicEventQueue.push({ id: 'overkill', type: 'flash' });
+        if (relicSystem.hasRelic('last_stand') && getEffectiveLives() === 1) relicEventQueue.push({ id: 'last_stand', type: 'flash' });
+        if (relicSystem.hasRelic('chain_reaction') && (ironWillActive || comboMultiplier > 1.15)) relicEventQueue.push({ id: 'chain_reaction', type: 'flash' });
+        if (relicSystem.hasRelic('synergy_amp') && synergyEngine.activeSynergies.length > 0) relicEventQueue.push({ id: 'synergy_amp', type: 'tick' });
         // Neue Relic-Flashes
-        if (relicSystem.hasRelic('deaths_mask')) tickRelic('deaths_mask');
-        if (relicSystem.hasRelic('phantom_streak') && effectiveStreakForBonus > streak.streak) flashRelic('phantom_streak');
-        if (relicSystem.hasRelic('mirror') && totalPoints > basePoints) tickRelic('mirror');
-        if (relicSystem.hasRelic('hermit')) tickRelic('hermit');
-        if (relicSystem.hasRelic('minimalist') && totalPoints > basePoints) tickRelic('minimalist');
-        if (synergyEngine.hasSynergy('masochist') && masochistMult > 0) tickRelic('masochist');
-        if (synergyEngine.hasSynergy('sacrifice_reward')) tickRelic('sacrifice_reward');
-        if (synergyEngine.hasSynergy('cheater')) tickRelic('cheater');
+        if (relicSystem.hasRelic('deaths_mask')) relicEventQueue.push({ id: 'deaths_mask', type: 'tick' });
+        if (relicSystem.hasRelic('phantom_streak') && effectiveStreakForBonus > streak.streak) relicEventQueue.push({ id: 'phantom_streak', type: 'flash' });
+        if (relicSystem.hasRelic('mirror') && totalPoints > basePoints) relicEventQueue.push({ id: 'mirror', type: 'tick' });
+        if (relicSystem.hasRelic('hermit')) relicEventQueue.push({ id: 'hermit', type: 'tick' });
+        if (relicSystem.hasRelic('minimalist') && totalPoints > basePoints) relicEventQueue.push({ id: 'minimalist', type: 'tick' });
+        if (synergyEngine.hasSynergy('masochist') && masochistMult > 0) relicEventQueue.push({ id: 'masochist', type: 'tick' });
+        if (synergyEngine.hasSynergy('sacrifice_reward')) relicEventQueue.push({ id: 'sacrifice_reward', type: 'tick' });
+        if (synergyEngine.hasSynergy('cheater')) relicEventQueue.push({ id: 'cheater', type: 'tick' });
+
+        // Staggered combo flash — jedes Relic feuert 180ms nach dem vorherigen
+        relicEventQueue.forEach(({ id, type }, i) => {
+          setTimeout(() => type === 'flash' ? flashRelic(id) : tickRelic(id), i * 180);
+        });
 
         // Scholar-Synergy: XP-Schwelle 20% niedriger
         const scholarMult = synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1;
@@ -752,6 +700,7 @@ export default function Game({
         const baseBreakdown = [];
         if (timeBonus > 0) baseBreakdown.push({ label: 'Zeit-Bonus', icon: '⏱️', delta: timeBonus });
         if (effectiveStreakForBonus > 0) baseBreakdown.push({ label: `Streak ${effectiveStreakForBonus}x${effectiveStreakForBonus > streak.streak ? ' 👻' : ''}`, icon: '🔥', delta: streakBonus });
+        setComboAnimationDone(false);
         setScoreBreakdown({ total: totalPoints, items: [...baseBreakdown, ...perkBreakdown, ...extraBreakdown] });
 
         runLogger.logRound({
@@ -976,6 +925,7 @@ export default function Game({
   }, [cardLoader.currentPair]);
 
   const handleNextPair = useCallback(() => {
+    setComboAnimationDone(true); // Safety: unlock modals when player advances early
     setMessage("");
     setScoreBreakdown(null);
     const nextRound = currentRound + 1;
@@ -1226,6 +1176,7 @@ export default function Game({
     setScore(0);
     setMessage("");
     setScoreBreakdown(null);
+    setComboAnimationDone(true);
     setGameOver(false);
     setSelectedCard(null);
     setCorrectIndex(null);
@@ -1293,11 +1244,11 @@ export default function Game({
               {scoreGain && (
                 <motion.span
                   key={score}
-                  initial={{ opacity: 1, y: 0 }}
-                  animate={{ opacity: 0, y: -16 }}
+                  initial={{ opacity: 1, y: 0, scale: 1.3 }}
+                  animate={{ opacity: 0, y: -22, scale: 1 }}
                   exit={{}}
-                  transition={{ duration: 1.2, delay: 0.3, ease: 'easeOut' }}
-                  className="absolute left-0 top-full text-green-400 text-xs font-bold pointer-events-none whitespace-nowrap"
+                  transition={{ duration: 1.3, delay: 0.2, ease: 'easeOut' }}
+                  className="absolute left-0 top-full text-green-300 text-sm font-bold pointer-events-none whitespace-nowrap"
                 >
                   +{scoreGain.toLocaleString()}
                 </motion.span>
@@ -1323,11 +1274,11 @@ export default function Game({
                 {scoreGain && (
                   <motion.span
                     key={score}
-                    initial={{ opacity: 1, y: 0 }}
-                    animate={{ opacity: 0, y: -18 }}
+                    initial={{ opacity: 1, y: 0, scale: 1.4 }}
+                    animate={{ opacity: 0, y: -24, scale: 1 }}
                     exit={{}}
-                    transition={{ duration: 1.2, delay: 0.3, ease: 'easeOut' }}
-                    className="absolute left-0 top-full text-green-400 text-sm font-bold pointer-events-none"
+                    transition={{ duration: 1.3, delay: 0.2, ease: 'easeOut' }}
+                    className="absolute left-0 top-full text-green-300 text-base font-bold pointer-events-none"
                   >
                     +{scoreGain.toLocaleString()}
                   </motion.span>
@@ -1462,6 +1413,12 @@ export default function Game({
         />
       )}
 
+      <ScoreComboReveal
+        breakdown={scoreBreakdown}
+        visible={selectedCard !== null && !gameOver}
+        onComplete={() => setComboAnimationDone(true)}
+      />
+
       {/* Keyboard Hints */}
       {!gameOver && !perkSystem.showPerkSelection && (
         <div className="text-gray-400 hidden sm:block text-sm mt-2 text-center">
@@ -1524,7 +1481,7 @@ export default function Game({
       </AnimatePresence>
 
       <LevelUpModal
-        show={level.showLevelUp && !gameOver}
+        show={level.showLevelUp && !gameOver && comboAnimationDone}
         newLevel={level.level}
         activeRelics={relicSystem.activeRelics}
         activePerks={perkSystem.activePerks}
@@ -1602,16 +1559,12 @@ export default function Game({
         </GameOverScreen>
       )}
 
+      {/* Wrong-answer message — only shown when no score breakdown (correct answers use ScoreComboReveal) */}
       <div className="w-full sm:min-h-[2.5rem] pt-1 pb-2 sm:pb-0 hidden sm:flex items-center sm:justify-center">
         {message && !gameOver && !scoreBreakdown && (
           <p className="text-base sm:text-xl transition-all duration-500 sm:text-center">{message}</p>
         )}
       </div>
-      {/* ScoreTooltip handles its own mobile (fixed top-left) and desktop rendering */}
-      {message && !gameOver && scoreBreakdown && (
-        <ScoreTooltip message={message} breakdown={scoreBreakdown} />
-      )}
-      {/* Mobile: plain message when no breakdown */}
       {message && !gameOver && !scoreBreakdown && (
         <p className="sm:hidden text-base transition-all duration-500 pt-1 pb-2 pl-14">{message}</p>
       )}
