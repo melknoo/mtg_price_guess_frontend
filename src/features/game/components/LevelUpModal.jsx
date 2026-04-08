@@ -56,7 +56,7 @@ function generateNormalOptions(activeRelics, activePerks, hasForture = false) {
   const itemCandidates = Object.values(PERKS).filter(p =>
     p.type !== 'filter' &&
     !p.isExtended &&
-    !activePerkIds.has(p.id)
+    (!activePerkIds.has(p.id) || p.stackable)
   );
   const perkWeights = {
     [PERK_RARITY.COMMON]: 50,
@@ -116,10 +116,13 @@ function generateNormalOptions(activeRelics, activePerks, hasForture = false) {
 }
 
 // Berechnet welche neuen Synergien durch die Wahl dieser Option aktiviert würden
-function getNewSynergiesForOption(option, activeRelics, activePerks, activeSynergies) {
+function getNewSynergiesForOption(option, activeRelics, activePerks, activeSynergies, maxSynergySlots) {
+  const availableSlots = Math.max(0, maxSynergySlots - activeSynergies.length);
+  if (availableSlots === 0) return [];
+
   const activeIds = new Set(activeSynergies.map(s => s.id));
 
-  // Aktuelle Tag-Counts
+  // Tag-Counts OHNE die neue Option
   const tagCounts = {};
   [...activeRelics, ...activePerks].forEach(item => {
     (item.tags || []).forEach(tag => {
@@ -127,19 +130,29 @@ function getNewSynergiesForOption(option, activeRelics, activePerks, activeSyner
     });
   });
 
-  // Tags der neuen Option dazuzählen
+  // Tag-Counts MIT der neuen Option
   const newTagCounts = { ...tagCounts };
   (option.tags || []).forEach(tag => {
     newTagCounts[tag] = (newTagCounts[tag] || 0) + 1;
   });
 
-  // Synergien die nach der Wahl neu erfüllt wären
-  return Object.values(SYNERGIES).filter(synergy => {
+  // Nur Synergien zeigen die:
+  // 1. Noch nicht aktiv sind
+  // 2. Ohne die neue Option NICHT erfüllt waren (sonst wären sie schon im Engine-Queue)
+  // 3. Mit der neuen Option erfüllt wären (die Option ist der ausschlaggebende Pick)
+  const newSynergies = Object.values(SYNERGIES).filter(synergy => {
     if (activeIds.has(synergy.id)) return false;
+    const alreadySatisfied = Object.entries(synergy.requiredTags).every(
+      ([tag, req]) => (tagCounts[tag] || 0) >= req
+    );
+    if (alreadySatisfied) return false;
     return Object.entries(synergy.requiredTags).every(
-      ([tag, required]) => (newTagCounts[tag] || 0) >= required
+      ([tag, req]) => (newTagCounts[tag] || 0) >= req
     );
   });
+
+  // Auf freie Slots begrenzen
+  return newSynergies.slice(0, availableSlots);
 }
 
 // Berechnet dynamischen Bonus-Hinweis für bestimmte Relics
@@ -168,7 +181,11 @@ const CATEGORY_STYLES = {
 };
 
 
-export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], onSelect, forceRelicMode = false, onSkip, onReroll, lives = 3, rerollKey = 0 }) {
+// RELIC_FREE_CAP: ab dieser Anzahl aktiver Relics kostet jedes weitere 25 Gold
+const RELIC_FREE_CAP = 6;
+const RELIC_EXTRA_COST = 25;
+
+export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], maxSynergySlots = 3, onSelect, forceRelicMode = false, onSkip, onReroll, gold = 0, rerollKey = 0 }) {
   const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
@@ -258,23 +275,26 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
               {options.map((option, index) => {
                 const rStyle = RARITY_STYLES[option.rarity] ?? RARITY_STYLES.common;
                 const cStyle = CATEGORY_STYLES[option.category] ?? CATEGORY_STYLES.item;
-                const newSynergies = getNewSynergiesForOption(option, activeRelics ?? [], activePerks ?? [], activeSynergies);
+                const newSynergies = getNewSynergiesForOption(option, activeRelics ?? [], activePerks ?? [], activeSynergies, maxSynergySlots);
+                const isRelicOverCap = option.category === 'relic' && (activeRelics ?? []).length >= RELIC_FREE_CAP;
+                const cantAfford = isRelicOverCap && gold < RELIC_EXTRA_COST;
                 return (
                   <motion.div
                     key={option.id + option.category}
                     initial={{ y: 30, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
+                    animate={{ y: 0, opacity: cantAfford ? 0.5 : 1 }}
                     transition={{ delay: 0.08 * index }}
-                    whileHover={{ scale: 1.02, y: -4 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => onSelect(option)}
+                    whileHover={cantAfford ? {} : { scale: 1.02, y: -4 }}
+                    whileTap={cantAfford ? {} : { scale: 0.97 }}
+                    onClick={() => !cantAfford && onSelect(option)}
                     className={`
-                      relative cursor-pointer group overflow-hidden pixel-scanlines
+                      relative group overflow-hidden pixel-scanlines
+                      ${cantAfford ? 'cursor-not-allowed' : 'cursor-pointer'}
                       ${rStyle.gradient}
                       ${cStyle.borderWidth} ${isRelicMilestone ? 'border-amber-400' : rStyle.borderColor} rounded-sm
                       p-3 sm:p-6
                       shadow-pixel transition-all duration-200
-                      ${rStyle.glow}
+                      ${cantAfford ? '' : rStyle.glow}
                     `}
                   >
                     {/* Relic: diagonales Muster-Overlay */}
@@ -326,7 +346,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                         {getOptionDynamicHint(option, (activeRelics ?? []).length) && (
                           <p className="text-amber-300 text-xs font-semibold mt-0.5">{getOptionDynamicHint(option, (activeRelics ?? []).length)}</p>
                         )}
-                        <div className="mt-1">
+                        <div className="mt-1 flex flex-wrap gap-1">
                           {option.category === 'item' && option.duration > 0 && (
                             <span className="inline-flex items-center gap-1 text-yellow-300 text-xs"><GameIcon name="time" color="amber" size={11} /> {option.duration} Runden</span>
                           )}
@@ -335,6 +355,11 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                           )}
                           {option.category === 'relic' && (
                             <span className="inline-flex items-center gap-1 text-amber-300 text-xs"><GameIcon name="ring" color="amber" size={11} /> Ganzer Run</span>
+                          )}
+                          {option.category === 'relic' && (activeRelics ?? []).length >= RELIC_FREE_CAP && (
+                            <span className={`inline-flex items-center gap-0.5 text-xs font-bold px-1 rounded-sm border ${gold >= RELIC_EXTRA_COST ? 'text-yellow-300 border-yellow-600 bg-yellow-900/30' : 'text-red-400 border-red-700 bg-red-900/30'}`}>
+                              <GameIcon name="coin" color={gold >= RELIC_EXTRA_COST ? 'amber' : 'red'} size={10} /> {RELIC_EXTRA_COST}
+                            </span>
                           )}
                         </div>
                         {newSynergies.length > 0 && (
@@ -394,8 +419,14 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                         </div>
                       )}
                       {option.category === 'relic' && (
-                        <div className="bg-black/30 rounded-sm p-2 text-center border border-white/10">
-                          <span className="inline-flex items-center gap-1 text-amber-300 text-xs font-semibold"><GameIcon name="ring" color="amber" size={11} /> Permanent (ganzer Run)</span>
+                        <div className="bg-black/30 rounded-sm p-2 text-center border border-white/10 flex flex-col gap-1">
+                          <span className="inline-flex items-center justify-center gap-1 text-amber-300 text-xs font-semibold"><GameIcon name="ring" color="amber" size={11} /> Permanent (ganzer Run)</span>
+                          {(activeRelics ?? []).length >= RELIC_FREE_CAP && (
+                            <span className={`inline-flex items-center justify-center gap-1 text-xs font-bold ${gold >= RELIC_EXTRA_COST ? 'text-yellow-300' : 'text-red-400'}`}>
+                              <GameIcon name="coin" color={gold >= RELIC_EXTRA_COST ? 'amber' : 'red'} size={11} />
+                              {gold >= RELIC_EXTRA_COST ? `Costs ${RELIC_EXTRA_COST} Gold` : `Need ${RELIC_EXTRA_COST} Gold (have ${gold})`}
+                            </span>
+                          )}
                         </div>
                       )}
                       {newSynergies.length > 0 && (
@@ -444,17 +475,17 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                 {onReroll && (
                   <button
                     onClick={onReroll}
-                    disabled={lives <= 1}
+                    disabled={gold < 15}
                     className={`flex items-center gap-2 px-4 py-2 rounded-sm border-2 text-sm transition shadow-pixel-sm
-                      ${lives <= 1
+                      ${gold < 15
                         ? 'bg-[#111827] border-gray-700 text-gray-600 cursor-not-allowed'
-                        : 'bg-red-950 border-red-700 text-red-300 hover:bg-red-900 hover:text-red-200'
+                        : 'bg-yellow-950 border-yellow-700 text-yellow-300 hover:bg-yellow-900 hover:text-yellow-200'
                       }`}
                   >
-                    <GameIcon name="reset" color={lives <= 1 ? 'gray' : 'red'} size={14} />
+                    <GameIcon name="reset" color={gold < 15 ? 'gray' : 'amber'} size={14} />
                     Reroll
                     <span className="flex items-center gap-1 text-xs opacity-80">
-                      (<GameIcon name="heart" color={lives <= 1 ? 'gray' : 'red'} size={11} /> 1)
+                      (<GameIcon name="coin" color={gold < 15 ? 'gray' : 'amber'} size={11} /> 15)
                     </span>
                   </button>
                 )}
