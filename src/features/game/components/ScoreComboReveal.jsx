@@ -145,58 +145,70 @@ export default function ScoreComboReveal({ breakdown, visible, onComplete }) {
     document.body
   );
 
-  return (
+  const comboItemsJSX = (
     <>
-      {/* Combo item feed — compact inline strip, capped height so it never pushes Next button off screen */}
-      <div className="w-full max-w-2xl mt-1 mb-0.5">
-        <div className="flex flex-col gap-px max-h-[120px] overflow-hidden">
-          <AnimatePresence initial={false}>
-            {visibleItems.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ x: 28, opacity: 0, scale: 0.96 }}
-                animate={{ x: 0, opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 450, damping: 22 }}
-                className={`flex items-center justify-between px-2 py-px rounded-sm border text-xs
-                  ${item.delta === 0 && !item.isMult
-                    ? 'bg-[#0d1320]/40 border-[#2d3a5c]/30'
-                    : 'bg-[#111827]/70 border-[#2d3a5c]/70'
-                  }`}
-              >
-                <span className={item.delta === 0 && !item.isMult ? 'text-gray-600' : 'text-gray-300'}>
-                  {item.isMult
-                    ? <span className="text-blue-400 font-bold mr-0.5">×</span>
-                    : <span className="text-green-500/60 mr-0.5">+</span>
-                  }
-                  {item.icon} {item.label}
-                </span>
-                <span className={
-                  item.delta === 0 ? 'text-gray-600'
-                  : item.isMult ? 'text-blue-300 font-semibold'
-                  : 'text-green-400 font-semibold'
-                }>
-                  {item.delta === 0 ? '—' : item.isMult ? `×${item.delta}` : `+${item.delta}`}
-                </span>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-        {/* Total-Zeile — erscheint nach den Items */}
-        <AnimatePresence>
-          {showTotalLine && (
+      <div className="flex flex-col gap-px max-h-[120px] overflow-hidden">
+        <AnimatePresence initial={false}>
+          {visibleItems.map((item, i) => (
             <motion.div
-              initial={{ x: 28, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
+              key={i}
+              initial={{ x: 28, opacity: 0, scale: 0.96 }}
+              animate={{ x: 0, opacity: 1, scale: 1 }}
               transition={{ type: 'spring', stiffness: 450, damping: 22 }}
-              className="flex items-center justify-between px-2 py-px mt-px rounded-sm border border-amber-600/50 bg-amber-900/20 text-xs"
+              className={`flex items-center justify-between px-2 py-px rounded-sm border text-xs
+                ${item.delta === 0 && !item.isMult
+                  ? 'bg-[#0d1320]/40 border-[#2d3a5c]/30'
+                  : 'bg-[#111827]/70 border-[#2d3a5c]/70'
+                }`}
             >
-              <span className="text-amber-300 font-bold">= Total</span>
-              <span className="text-amber-300 font-bold">+{breakdown.total}</span>
+              <span className={item.delta === 0 && !item.isMult ? 'text-gray-600' : 'text-gray-300'}>
+                {item.isMult
+                  ? <span className="text-blue-400 font-bold mr-0.5">×</span>
+                  : <span className="text-green-500/60 mr-0.5">+</span>
+                }
+                {item.icon} {item.label}
+              </span>
+              <span className={
+                item.delta === 0 ? 'text-gray-600'
+                : item.isMult ? 'text-blue-300 font-semibold'
+                : 'text-green-400 font-semibold'
+              }>
+                {item.delta === 0 ? '—' : item.isMult ? `×${item.delta}` : `+${item.delta}`}
+              </span>
             </motion.div>
-          )}
+          ))}
         </AnimatePresence>
       </div>
+      {/* Total-Zeile */}
+      <AnimatePresence>
+        {showTotalLine && (
+          <motion.div
+            initial={{ x: 28, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 450, damping: 22 }}
+            className="flex items-center justify-between px-2 py-px mt-px rounded-sm border border-amber-600/50 bg-amber-900/20 text-xs"
+          >
+            <span className="text-amber-300 font-bold">= Total</span>
+            <span className="text-amber-300 font-bold">+{breakdown.total}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
 
+  // Mobile: portal so cards never shift
+  const mobilePortal = createPortal(
+    <div className="sm:hidden fixed bottom-[88px] left-0 right-0 flex flex-col items-center pointer-events-none z-40 px-4">
+      <div className="w-full max-w-2xl">{comboItemsJSX}</div>
+    </div>,
+    document.body
+  );
+
+  return (
+    <>
+      {mobilePortal}
+      {/* Desktop: inline, rendered by parent in the bottom row */}
+      <div className="hidden sm:block w-full">{comboItemsJSX}</div>
       {totalOverlay}
     </>
   );

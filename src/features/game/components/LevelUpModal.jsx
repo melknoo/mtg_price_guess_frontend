@@ -240,7 +240,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
             className="max-w-5xl w-full p-3 sm:p-6 my-auto"
           >
             {/* Header */}
-            <div className="text-center mb-3 sm:mb-8">
+            <div className="text-center mb-3 sm:mb-8 bg-black/50 rounded-xl py-3 px-4 backdrop-blur-sm">
               <motion.div
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}

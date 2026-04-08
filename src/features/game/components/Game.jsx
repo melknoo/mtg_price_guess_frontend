@@ -1413,53 +1413,61 @@ export default function Game({
         />
       )}
 
-      <ScoreComboReveal
-        breakdown={scoreBreakdown}
-        visible={selectedCard !== null && !gameOver}
-        onComplete={() => setComboAnimationDone(true)}
-      />
-
-      {/* Keyboard Hints */}
+      {/* Keyboard Hints — desktop only, centered below cards */}
       {!gameOver && !perkSystem.showPerkSelection && (
-        <div className="text-gray-400 hidden sm:block text-sm mt-2 text-center">
+        <div className="hidden sm:flex w-full max-w-lg sm:max-w-2xl justify-center mt-2 mb-1">
           {selectedCard === null && !showPrices ? (
-            <span>⌨️ Press <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">1</kbd>/<kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">A</kbd> for left, <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">2</kbd>/<kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">D</kbd> for right</span>
+            <span className="text-gray-400 text-sm">⌨️ Press <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">1</kbd>/<kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">A</kbd> for left, <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">2</kbd>/<kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">D</kbd> for right</span>
           ) : selectedCard !== null ? (
-            <span>⌨️ Press <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">Space</kbd> or <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">Enter</kbd> to continue</span>
+            <span className="text-gray-400 text-sm">⌨️ Press <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">Space</kbd> or <kbd className="bg-[#111827] border border-[#2d3a5c] px-2 py-0.5 rounded-sm mx-1">Enter</kbd> to continue</span>
           ) : null}
         </div>
       )}
 
-      <div className="sm:mt-6 mt-auto w-full flex gap-4 items-center justify-center pb-1 sm:pb-2 pl-14 sm:pl-0">
-        {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
-          <button
-            onClick={handleSkipCard}
-            className="bg-yellow-600 text-lg font-semibold hover:bg-yellow-500 active:scale-95 text-white px-6 py-4 rounded-sm transition shadow-pixel border-2 border-yellow-400"
-            title="Press S to skip"
-          >
-            ⭐ Skip{(() => { const sc = perkSystem.activePerks.find(p => p.id === 'skip_card'); return sc && sc.value > 1 ? ` (×${sc.value})` : ''; })()}
-          </button>
-        )}
+      {/* Bottom row: score breakdown left + buttons right (desktop) / stacked (mobile) */}
+      <div className="mt-1 w-full max-w-lg sm:max-w-2xl flex flex-col sm:flex-row sm:items-end sm:gap-4 gap-2 pb-1 sm:pb-2 pl-14 sm:pl-0">
 
-        {selectedCard !== null && !gameOver && (
-          <button
-            onClick={handleNextPair}
-            disabled={perkSystem.showPerkSelection || level.showLevelUp}
-            className={`text-xl sm:text-2xl w-full sm:w-auto sm:min-w-[250px] font-bold text-white
-              px-6 py-5 sm:px-6 sm:py-6
-              [@media(max-height:500px)]:py-2 [@media(max-height:500px)]:text-base
-              rounded-sm
-              border-2
-              transition-all duration-150
-              active:scale-[0.97]
-              ${(perkSystem.showPerkSelection || level.showLevelUp)
-                ? "bg-amber-700/50 border-amber-800 cursor-not-allowed shadow-none"
-                : "bg-amber-600 border-amber-800 hover:bg-amber-500 shadow-pixel"
-              }`}
-          >
-            Next →
-          </button>
-        )}
+        {/* Score breakdown — desktop: inline left, mobile: via portal inside ScoreComboReveal */}
+        <div className={scoreBreakdown ? 'flex-1 min-w-0' : ''}>
+          <ScoreComboReveal
+            breakdown={scoreBreakdown}
+            visible={selectedCard !== null && !gameOver}
+            onComplete={() => setComboAnimationDone(true)}
+          />
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-4 items-center justify-center sm:justify-end sm:shrink-0">
+          {perkSystem.hasPerk("skip_card") && selectedCard === null && !gameOver && !showPrices && (
+            <button
+              onClick={handleSkipCard}
+              className="bg-yellow-600 text-lg font-semibold hover:bg-yellow-500 active:scale-95 text-white px-6 py-4 rounded-sm transition shadow-pixel border-2 border-yellow-400"
+              title="Press S to skip"
+            >
+              ⭐ Skip{(() => { const sc = perkSystem.activePerks.find(p => p.id === 'skip_card'); return sc && sc.value > 1 ? ` (×${sc.value})` : ''; })()}
+            </button>
+          )}
+
+          {selectedCard !== null && !gameOver && (
+            <button
+              onClick={handleNextPair}
+              disabled={perkSystem.showPerkSelection || level.showLevelUp}
+              className={`text-xl sm:text-2xl w-full sm:w-auto sm:min-w-[200px] font-bold text-white
+                px-6 py-5 sm:px-6 sm:py-6
+                [@media(max-height:500px)]:py-2 [@media(max-height:500px)]:text-base
+                rounded-sm
+                border-2
+                transition-all duration-150
+                active:scale-[0.97]
+                ${(perkSystem.showPerkSelection || level.showLevelUp)
+                  ? "bg-amber-700/50 border-amber-800 cursor-not-allowed shadow-none"
+                  : "bg-amber-600 border-amber-800 hover:bg-amber-500 shadow-pixel"
+                }`}
+            >
+              Next →
+            </button>
+          )}
+        </div>
       </div>
 
       <FilterOddsModal
