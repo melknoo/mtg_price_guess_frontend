@@ -7,7 +7,8 @@ export const useLevel = () => {
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
   const [xpToNextLevel, setXpToNextLevel] = useState(getXpToNextLevel(1));
-  const [showLevelUp, setShowLevelUp] = useState(false);
+  // Anzahl ausstehender Level-Up-Modals (je Level-Up +1, je Dismiss -1)
+  const [pendingLevelUps, setPendingLevelUps] = useState(0);
 
   // Fügt XP hinzu; gibt true zurück wenn Level-Up passiert ist
   // thresholdMultiplier: Scholar-Synergy senkt die Schwelle (z.B. 0.8 = 20% weniger XP nötig)
@@ -19,6 +20,7 @@ export const useLevel = () => {
     setXp((prevXp) => {
       let newXp = prevXp + amount;
       let newLevel = level;
+      let levelsGained = 0;
       let threshold = Math.floor(getXpToNextLevel(newLevel) * thresholdMultiplier);
 
       // Mehrere Level-Ups hintereinander möglich (z.B. bei hohem XP-Boost)
@@ -26,13 +28,14 @@ export const useLevel = () => {
         newXp -= threshold;
         newLevel++;
         threshold = Math.floor(getXpToNextLevel(newLevel) * thresholdMultiplier);
-        didLevelUp = true;
+        levelsGained++;
       }
 
-      if (didLevelUp) {
+      if (levelsGained > 0) {
         setLevel(newLevel);
         setXpToNextLevel(getXpToNextLevel(newLevel));
-        setShowLevelUp(true);
+        setPendingLevelUps(prev => prev + levelsGained);
+        didLevelUp = true;
       }
 
       return newXp;
@@ -42,7 +45,7 @@ export const useLevel = () => {
   }, [level]);
 
   const dismissLevelUp = useCallback(() => {
-    setShowLevelUp(false);
+    setPendingLevelUps(prev => Math.max(0, prev - 1));
   }, []);
 
   const setLevelDirect = useCallback((newLevel) => {
@@ -50,21 +53,22 @@ export const useLevel = () => {
     setLevel(lvl);
     setXp(0);
     setXpToNextLevel(getXpToNextLevel(lvl));
-    setShowLevelUp(false);
+    setPendingLevelUps(0);
   }, []);
 
   const reset = useCallback(() => {
     setXp(0);
     setLevel(1);
     setXpToNextLevel(getXpToNextLevel(1));
-    setShowLevelUp(false);
+    setPendingLevelUps(0);
   }, []);
 
   return {
     xp,
     level,
     xpToNextLevel,
-    showLevelUp,
+    showLevelUp: pendingLevelUps > 0,
+    pendingLevelUps,
     addXP,
     dismissLevelUp,
     setLevelDirect,

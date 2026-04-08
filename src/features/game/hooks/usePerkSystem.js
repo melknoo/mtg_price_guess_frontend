@@ -19,11 +19,6 @@ export const usePerkSystem = () => {
     // including perks made permanent by Parasite (duration changed at pick-time).
     const excludedIds = new Set(selectedPermanentPerks);
 
-    // IDs of stackable perks that are currently active (can re-appear in pool)
-    const stackableActiveIds = new Set(
-      activePerks.filter(p => p.stackable).map(p => p.id)
-    );
-
     // Exclude base perks when their extended version is already active
     activePerks.forEach(p => {
       if (p.basePerkId) excludedIds.add(p.basePerkId);
@@ -36,10 +31,10 @@ export const usePerkSystem = () => {
         .map(p => p.id)
     );
 
-    // Get active filter types to avoid duplicate filter categories
-    const activeFilterTypes = new Set(
+    // Only track non-stackable (exclude) filter types — stackable boost perks can always appear
+    const activeExcludeFilterTypes = new Set(
       activePerks
-        .filter(p => p.type === PERK_TYPES.FILTER)
+        .filter(p => p.type === PERK_TYPES.FILTER && !p.stackable)
         .map(p => p.filterType)
     );
 
@@ -49,8 +44,7 @@ export const usePerkSystem = () => {
         usedIds,
         excludedIds,
         activeConsumableIds,
-        activeFilterTypes,
-        stackableActiveIds
+        activeExcludeFilterTypes
       );
       if (perk) {
         selectedPerks.push(perk);
@@ -76,17 +70,16 @@ export const usePerkSystem = () => {
     return selectedPerks;
   }, [selectedPermanentPerks, activePerks]);
 
-  const getWeightedRandomPerk = (perks, excludeIds, permanentExcludeIds, activeConsumableIds, activeFilterTypes, stackableActiveIds = new Set()) => {
+  const getWeightedRandomPerk = (perks, excludeIds, permanentExcludeIds, activeConsumableIds, activeExcludeFilterTypes) => {
     const availablePerks = perks.filter(p => {
       // Basic exclusions
       if (excludeIds.has(p.id)) return false;
       if (permanentExcludeIds.has(p.id)) return false;
       if (activeConsumableIds.has(p.id)) return false;
 
-      // Don't show filter perks if that filter type is already active —
-      // exception: stackable perks that are already active can re-appear
-      if (p.type === PERK_TYPES.FILTER && activeFilterTypes.has(p.filterType)) {
-        if (p.stackable && stackableActiveIds.has(p.id)) return true;
+      // Block non-stackable (exclude) filter perks if same filterType is already active
+      // Stackable boost perks can always appear
+      if (p.type === PERK_TYPES.FILTER && !p.stackable && activeExcludeFilterTypes.has(p.filterType)) {
         return false;
       }
 

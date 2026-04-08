@@ -54,7 +54,6 @@ function generateNormalOptions(activeRelics, activePerks, hasForture = false) {
 
   const activePerkIds = new Set(activePerks.map(p => p.id));
   const itemCandidates = Object.values(PERKS).filter(p =>
-    p.type !== 'filter' &&
     !p.isExtended &&
     (!activePerkIds.has(p.id) || p.stackable)
   );

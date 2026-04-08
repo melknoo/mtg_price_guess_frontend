@@ -1052,7 +1052,7 @@ export default function Game({
   // Der Spieler klickt danach ganz normal "Next" → handleNextPair läuft sauber durch
   // (Round-Counter, Achievements, Perk-Selektion alle korrekt).
   // Verhindert auch dass beide Modals gleichzeitig aktiv sind.
-  const handleLevelUpSelect = useCallback((pick) => {
+  const handleLevelUpSelect = useCallback(async (pick) => {
     console.log('[LevelUp]', pick.category.toUpperCase(), pick.name, `(${pick.id})`, pick.tags ?? []);
     const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
     const hasUpgradeMaster = relicSystem.hasRelic('upgrade_master');
@@ -1085,7 +1085,27 @@ export default function Game({
       runLogger.logRelicSelected({ level: level.level, relic_id: pick.id, relic_name: pick.name });
       if (pick.effect === 'glass_cannon') setLives(1);
     } else if (pick.category === 'item') {
-      perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
+      // Hard-Filter (Exclude): Karten neu vom Backend laden, genau wie in handlePerkSelect
+      if (pick.type === 'filter' && !pick.isBoost) {
+        const currentFilterPerks = perkSystem.getActiveFilterPerks();
+        const otherFilterPerks = currentFilterPerks.filter(p => p.filterType !== pick.filterType && !p.isBoost);
+        const allHardFilterPerks = [...otherFilterPerks, pick];
+        const filters = {};
+        allHardFilterPerks.forEach(filterPerk => {
+          switch (filterPerk.effect) {
+            case FILTER_EFFECTS.COLOR_EXCLUDE:   filters.color_exclude = filterPerk.value; break;
+            case FILTER_EFFECTS.CMC_EXCLUDE:     filters.cmc_exclude = filterPerk.value; break;
+            case FILTER_EFFECTS.RARITY_EXCLUDE:  filters.rarity_exclude = filterPerk.value; break;
+            case FILTER_EFFECTS.TYPE_EXCLUDE:    filters.type_exclude = filterPerk.value; break;
+            default: break;
+          }
+        });
+        const newCards = await cardLoader.preloadCards(filters);
+        perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
+        await cardLoader.setNextPair(false, newCards);
+      } else {
+        perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
+      }
       achievements.trackPerkCollected();
       runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'level_up', offered_ids: [] });
     } else if (pick.category === 'upgrade') {
