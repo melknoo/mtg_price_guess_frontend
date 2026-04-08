@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 
-// XP-Kurve: Level N braucht 50 + (N * 25) XP
-const getXpToNextLevel = (level) => 50 + level * 25;
+// XP-Kurve: Level 1→2 = 30 XP (ca. 3 richtige Antworten), dann +25 pro Level
+const getXpToNextLevel = (level) => 30 + (level - 1) * 25;
 
 export const useLevel = () => {
   const [xp, setXp] = useState(0);

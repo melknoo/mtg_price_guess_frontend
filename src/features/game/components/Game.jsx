@@ -870,6 +870,11 @@ export default function Game({
             breakdown: [],
           });
 
+          // 25% XP auch bei falscher Antwort
+          const wrongXP = Math.round(10 * 0.25); // 25% des Basis-XP (10)
+          const scholarMultWrong = synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1;
+          level.addXP(wrongXP, scholarMultWrong);
+
           if (remainingLives <= 0) {
             setGameOver(true);
             level.dismissLevelUp();
@@ -980,13 +985,6 @@ export default function Game({
     if (nextRound > 0 && nextRound % 10 === 0) {
       // Alle 10 Runden: Relic-Auswahl
       setShowRelicSelection(true);
-    } else if (nextRound > 0 && nextRound % 5 === 0) {
-      // Alle 5 Runden (außer Relic-Runden): Perk-Auswahl
-      if (relicSystem.hasRelic('no_perks')) {
-        cardLoader.setNextPair();
-      } else {
-        perkSystem.triggerPerkSelection();
-      }
     } else {
       cardLoader.setNextPair();
     }
