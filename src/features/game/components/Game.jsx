@@ -1113,7 +1113,7 @@ export default function Game({
       runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'upgrade', offered_ids: [] });
     }
     level.dismissLevelUp();
-  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold]);
+  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold, cardLoader]);
 
   const handleRelicRoundSelect = useCallback((pick) => {
     console.log('[RelicRound]', pick.name, `(${pick.id})`);
