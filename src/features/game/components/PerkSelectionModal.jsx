@@ -65,7 +65,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     onClick={() => setIsMinimized((prev) => !prev)}
-                    className="fixed bottom-12 right-4 z-[60] bg-black/80 text-white text-sm sm:text-2xl px-4 py-2 rounded-sm border-2 border-[#2d3a5c] shadow-pixel hover:bg-black/70 transition"
+                    className="fixed bottom-12 right-4 z-[60] bg-slate-700 text-white text-sm sm:text-2xl px-4 py-2 rounded-sm border-2 border-[#2d3a5c] shadow-pixel hover:bg-slate-600 transition"
                 >
                     {isMinimized ? 'Show Perks' : 'Hide Perks'}
                 </motion.button>
@@ -77,7 +77,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/75 flex items-start justify-center z-50 overflow-y-auto"
+                        className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 overflow-y-auto"
                     >
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -87,7 +87,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                         >
                             <button
                                 onClick={() => setIsMinimized(true)}
-                                className="absolute top-0 left-3 sm:left-0 sm:-top-7 bg-black/70 text-white px-3 py-1 text-sm rounded-sm border-2 border-[#2d3a5c] shadow-pixel-sm hover:bg-black/60 transition"
+                                className="absolute top-0 left-3 sm:left-0 sm:-top-7 bg-slate-700 text-white px-3 py-1 text-sm rounded-sm border-2 border-[#2d3a5c] shadow-pixel-sm hover:bg-slate-600 transition"
                             >
                                 Minimize
                             </button>
@@ -235,7 +235,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                 {onSkip && (
                                     <button
                                         onClick={onSkip}
-                                        className="flex items-center gap-2 px-4 py-2 rounded-sm bg-[#111827] border-2 border-[#2d3a5c] text-gray-300 text-sm hover:bg-[#1e293b] hover:text-white transition shadow-pixel-sm"
+                                        className="flex items-center gap-2 px-4 py-2 rounded-sm bg-slate-600 border-2 border-[#2d3a5c] text-gray-200 text-sm hover:bg-slate-500 hover:text-white transition shadow-pixel-sm"
                                     >
                                         <GameIcon name="next" color="gray" size={14} />
                                         Skip
@@ -248,7 +248,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                         className={`flex items-center gap-2 px-4 py-2 rounded-sm border-2 text-sm transition shadow-pixel-sm
                                             ${lives <= 1
                                                 ? 'bg-[#111827] border-gray-700 text-gray-600 cursor-not-allowed'
-                                                : 'bg-red-950 border-red-700 text-red-300 hover:bg-red-900 hover:text-red-200'
+                                                : 'bg-red-700 border-red-400 text-red-100 hover:bg-red-600 hover:text-white'
                                             }`}
                                     >
                                         <GameIcon name="reset" color={lives <= 1 ? 'gray' : 'red'} size={14} />

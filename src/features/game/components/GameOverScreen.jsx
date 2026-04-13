@@ -78,14 +78,14 @@ export default function GameOverScreen({
 
         <button
           onClick={onRestart}
-          className="w-full bg-emerald-700 hover:bg-emerald-600 border-2 border-emerald-400 px-6 py-3 rounded-sm text-white text-lg font-semibold transition shadow-pixel active:scale-95"
+          className="w-full bg-emerald-600 hover:bg-emerald-500 border-2 border-emerald-400 px-6 py-3 rounded-sm text-white text-lg font-semibold transition shadow-pixel active:scale-95"
         >
           Restart
         </button>
 
         <button
           onClick={onBack}
-          className="mt-3 w-full bg-[#111827] hover:bg-[#1e293b] border-2 border-[#2d3a5c] px-6 py-3 rounded-sm text-white/80 text-lg transition shadow-pixel-sm active:scale-95"
+          className="mt-3 w-full bg-slate-600 hover:bg-slate-500 border-2 border-[#2d3a5c] px-6 py-3 rounded-sm text-white text-lg transition shadow-pixel active:scale-95"
         >
           Back to Menu
         </button>
@@ -93,7 +93,7 @@ export default function GameOverScreen({
         {isGuest && !showRegister && (
           <button
             onClick={onShowRegister}
-            className="mt-3 w-full bg-amber-600 hover:bg-amber-500 border-2 border-amber-800 px-6 py-3 rounded-sm text-white text-lg font-semibold transition shadow-pixel active:scale-95"
+            className="mt-3 w-full bg-amber-500 hover:bg-amber-400 border-2 border-amber-700 px-6 py-3 rounded-sm text-white text-lg font-semibold transition shadow-pixel active:scale-95"
           >
             Register & Save Score
           </button>

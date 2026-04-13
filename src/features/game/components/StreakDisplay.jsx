@@ -22,7 +22,7 @@ export default function StreakDisplay({ streak, bestStreak, color, streakBonus }
           <span>{streak}</span>
         </motion.div>
         {bestStreak > 0 && (
-          <span className="text-sm sm:block hidden text-gray-300 ml-2">
+          <span className="text-sm sm:block hidden text-gray-700 ml-2">
             (Best: {bestStreak})
           </span>
         )}

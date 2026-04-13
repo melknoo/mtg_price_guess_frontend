@@ -219,7 +219,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => setIsMinimized(prev => !prev)}
-          className="fixed bottom-12 right-4 z-[60] bg-black/80 text-white text-sm px-4 py-2 rounded-sm border-2 border-[#2d3a5c] shadow-pixel hover:bg-black/70 transition"
+          className="fixed bottom-12 right-4 z-[60] bg-slate-700 text-white text-sm px-4 py-2 rounded-sm border-2 border-[#2d3a5c] shadow-pixel hover:bg-slate-600 transition"
         >
           {isMinimized ? 'Show Reward' : 'Hide Reward'}
         </motion.button>
@@ -230,7 +230,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className={`fixed inset-0 flex items-start justify-center z-50 overflow-y-auto ${isRelicMilestone ? 'bg-amber-950/75' : 'bg-black/75'}`}
+          className={`fixed inset-0 flex items-start justify-center z-50 overflow-y-auto ${isRelicMilestone ? 'bg-amber-950/60' : 'bg-black/40'}`}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -465,7 +465,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                 {onSkip && (
                   <button
                     onClick={onSkip}
-                    className="flex items-center gap-2 px-4 py-2 rounded-sm bg-[#111827] border-2 border-[#2d3a5c] text-gray-300 text-sm hover:bg-[#1e293b] hover:text-white transition shadow-pixel-sm"
+                    className="flex items-center gap-2 px-4 py-2 rounded-sm bg-slate-600 border-2 border-[#2d3a5c] text-gray-200 text-sm hover:bg-slate-500 hover:text-white transition shadow-pixel-sm"
                   >
                     <GameIcon name="next" color="gray" size={14} />
                     Skip
@@ -478,7 +478,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                     className={`flex items-center gap-2 px-4 py-2 rounded-sm border-2 text-sm transition shadow-pixel-sm
                       ${gold < 15
                         ? 'bg-[#111827] border-gray-700 text-gray-600 cursor-not-allowed'
-                        : 'bg-yellow-950 border-yellow-700 text-yellow-300 hover:bg-yellow-900 hover:text-yellow-200'
+                        : 'bg-yellow-700 border-yellow-500 text-yellow-100 hover:bg-yellow-600 hover:text-white'
                       }`}
                   >
                     <GameIcon name="reset" color={gold < 15 ? 'gray' : 'amber'} size={14} />

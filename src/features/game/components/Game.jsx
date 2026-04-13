@@ -1314,7 +1314,7 @@ export default function Game({
             <span className="text-amber-300 text-xs font-semibold">🎯 R{currentRound}</span>
           </div>
           <div className="relative min-w-0">
-            <span className="font-bold text-lg">Pts: {displayScore.toLocaleString()}</span>
+            <span className="font-bold text-lg text-gray-900">Pts: {displayScore.toLocaleString()}</span>
             <AnimatePresence>
               {scoreGain && (
                 <motion.span
@@ -1342,9 +1342,9 @@ export default function Game({
             </div>
           </div>
           <div className="flex flex-col sm:ml-3">
-            <p className="mb-2 text-lg">Your Highscore: {user.highscore}</p>
+            <p className="mb-2 text-lg text-gray-800">Your Highscore: {user.highscore}</p>
             <div className="relative mb-2">
-              <p className="font-bold text-2xl">Points: {displayScore.toLocaleString()}</p>
+              <p className="font-bold text-2xl text-gray-900">Points: {displayScore.toLocaleString()}</p>
               <AnimatePresence>
                 {scoreGain && (
                   <motion.span
@@ -1383,7 +1383,7 @@ export default function Game({
 
           {/* XP-Fortschrittsbalken */}
           <div className="flex-1">
-            <div className="flex justify-between text-xs text-gray-400 mb-1">
+            <div className="flex justify-between text-xs text-gray-600 mb-1">
               <span>XP</span>
               <span>{level.xp} / {level.xpToNextLevel}</span>
             </div>
@@ -1511,14 +1511,14 @@ export default function Game({
           />
           {/* Wrong answer banner */}
           {wrongData && !gameOver && !scoreBreakdown && (
-            <div className="flex items-center gap-3 px-3 py-2 rounded-sm border border-red-700/60 bg-red-950/40">
-              <span className="text-red-400 text-lg font-black shrink-0">✗</span>
+            <div className="flex items-center gap-3 px-3 py-2 rounded-sm border border-red-400/60 bg-red-100/70">
+              <span className="text-red-600 text-lg font-black shrink-0">✗</span>
               <div className="min-w-0">
-                <span className="text-red-300 text-xs uppercase tracking-widest font-bold block">Wrong!</span>
-                <span className="text-white text-sm font-semibold block">
-                  <span className="text-amber-300">{wrongData.name}</span>
-                  <span className="text-gray-400 font-normal"> was more expensive — </span>
-                  <span className="text-green-300 font-bold">{wrongData.price}</span>
+                <span className="text-red-700 text-xs uppercase tracking-widest font-bold block">Wrong!</span>
+                <span className="text-gray-900 text-sm font-semibold block">
+                  <span className="text-amber-700">{wrongData.name}</span>
+                  <span className="text-gray-600 font-normal"> was more expensive — </span>
+                  <span className="text-green-700 font-bold">{wrongData.price}</span>
                 </span>
               </div>
             </div>
@@ -1588,14 +1588,14 @@ export default function Game({
               suppressOverlay
             />
             {wrongData && !gameOver && !scoreBreakdown && (
-              <div className="flex items-center gap-3 px-3 py-2 rounded-sm border border-red-700/60 bg-red-950/90">
-                <span className="text-red-400 text-lg font-black shrink-0">✗</span>
+              <div className="flex items-center gap-3 px-3 py-2 rounded-sm border border-red-400/60 bg-red-100/70">
+                <span className="text-red-600 text-lg font-black shrink-0">✗</span>
                 <div className="min-w-0">
-                  <span className="text-red-300 text-xs uppercase tracking-widest font-bold block">Wrong!</span>
-                  <span className="text-white text-sm font-semibold block">
-                    <span className="text-amber-300">{wrongData.name}</span>
-                    <span className="text-gray-400 font-normal"> was more expensive — </span>
-                    <span className="text-green-300 font-bold">{wrongData.price}</span>
+                  <span className="text-red-700 text-xs uppercase tracking-widest font-bold block">Wrong!</span>
+                  <span className="text-gray-900 text-sm font-semibold block">
+                    <span className="text-amber-700">{wrongData.name}</span>
+                    <span className="text-gray-600 font-normal"> was more expensive — </span>
+                    <span className="text-green-700 font-bold">{wrongData.price}</span>
                   </span>
                 </div>
               </div>

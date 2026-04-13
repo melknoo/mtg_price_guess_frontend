@@ -107,7 +107,7 @@ function AppContent() {
 
   if (!user && screen === "forgot-password") {
     return (
-      <div className="min-h-[100dvh] bg-[#0a0e1a] text-white flex flex-col pt-safe">
+      <div className="min-h-[100dvh] app-bg text-white flex flex-col pt-safe">
         <div className="flex-1 flex items-center justify-center p-4">
           <ForgotPassword onBack={() => setScreen("login")} />
         </div>
@@ -119,7 +119,7 @@ function AppContent() {
 
   if (!user && screen === "reset-password" && resetToken) {
     return (
-      <div className="min-h-[100dvh] bg-[#0a0e1a] text-white flex flex-col pt-safe">
+      <div className="min-h-[100dvh] app-bg text-white flex flex-col pt-safe">
         <div className="flex-1 flex items-center justify-center p-4">
           <ResetPassword
             token={resetToken}
@@ -136,7 +136,7 @@ function AppContent() {
   // Public full leaderboard (accessible from login/register screen)
   if (!user && screen === "leaderboard") {
     return (
-      <div className="min-h-[100dvh] bg-[#0a0e1a] text-white flex flex-col pt-safe overflow-y-auto">
+      <div className="min-h-[100dvh] app-bg text-white flex flex-col pt-safe overflow-y-auto">
         <div className="flex-1 flex items-start justify-center p-4 py-8">
           <Leaderboard onBack={() => setScreen("login")} />
         </div>
@@ -148,7 +148,7 @@ function AppContent() {
 
   if (!user) {
     return (
-      <div className="min-h-[100dvh] bg-[#0a0e1a] text-white flex flex-col pt-safe overflow-y-auto">
+      <div className="min-h-[100dvh] app-bg text-white flex flex-col pt-safe overflow-y-auto">
         <div className="flex-1 flex items-start lg:items-center justify-center p-4 py-8">
           <div className="w-full max-w-4xl mx-auto flex flex-col lg:flex-row gap-8 items-start lg:items-center justify-center">
 
@@ -192,7 +192,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#0a0e1a] text-white flex flex-col pt-safe overflow-y-auto">
+    <div className="min-h-[100dvh] app-bg text-white flex flex-col pt-safe overflow-y-auto">
       {/* Header row — never overlaps content */}
       <div className="flex justify-end items-center gap-2 px-4 py-3 min-h-[56px] shrink-0">
         {(screen === "game" || screen === "daily-challenge") && (

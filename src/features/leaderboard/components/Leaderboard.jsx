@@ -46,34 +46,34 @@ export default function Leaderboard({ onBack, onShowFull, compact = false, mobil
   }
 
   return (
-    <div className={`text-white text-center ${compact ? "w-full" : "max-w-md mx-auto"}`}>
+    <div className={`text-gray-900 text-center ${compact ? "w-full" : "max-w-md mx-auto"}`}>
       <h2 className={`font-bold ${compact ? "text-xl mb-3" : "text-3xl mb-6"}`}>🏆 Leaderboard</h2>
 
       {players.length === 0 ? (
-        <p className="text-gray-400 py-4 text-sm">
+        <p className="text-gray-600 py-4 text-sm">
           No highscores yet. Be the first!
         </p>
       ) : (
-        <ol className="bg-white/10 border border-white/20 rounded-lg p-3">
+        <ol className="bg-black/10 border border-black/10 rounded-lg p-3">
           {(compact ? players.slice(0, mobileLimit) : players).map((player, index) => (
             <li
               key={index}
-              className={`flex items-center justify-between border-b border-white/10 last:border-none ${compact ? "py-1.5 text-sm" : "py-2"}`}
+              className={`flex items-center justify-between border-b border-black/10 last:border-none ${compact ? "py-1.5 text-sm" : "py-2"}`}
             >
               <span className="flex items-center gap-2">
-                <span className={`font-bold w-5 text-right shrink-0 ${index === 0 ? "text-amber-400" : index === 1 ? "text-slate-300" : index === 2 ? "text-amber-700" : "text-white/50"}`}>
+                <span className={`font-bold w-5 text-right shrink-0 ${index === 0 ? "text-amber-500" : index === 1 ? "text-slate-500" : index === 2 ? "text-amber-700" : "text-gray-500"}`}>
                   {index + 1}.
                 </span>
-                <span className="text-white/90">{player.username}</span>
+                <span className="text-gray-800">{player.username}</span>
               </span>
-              <span className="text-amber-400 font-semibold">{player.highscore.toLocaleString()}</span>
+              <span className="text-amber-600 font-semibold">{player.highscore.toLocaleString()}</span>
             </li>
           ))}
           {compact && players.length > mobileLimit && (
             <li className="pt-2 text-center">
               <button
                 onClick={onShowFull}
-                className="text-xs text-white/40 hover:text-amber-400 transition-colors cursor-pointer"
+                className="text-xs text-gray-500 hover:text-amber-600 transition-colors cursor-pointer"
               >
                 +{players.length - mobileLimit} more · see full leaderboard
               </button>

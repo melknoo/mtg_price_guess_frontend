@@ -121,7 +121,7 @@ export default function ScoreComboReveal({ breakdown, visible, onComplete, suppr
           transition={tier.transition}
           className="fixed inset-0 flex flex-col items-center justify-center select-none pointer-events-none z-[55]"
         >
-          <div className="flex flex-col items-center bg-[#070d1a]/80 border-2 border-[#2d3a5c] rounded-sm px-6 py-3 shadow-pixel backdrop-blur-sm">
+          <div className="flex flex-col items-center bg-slate-700 border-2 border-[#2d3a5c] rounded-sm px-6 py-3 shadow-pixel backdrop-blur-sm">
             {tier.label && (
               <motion.span
                 initial={{ opacity: 0, y: -6 }}
@@ -158,7 +158,7 @@ export default function ScoreComboReveal({ breakdown, visible, onComplete, suppr
               className={`flex items-center justify-between px-2 py-px rounded-sm border text-xs
                 ${item.delta === 0 && !item.isMult
                   ? 'bg-[#0d1320]/40 border-[#2d3a5c]/30'
-                  : 'bg-[#111827]/70 border-[#2d3a5c]/70'
+                  : 'bg-slate-600/80 border-slate-400/50'
                 }`}
             >
               <span className={item.delta === 0 && !item.isMult ? 'text-gray-600' : 'text-gray-300'}>
@@ -186,7 +186,7 @@ export default function ScoreComboReveal({ breakdown, visible, onComplete, suppr
             initial={{ x: 28, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 450, damping: 22 }}
-            className="flex items-center justify-between px-2 py-px mt-px rounded-sm border border-amber-600/50 bg-amber-900/20 text-xs"
+            className="flex items-center justify-between px-2 py-px mt-px rounded-sm border border-amber-400/70 bg-amber-700/50 text-xs"
           >
             <span className="text-amber-300 font-bold">= Total</span>
             <span className="text-amber-300 font-bold">+{breakdown.total}</span>
