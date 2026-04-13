@@ -83,6 +83,8 @@ export default function Game({
   const [levelUpRerollKey, setLevelUpRerollKey] = useState(0);
   const [relicRerollKey, setRelicRerollKey] = useState(0);
   const [synergyConflictQueue, setSynergyConflictQueue] = useState([]); // Queue wartender Synergy-Konflikte
+  const [xpBling, setXpBling] = useState(false); // XP-Bar Bling bei Level-Up
+  const xpBlingLevelRef = useRef(1); // Track letztes Level für Bling-Trigger
 
   // Combo-Animation: blockiert Level-Up/Relic-Modals bis die Combo-Sequenz fertig ist
   const [comboAnimationDone, setComboAnimationDone] = useState(true);
@@ -153,6 +155,17 @@ export default function Game({
   const relicSystem = useRelicSystem();
   const runLogger = useRunLogger();
   const gold = useGold();
+
+  // XP-Bar Bling: triggert wenn Level steigt
+  useEffect(() => {
+    if (level.level > xpBlingLevelRef.current) {
+      xpBlingLevelRef.current = level.level;
+      setXpBling(true);
+      const t = setTimeout(() => setXpBling(false), 750);
+      return () => clearTimeout(t);
+    }
+    xpBlingLevelRef.current = level.level;
+  }, [level.level]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Blinkt ein Relic kurz auf (1.2s) — visuelles Feedback wenn es triggert
   const flashRelic = useCallback((id) => {
@@ -1383,17 +1396,50 @@ export default function Game({
 
           {/* XP-Fortschrittsbalken */}
           <div className="flex-1">
-            <div className="flex justify-between text-xs text-gray-600 mb-1">
-              <span>XP</span>
-              <span>{level.xp} / {level.xpToNextLevel}</span>
+            <div className="flex justify-between text-xs mb-1">
+              <span className="font-semibold tracking-wide text-amber-400/70">XP</span>
+              <span className="text-gray-500">{level.xp} / {level.xpToNextLevel}</span>
             </div>
-            <div className="w-full h-2 bg-[#1e293b] rounded-sm overflow-hidden border border-[#2d3a5c]">
+            <div
+              className="w-full h-3 bg-[#0f1724] border border-[#2d3a5c] relative overflow-hidden"
+              style={xpBling ? { boxShadow: '0 0 10px 3px #fbbf24bb' } : undefined}
+            >
+              {/* Fill */}
               <motion.div
-                className="h-full bg-yellow-500 rounded-sm"
+                className="absolute left-0 top-0 h-full"
                 initial={false}
-                animate={{ width: `${(level.xp / level.xpToNextLevel) * 100}%` }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
+                animate={{ width: xpBling ? '100%' : `${(level.xp / level.xpToNextLevel) * 100}%` }}
+                transition={{ duration: xpBling ? 0.12 : 0.4, ease: "easeOut" }}
+                style={{
+                  background: 'linear-gradient(90deg, #b45309 0%, #f59e0b 60%, #fde68a 100%)',
+                  boxShadow: '0 0 5px 1px #f59e0b55',
+                }}
               />
+              {/* Segment-Trennlinien (10 Segmente) */}
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute top-0 h-full w-px bg-[#1e2d45]"
+                  style={{ left: `${(i + 1) * 10}%` }}
+                />
+              ))}
+              {/* Shimmer-Sweep bei Level-Up */}
+              <AnimatePresence>
+                {xpBling && (
+                  <motion.div
+                    key="xp-bling"
+                    className="absolute inset-0 pointer-events-none"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '250%' }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
+                    style={{
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.75) 50%, transparent 100%)',
+                      width: '40%',
+                    }}
+                  />
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
