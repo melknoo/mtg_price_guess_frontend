@@ -54,8 +54,9 @@ export const usePerkSystem = () => {
         const extended = allPerks.find(p => p.basePerkId === perk.id);
         if (extended) usedIds.add(extended.id);
 
-        // If it's a filter perk, exclude other perks of the same filter type
-        if (perk.type === PERK_TYPES.FILTER) {
+        // If it's a non-stackable filter perk, exclude other perks of the same filter type
+        // Stackable boost perks (e.g. BLUE_FOCUS) can coexist with other boosts of the same type
+        if (perk.type === PERK_TYPES.FILTER && !perk.stackable) {
           allPerks.forEach(p => {
             if (p.filterType === perk.filterType && p.id !== perk.id) {
               usedIds.add(p.id);
@@ -201,9 +202,11 @@ export const usePerkSystem = () => {
           // New perk - add it
           const durationBonus = (hasEternalFlame && perk.duration > 0) ? 3 : 0;
 
-          if (perk.type === PERK_TYPES.FILTER) {
+          if (perk.type === PERK_TYPES.FILTER && !perk.stackable) {
+            // Non-stackable exclude-filter: replace other non-stackable filters of same type,
+            // but preserve stackable boost perks (e.g. RED_FOCUS must survive COLOR_EXCLUDE pick)
             const filtered = list.filter(p =>
-              !(p.type === PERK_TYPES.FILTER && p.filterType === perk.filterType)
+              !(p.type === PERK_TYPES.FILTER && p.filterType === perk.filterType && !p.stackable)
             );
             return [...filtered, {
               ...perk,

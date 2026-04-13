@@ -1013,6 +1013,25 @@ export default function Game({
       perkSystem.selectPerk(perk, { hasEternalFlame, hasUpgradeMaster, doubleDip: hasDoubleDip });
       achievements.trackPerkCollected();
       await cardLoader.setNextPair(false, newCards);
+    } else if (perk.type === 'filter' && perk.isBoost) {
+      // Boost-Filter: frische Karten laden damit der Boost sofort auf neuen Pool wirkt.
+      // activeBoosts state ist hier noch nicht geupdated → Boosts manuell berechnen und übergeben.
+      let finalPerk = perk;
+      if (relicSystem.hasRelic('parasite') && perk.duration > 0) {
+        finalPerk = { ...perk, duration: -1 };
+        relicSystem.consumeRelic('parasite');
+        flashRelic('parasite');
+      }
+      const newCards = await cardLoader.preloadCards();
+      perkSystem.selectPerk(finalPerk, { hasEternalFlame, hasUpgradeMaster, doubleDip: hasDoubleDip });
+      achievements.trackPerkCollected();
+      // Merge des neuen Boosts mit bestehenden activeBoosts
+      const existingBoost = cardLoader.activeBoosts.find(b => b.id === finalPerk.id);
+      const mergedBoost = existingBoost
+        ? { ...existingBoost, boostPercent: (existingBoost.boostPercent ?? 40) + (finalPerk.boostPercent ?? 40) }
+        : finalPerk;
+      const updatedBoosts = [...cardLoader.activeBoosts.filter(b => b.id !== finalPerk.id), mergedBoost];
+      await cardLoader.setNextPair(false, newCards, updatedBoosts);
     } else {
       // Parasite: macht temporären Perk permanent, verbraucht sich dabei
       let finalPerk = perk;
@@ -1103,6 +1122,16 @@ export default function Game({
         const newCards = await cardLoader.preloadCards(filters);
         perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
         await cardLoader.setNextPair(false, newCards);
+      } else if (pick.type === 'filter' && pick.isBoost) {
+        // Boost-Filter: frische Karten + explizite Boosts (state noch nicht geupdated)
+        const newCards = await cardLoader.preloadCards();
+        perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
+        const existingBoost = cardLoader.activeBoosts.find(b => b.id === pick.id);
+        const mergedBoost = existingBoost
+          ? { ...existingBoost, boostPercent: (existingBoost.boostPercent ?? 40) + (pick.boostPercent ?? 40) }
+          : pick;
+        const updatedBoosts = [...cardLoader.activeBoosts.filter(b => b.id !== pick.id), mergedBoost];
+        await cardLoader.setNextPair(false, newCards, updatedBoosts);
       } else {
         perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
       }
@@ -1688,6 +1717,7 @@ export default function Game({
           setCurrentRound={setCurrentRound}
           applyPerkEffects={applyPerkEffects}
           timer={timer}
+          cardLoader={cardLoader}
         />
       )}
     </>

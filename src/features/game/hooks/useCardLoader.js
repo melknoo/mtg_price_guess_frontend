@@ -136,7 +136,7 @@ export const useCardLoader = () => {
     }
   }, [activeFilters]);
 
-  const setNextPair = useCallback(async (forceReload = false, providedCards = null) => {
+  const setNextPair = useCallback(async (forceReload = false, providedCards = null, boostsOverride = null) => {
     let cardsToUse;
 
     // Wenn Karten direkt übergeben werden, verwende diese
@@ -157,12 +157,15 @@ export const useCardLoader = () => {
       return false;
     }
 
+    // boostsOverride: für den Fall dass activeBoosts noch nicht per state geupdated ist (z.B. direkt nach selectPerk)
+    const effectiveBoosts = boostsOverride ?? activeBoosts;
+
     // Gewichtete Auswahl wenn Boost-Perks aktiv sind
-    if (activeBoosts.length > 0 && cardsToUse.length > 2) {
+    if (effectiveBoosts.length > 0 && cardsToUse.length > 2) {
       const remaining = [...cardsToUse];
       const selected = [];
       for (let i = 0; i < 2; i++) {
-        const idx = weightedPick(remaining, activeBoosts);
+        const idx = weightedPick(remaining, effectiveBoosts);
         selected.push(remaining[idx]);
         remaining.splice(idx, 1);
       }

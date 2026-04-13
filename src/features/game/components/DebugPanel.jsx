@@ -4,6 +4,7 @@ import { PERKS, PERK_TYPES } from '../constants/perkDefinitions';
 
 const ALL_RELICS = Object.values(RELICS);
 const ALL_PERKS = Object.values(PERKS).filter(p => p.type !== PERK_TYPES.FILTER);
+const ALL_FOCUS_PERKS = Object.values(PERKS).filter(p => p.type === PERK_TYPES.FILTER && p.isBoost);
 
 export default function DebugPanel({
   relicSystem,
@@ -19,10 +20,12 @@ export default function DebugPanel({
   setCurrentRound,
   applyPerkEffects,
   timer,
+  cardLoader,
 }) {
   const [open, setOpen] = useState(false);
   const [selectedRelic, setSelectedRelic] = useState(ALL_RELICS[0]?.id ?? '');
   const [selectedPerk, setSelectedPerk] = useState(ALL_PERKS[0]?.id ?? '');
+  const [selectedFocus, setSelectedFocus] = useState(ALL_FOCUS_PERKS[0]?.id ?? '');
   const [levelInput, setLevelInput] = useState('');
   const [scoreInput, setScoreInput] = useState('');
   const [breakdownPreview, setBreakdownPreview] = useState(null);
@@ -47,6 +50,18 @@ export default function DebugPanel({
   const handleAddPerk = () => {
     const perk = ALL_PERKS.find(p => p.id === selectedPerk);
     if (perk) perkSystem.selectPerk(perk);
+  };
+
+  const handleAddFocus = () => {
+    const perk = ALL_FOCUS_PERKS.find(p => p.id === selectedFocus);
+    if (perk) perkSystem.selectPerk(perk);
+  };
+
+  const handleReloadCards = async () => {
+    if (!cardLoader) return;
+    const newCards = await cardLoader.preloadCards();
+    const boosts = cardLoader.activeBoosts;
+    await cardLoader.setNextPair(false, newCards, boosts.length > 0 ? boosts : null);
   };
 
   const handleSetLevel = () => {
@@ -110,6 +125,71 @@ export default function DebugPanel({
             <Row label="Perks">{perkSystem.activePerks.map(p => `${p.id}(${p.remainingDuration ?? '∞'})`).join(', ') || '—'}</Row>
             <Row label="Synergies">{synergyEngine.activeSynergies.map(s => s.id).join(', ') || '—'}</Row>
           </Section>
+
+          {/* ── Focus / Boost Debug ── */}
+          {cardLoader && (
+            <Section title="Focus / Boost Debug">
+              <div style={{ marginBottom: 4 }}>
+                <span style={{ color: '#888' }}>Active boosts: </span>
+                {cardLoader.activeBoosts.length === 0 ? (
+                  <span style={{ color: '#555' }}>none</span>
+                ) : (
+                  cardLoader.activeBoosts.map(b => (
+                    <span key={b.id} style={{ color: '#f0c040', marginRight: 6 }}>
+                      {b.icon} {b.id} +{b.boostPercent ?? 40}%
+                    </span>
+                  ))
+                )}
+              </div>
+              <div style={{ marginBottom: 6 }}>
+                <span style={{ color: '#888' }}>Current pair: </span>
+                {cardLoader.currentPair.map((card, i) => (
+                  <span key={i} style={{ color: '#8cf', marginRight: 8 }}>
+                    [{card.color || 'colorless'}]
+                  </span>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                <select
+                  value={selectedFocus}
+                  onChange={e => setSelectedFocus(e.target.value)}
+                  style={selectStyle}
+                >
+                  {ALL_FOCUS_PERKS.map(p => (
+                    <option key={p.id} value={p.id}>{p.icon} {p.name}</option>
+                  ))}
+                </select>
+                <Btn onClick={handleAddFocus}>Add</Btn>
+              </div>
+              <div style={{ marginBottom: 6 }}>
+                <Btn onClick={handleReloadCards}>⟳ Reload Cards (apply boosts)</Btn>
+              </div>
+              <div style={{ marginBottom: 2, color: '#888', fontSize: 10 }}>Quick-Add ×1:</div>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 4 }}>
+                {['red_focus','green_focus','blue_focus','black_focus','white_focus'].map(id => {
+                  const p = ALL_FOCUS_PERKS.find(f => f.id === id);
+                  if (!p) return null;
+                  return (
+                    <Btn key={id} onClick={() => perkSystem.selectPerk(p)}>
+                      {p.icon}
+                    </Btn>
+                  );
+                })}
+              </div>
+              <div style={{ marginBottom: 2, color: '#888', fontSize: 10 }}>Stack ×5 (≈200% boost):</div>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                {['red_focus','green_focus','blue_focus','black_focus','white_focus'].map(id => {
+                  const p = ALL_FOCUS_PERKS.find(f => f.id === id);
+                  if (!p) return null;
+                  return (
+                    <Btn key={id} onClick={() => { for (let i = 0; i < 5; i++) perkSystem.selectPerk(p); }}>
+                      {p.icon}×5
+                    </Btn>
+                  );
+                })}
+              </div>
+            </Section>
+          )}
 
           {/* ── Relics ── */}
           <Section title="Relics">
