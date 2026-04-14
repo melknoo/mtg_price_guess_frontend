@@ -14,7 +14,7 @@ export default function SynergyToast({ synergy, onDismiss }) {
           animate={{ x: 0, opacity: 1, scale: 1 }}
           exit={{ x: -400, opacity: 0, scale: 0.8 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="fixed top-[30%] sm:bottom-24 sm:top-auto left-4 z-[60] cursor-pointer"
+          className="fixed top-4 sm:bottom-24 sm:top-auto left-4 z-[60] cursor-pointer"
           onClick={onDismiss}
         >
           <div className="relative overflow-hidden bg-teal-900 border-2 border-teal-400 rounded-sm p-2 sm:p-4 sm:pr-6 min-w-[200px] sm:min-w-[280px] max-w-[260px] sm:max-w-[350px] shadow-pixel">

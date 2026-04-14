@@ -77,7 +77,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 overflow-y-auto"
+                        className="fixed inset-0 bg-black/75 flex items-start justify-center z-50 overflow-y-auto"
                     >
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -196,21 +196,21 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                             </div>
 
                                             {/* Description */}
-                                            <p className="text-gray-200 text-center text-sm leading-relaxed mb-4">
+                                            <p className="text-gray-700 text-center text-sm leading-relaxed mb-4">
                                                 {perk.description}
                                             </p>
 
                                             {/* Duration Info */}
                                             {perk.duration > 0 && (
-                                                <div className="bg-black/30 rounded-sm p-2 text-center border border-white/10">
-                                                    <span className="inline-flex items-center gap-1 text-yellow-300 text-xs font-semibold">
+                                                <div className="bg-black/10 rounded-sm p-2 text-center border border-black/15">
+                                                    <span className="inline-flex items-center gap-1 text-amber-700 text-xs font-semibold">
                                                         <GameIcon name="time" color="amber" size={11} /> {perk.duration} {perk.duration === 1 ? 'Round' : 'Rounds'}
                                                     </span>
                                                 </div>
                                             )}
                                             {perk.duration === -1 && (
-                                                <div className="bg-black/30 rounded-sm p-2 text-center border border-white/10">
-                                                    <span className="inline-flex items-center gap-1 text-green-300 text-xs font-semibold">
+                                                <div className="bg-black/10 rounded-sm p-2 text-center border border-black/15">
+                                                    <span className="inline-flex items-center gap-1 text-green-700 text-xs font-semibold">
                                                         <GameIcon name="ring" color="green" size={11} /> Permanent (this game)
                                                     </span>
                                                 </div>
@@ -219,7 +219,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
 
                                         {/* Hover Glow Effect */}
                                         <div className="absolute inset-0 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                            <div className="absolute inset-0 rounded-sm bg-white/10" />
+                                            <div className="absolute inset-0 rounded-sm bg-black/10" />
                                         </div>
                                     </motion.div>
                                 ))}
