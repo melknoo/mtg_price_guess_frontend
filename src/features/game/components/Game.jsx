@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "../../auth/context/AuthContext";
 import { useAchievementContext } from "../context/AchievementContext";
@@ -10,8 +10,11 @@ import { useLevel } from "../hooks/useLevel";
 import { useRelicSystem } from "../hooks/useRelicSystem";
 import { useSynergyEngine } from "../hooks/useSynergyEngine";
 import { useGold } from "../hooks/useGold";
+import { useMapSystem } from "../hooks/useMapSystem";
+import { ROUNDS_PER_STAGE, TOTAL_STAGES, NODE_TYPES } from "../constants/mapDefinitions";
+import { RELICS } from "../constants/relicDefinitions";
 import { updateHighscore } from "../api/gameApi";
-import { saveGameSession, saveRunLog } from "../api/statsApi";
+import { saveGameSession, saveRunLog, saveStageCheckpoint } from "../api/statsApi";
 import useRunLogger from "../hooks/useRunLogger";
 import {
   isChoiceCorrect,
@@ -23,7 +26,6 @@ import {
   calculateTimeBonus,
 } from "../utils/scoreCalculator";
 import { GAME_CONFIG, SCORE_CONFIG } from "../../../shared/utils/constants";
-import { FILTER_EFFECTS } from "../constants/perkDefinitions";
 import { motion, AnimatePresence } from "framer-motion";
 import GameTimer from "./GameTimer";
 import StreakDisplay from "./StreakDisplay";
@@ -33,7 +35,6 @@ import GameOverScreen from "./GameOverScreen";
 import PerkSelectionModal from "./PerkSelectionModal";
 import LevelUpModal from "./LevelUpModal";
 import ProgressionRoadmapModal from "./ProgressionRoadmapModal";
-import FilterOddsModal from "./FilterOddsModal";
 import SynergyToast from "./SynergyToast";
 import SynergyConflictModal from "./SynergyConflictModal";
 import GameIcon from "../../../shared/components/GameIcon";
@@ -41,6 +42,10 @@ import ActivePerksDisplay from "./ActivePerksDisplay";
 import RegisterWithScore from "../../auth/components/RegisterWithScore";
 import DebugPanel from "./DebugPanel";
 import ScoreComboReveal from "./ScoreComboReveal";
+import StageCompleteScreen from "./StageCompleteScreen";
+import MapScreen from "./MapScreen";
+import ShopScreen from "./ShopScreen";
+import RestScreen from "./RestScreen";
 
 export default function Game({
   score,
@@ -78,10 +83,11 @@ export default function Game({
   const [fortressRegenCount, setFortressRegenCount] = useState(0); // Fortress unabhängiger Zähler
   const [masochistMult, setMasochistMult] = useState(0); // Masochist Synergy: permanent per damage
   const [showRoadmap, setShowRoadmap] = useState(false);
-  const [showFilterOdds, setShowFilterOdds] = useState(false);
-  const [showRelicSelection, setShowRelicSelection] = useState(false);
   const [levelUpRerollKey, setLevelUpRerollKey] = useState(0);
-  const [relicRerollKey, setRelicRerollKey] = useState(0);
+  // Stage/Map System
+  const mapSystem = useMapSystem();
+  const stageScoreRef = useRef({}); // { stageIndex: score } — für Backend + StageCompleteScreen
+  const stageCorrectRef = useRef(0); // richtige Antworten in dieser Stage
   const [synergyConflictQueue, setSynergyConflictQueue] = useState([]); // Queue wartender Synergy-Konflikte
   const [xpBling, setXpBling] = useState(false); // XP-Bar Bling bei Level-Up
   const xpBlingLevelRef = useRef(1); // Track letztes Level für Bling-Trigger
@@ -211,10 +217,17 @@ export default function Game({
     // Speed Demon Synergy: verdoppelt alle Timer-Boni (nicht die Basis-Zeit)
     const timeMult = synergyEngine.getSynergyValue('double_time_bonus') ?? 1;
     duration += (timeBufferValue + meditationBonus) * timeMult;
-    return duration;
-  }, [perkSystem, relicSystem, synergyEngine]);
+    // Overcautious Perk: +5s
+    if (perkSystem.activePerks.some(p => p.effect === 'overcautious')) duration += 5;
+    // Node-Schwierigkeit: Elite -2s, Boss -3s
+    if (mapSystem.currentNodeType === NODE_TYPES.ELITE) duration -= 2;
+    if (mapSystem.currentNodeType === NODE_TYPES.BOSS) duration -= 3;
+    return Math.max(3, duration); // nie unter 3s
+  }, [perkSystem, relicSystem, synergyEngine, mapSystem]);
 
   const getTimerSpeed = useCallback(() => {
+    // Overclock Perk: Timer läuft 2× schnell
+    if (perkSystem.activePerks.some(p => p.effect === 'overclock')) return 2;
     const slowTimeValue = perkSystem.getPerkValue("slow_time");
     return slowTimeValue || 1;
   }, [perkSystem]);
@@ -251,7 +264,7 @@ export default function Game({
     speed: getTimerSpeed(),
   });
 
-  const applyPerkEffects = useCallback((basePoints, timeLeft, winnerCard = null) => {
+  const applyPerkEffects = useCallback((basePoints, timeLeft, winnerCard = null, isPerfect = false) => {
     let finalPoints = basePoints;
     const breakdown = [];
     let fakeBonus = 0; // Tracking für Cheater: Bonus der durch gefakte Bedingungen entstand
@@ -263,7 +276,6 @@ export default function Game({
 
     // Setup: gemeinsame Hilfswerte
     const hermitActive = relicSystem.hasRelic('hermit');
-    const effectiveTimeLeft = relicSystem.hasRelic('timeless') ? getTimerDuration() - 0.5 : timeLeft;
     const currentDuration = getTimerDuration();
     const effectiveLives = relicSystem.hasRelic('deaths_mask') ? 1 : lives;
     const multiplierPerk = perkSystem.activePerks.find(p => p.effect === 'point_multiplier');
@@ -287,19 +299,109 @@ export default function Game({
       });
     }
 
-    // Perfectionist Perk: effectiveTimeLeft für Timeless-Fake
-    if (effectiveTimeLeft >= currentDuration - 1) {
-      const perfectPerk = perkSystem.activePerks.find(p => p.effect === 'perfect_bonus');
-      if (perfectPerk?.value) {
-        const b = finalPoints; finalPoints += perfectPerk.value; flatPerkBonus += perfectPerk.value; snap(perfectPerk.name, perfectPerk.icon, b);
-        if (relicSystem.hasRelic('timeless') && timeLeft < currentDuration - 1) fakeBonus += perfectPerk.value;
+    // ── Balatro Phase A: Flat-Effekte ──────────────────────────
+
+    // Momentum: stacking +15 flat per correct (reset on wrong via handleChoice)
+    if (perkSystem.activePerks.some(p => p.effect === 'momentum_flat')) {
+      const momentumPerk = perkSystem.activePerks.find(p => p.effect === 'momentum_flat');
+      perkSystem.momentumFlatStackRef.current += momentumPerk?.value ?? 15;
+      const bonus = perkSystem.momentumFlatStackRef.current;
+      const b = finalPoints; finalPoints += bonus; flatPerkBonus += bonus; snap('Momentum', momentumPerk?.icon ?? '🌊', b);
+    }
+
+    // Compound Interest: accumulate +10 per correct; payout on expiry via decrementPerkDurations callback
+    if (perkSystem.activePerks.some(p => p.effect === 'compound_interest')) {
+      perkSystem.compoundInterestAccRef.current += 10;
+    }
+
+    // Time Bomb: count correct answers; massive payout on expiry
+    if (perkSystem.activePerks.some(p => p.effect === 'time_bomb_counter')) {
+      perkSystem.timeBombCounterRef.current += 1;
+    }
+
+    // Chain Lightning: consecutive correct streak → ×(1 + count×0.5) flat bonus applied as flat here
+    if (perkSystem.activePerks.some(p => p.effect === 'chain_lightning_counter')) {
+      perkSystem.chainLightningCounterRef.current += 1;
+      const chainCount = perkSystem.chainLightningCounterRef.current;
+      if (chainCount > 1) {
+        const bonus = Math.floor(finalPoints * (chainCount - 1) * 0.5);
+        const b = finalPoints; finalPoints += bonus; flatPerkBonus += bonus;
+        snap(`Chain Lightning ×${chainCount}`, '⚡', b);
       }
+    }
+
+    // Bloodlust: cashout accumulated charges on correct answer
+    if (perkSystem.bloodlustChargesRef.current > 0 && perkSystem.activePerks.some(p => p.effect === 'bloodlust_charges')) {
+      const charges = perkSystem.bloodlustChargesRef.current;
+      perkSystem.bloodlustChargesRef.current = 0;
+      const b = finalPoints; finalPoints += charges; flatPerkBonus += charges; snap('Bloodlust', '🩸', b);
+    }
+
+    // Echo Chamber: repeat last answer's bonus delta
+    if (perkSystem.activePerks.some(p => p.effect === 'echo_chamber') && perkSystem.echoLastBonusRef.current > 0) {
+      const echo = perkSystem.echoLastBonusRef.current;
+      const b = finalPoints; finalPoints += echo; flatPerkBonus += echo; snap('Echo Chamber', '🔊', b);
     }
 
     // ════════════════════════════════════════════════════════════
     // PHASE B — PERK-MULTIPLIKATOR (nach den Flats — multipliziert Base + alle Perk-Flats)
     // ════════════════════════════════════════════════════════════
     if (multiplierPerk?.value) { const b = finalPoints; finalPoints *= multiplierPerk.value; snap(multiplierPerk.name, multiplierPerk.icon, b, true); }
+
+    // ── Balatro Phase B: Mult-Effekte ──────────────────────────
+
+    // Perfectionist: ×3 on perfect answer (replaces old flat perfect_bonus)
+    if (isPerfect && perkSystem.activePerks.some(p => p.effect === 'perfect_multiplier')) {
+      const b = finalPoints; finalPoints *= 3; snap('Perfectionist', '✨', b, true);
+    }
+
+    // Glass Mind: ×3 on perfect; wrong = extra -1 life (handled in handleChoice)
+    if (isPerfect && perkSystem.activePerks.some(p => p.effect === 'glass_mind')) {
+      const b = finalPoints; finalPoints *= 3; snap('Glass Mind', '🔮', b, true);
+    }
+
+    // Dead Man's Hand: ×5 at 1 life (effectiveLives for Deaths Mask compat)
+    if (effectiveLives === 1 && perkSystem.activePerks.some(p => p.effect === 'dead_mans_hand')) {
+      const b = finalPoints; finalPoints *= 5; snap("Dead Man's Hand", '☠️', b, true);
+      if (lives !== 1) fakeBonus += finalPoints - b;
+    }
+
+    // Overclock: ×2 (timer also runs at 2× speed via getTimerSpeed)
+    if (perkSystem.activePerks.some(p => p.effect === 'overclock')) {
+      const b = finalPoints; finalPoints *= 2; snap('Overclock', '⚡⚡', b, true);
+    }
+
+    // Adrenaline: +20% per active temp perk (duration > 0)
+    const tempPerkCount = perkSystem.activePerks.filter(p => p.duration > 0 && p.effect !== 'adrenaline_mult').length;
+    if (tempPerkCount > 0 && perkSystem.activePerks.some(p => p.effect === 'adrenaline_mult')) {
+      const b = finalPoints; finalPoints *= 1 + tempPerkCount * 0.2; snap(`Adrenaline ×${tempPerkCount}`, '💉', b, true);
+    }
+
+    // Gambler: 60% ×2, 40% ×0
+    if (perkSystem.activePerks.some(p => p.effect === 'gambler_roll')) {
+      const b = finalPoints;
+      const roll = Math.random();
+      if (roll < 0.6) { finalPoints *= 2; snap('Gambler Win', '🎲', b, true); }
+      else { finalPoints = 0; snap('Gambler Loss', '🎲💀', b, true); }
+    }
+
+    // Roulette: ×(1–8) zufällig
+    if (perkSystem.activePerks.some(p => p.effect === 'roulette')) {
+      const b = finalPoints;
+      const roll = Math.floor(Math.random() * 8) + 1;
+      finalPoints *= roll; snap(`Roulette ×${roll}`, '🎰', b, true);
+    }
+
+    // Wildcard: random effect
+    if (perkSystem.activePerks.some(p => p.effect === 'wildcard')) {
+      const wildcardRoll = Math.random();
+      const b = finalPoints;
+      if (wildcardRoll < 0.25) { finalPoints *= 2; snap('Wildcard ×2', '🃏', b, true); }
+      else if (wildcardRoll < 0.45) { finalPoints *= 3; snap('Wildcard ×3', '🃏', b, true); }
+      else if (wildcardRoll < 0.65) { finalPoints += 50; snap('Wildcard +50', '🃏', b); }
+      else if (wildcardRoll < 0.85) { finalPoints += 100; snap('Wildcard +100', '🃏', b); }
+      // else: nothing (~15%)
+    }
 
     // Referenzpunkt für Hermit/Minimalist: alles ab hier ist Relic-Anteil
     const afterPerks = finalPoints;
@@ -498,6 +600,18 @@ export default function Game({
       const b = finalPoints; finalPoints += fakeBonus; snap('Cheater', '🃏🃏', b);
     }
 
+    // Overcautious: Score-Cap 100 per answer
+    if (perkSystem.activePerks.some(p => p.effect === 'overcautious')) {
+      if (finalPoints > 100) {
+        const b = finalPoints; finalPoints = 100; snap('Overcautious', '🛡️🐢', b);
+      }
+    }
+
+    // Echo Chamber: speichere aktuellen Bonus-Delta für nächste Runde
+    if (perkSystem.activePerks.some(p => p.effect === 'echo_chamber')) {
+      perkSystem.echoLastBonusRef.current = Math.max(0, finalPoints - basePoints);
+    }
+
     return { total: Math.floor(finalPoints), breakdown };
   }, [perkSystem, getTimerDuration, relicSystem, ironWillActive, comboMultiplier, synergyEngine, lives, level, currentRound, masochistMult]);
 
@@ -506,7 +620,7 @@ export default function Game({
     runLoggedRef.current = true;
     const runSummary = runLogger.getRunSummary(synergyEngine.activeSynergies);
     saveRunLog({
-      mode:              initialCards ? 'daily' : 'normal',
+      run_mode:          initialCards ? 'daily' : 'roguelike',
       final_score:       score,
       final_level:       level.level,
       rounds_played:     currentRound,
@@ -516,8 +630,12 @@ export default function Game({
       relics:            runSummary.relics,
       synergies:         runSummary.synergies,
       rounds:            runSummary.rounds,
+      stages_cleared:    mapSystem.currentStage - 1,
+      total_stages:      TOTAL_STAGES,
+      node_path:         mapSystem.getChosenPathSoFar(),
+      score_per_stage:   stageScoreRef.current,
     });
-  }, [user, currentRound, score, level.level, streak.bestStreak, initialCards, runLogger, synergyEngine]);
+  }, [user, currentRound, score, level.level, streak.bestStreak, initialCards, runLogger, synergyEngine, mapSystem]);
 
   // Ref immer aktuell halten — wird beim Unmount (Back to Menu) aufgerufen
   useEffect(() => { saveCurrentRunRef.current = saveCurrentRun; }, [saveCurrentRun]);
@@ -567,7 +685,9 @@ export default function Game({
         const basePoints = timeBonus + streakBonus;
         const hadDoublePoints = !!perkSystem.getPerkValue("point_multiplier");
         const winnerCard = cardLoader.currentPair[correctCardIndex];
-        const { total: applied, breakdown: perkBreakdown } = applyPerkEffects(basePoints, timer.timeLeft, winnerCard);
+        const _currentDuration = getTimerDuration();
+        const isPerfect = timer.timeLeft >= _currentDuration - 1;
+        const { total: applied, breakdown: perkBreakdown } = applyPerkEffects(basePoints, timer.timeLeft, winnerCard, isPerfect);
         let totalPoints = applied;
         const extraBreakdown = [];
 
@@ -705,6 +825,17 @@ export default function Game({
         level.addXP(xpGained, scholarMult);
         achievements.trackLevel(level.level);
 
+        // Mirror Image: XP gain also added as score
+        if (perkSystem.activePerks.some(p => p.effect === 'mirror_image')) {
+          totalPoints += xpGained;
+        }
+
+        // Treasure Map: convert score to gold instead
+        if (perkSystem.activePerks.some(p => p.effect === 'treasure_map_gold')) {
+          gold.addGold(10);
+          totalPoints = 0; // no score this round
+        }
+
         // Heart Regeneration Overflow: vorab berechnen damit es im Score-Breakdown erscheint
         const regenResult = perkSystem.trackCorrectAnswer();
         const _overflowMaxLives = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
@@ -717,6 +848,10 @@ export default function Game({
         const newScore = score + totalPoints;
         setScore(newScore);
         pendingScoreRef.current = newScore; // animate after combo popup dismisses
+        // Stage-Score tracken für Backend-Persistenz
+        stageScoreRef.current[mapSystem.currentStage] =
+          (stageScoreRef.current[mapSystem.currentStage] ?? 0) + Math.floor(totalPoints);
+        stageCorrectRef.current += 1;
 
         achievements.trackCorrectAnswer(
           timer.timeLeft,
@@ -833,8 +968,25 @@ export default function Game({
           // Combo Master Reset bei Fehler (außer Unstoppable)
           if (relicSystem.hasRelic('combo_master') && !synergyEngine.hasSynergy('unstoppable')) setComboMultiplier(1);
 
-          const remainingLives = lives - 1;
-          setLives(remainingLives);
+          // ── Balatro Wrong-Answer Effects ──────────────────────
+          // Chain Lightning: reset consecutive counter
+          perkSystem.chainLightningCounterRef.current = 0;
+          // Momentum: reset stacking flat
+          perkSystem.momentumFlatStackRef.current = 0;
+          // Bloodlust: add charges
+          if (perkSystem.activePerks.some(p => p.effect === 'bloodlust_charges')) {
+            perkSystem.bloodlustChargesRef.current += 30;
+          }
+          // Echo Chamber: reset last bonus (wrong = no echo next round)
+          perkSystem.echoLastBonusRef.current = 0;
+
+          // Glass Mind: extra -1 life on wrong
+          const hasGlassMind = perkSystem.activePerks.some(p => p.effect === 'glass_mind');
+          // Dead Man's Hand: instant death on wrong at 1 life
+          const hasDeadMansHand = perkSystem.activePerks.some(p => p.effect === 'dead_mans_hand');
+          const livesLost = 1 + (hasGlassMind ? 1 : 0);
+          const remainingLives = hasDeadMansHand ? 0 : lives - livesLost;
+          setLives(Math.max(0, remainingLives));
 
           // Pain is Gain: Lebensverlust → +50 Score, +30 XP
           if (relicSystem.hasRelic('pain_is_gain')) {
@@ -891,9 +1043,19 @@ export default function Game({
         }
       }
 
-      perkSystem.decrementPerkDurations(relicSystem.hasRelic('perk_recycler'));
+      perkSystem.decrementPerkDurations(relicSystem.hasRelic('perk_recycler'), (expiredPerk) => {
+        // Perk-Payout bei Ablauf (Time Bomb, Compound Interest)
+        if (expiredPerk.effect === 'time_bomb_counter') {
+          const payout = perkSystem.timeBombCounterRef.current * 15;
+          if (payout > 0) setScore(prev => prev + payout);
+        }
+        if (expiredPerk.effect === 'compound_interest') {
+          const payout = perkSystem.compoundInterestAccRef.current;
+          if (payout > 0) setScore(prev => prev + payout);
+        }
+      });
     },
-    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult, runLogger, saveCurrentRun, gold]
+    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult, runLogger, saveCurrentRun, gold, mapSystem]
   );
 
   // Update handleChoiceRef when handleChoice changes
@@ -938,9 +1100,27 @@ export default function Game({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [perkSystem.activePerks]);
 
+  // Map-Transition: Nach Shop/Rest/Map-Screen → neue Karte laden
+  useEffect(() => {
+    if (
+      !mapSystem.showMap &&
+      !mapSystem.showShop &&
+      !mapSystem.showRest &&
+      !mapSystem.showStageComplete &&
+      mapSystem.map &&
+      mapSystem.currentStage > 1 &&
+      !gameOver
+    ) {
+      cardLoader.setNextPair(false, null, null, mapSystem.getCardParams());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapSystem.showMap, mapSystem.showShop, mapSystem.showRest, mapSystem.showStageComplete]);
+
   // Start Timer when images loaded
   useEffect(() => {
-    if (imagesLoaded.every(Boolean) && !showPrices) {
+    const anyModalOpen = mapSystem.showStageComplete || mapSystem.showMap ||
+      mapSystem.showShop || mapSystem.showRest;
+    if (imagesLoaded.every(Boolean) && !showPrices && !anyModalOpen) {
       timer.start();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -993,13 +1173,16 @@ export default function Game({
       }
     }
 
-    if (nextRound > 0 && nextRound % 10 === 0) {
-      // Alle 10 Runden: Relic-Auswahl
-      setShowRelicSelection(true);
+    // Stage-Advance (ersetzt altes Relic-at-10 System)
+    const willCompleteStage = mapSystem.stageRound >= ROUNDS_PER_STAGE;
+    if (willCompleteStage) {
+      // Stage komplett — StageComplete-Screen zeigen, keine neue Karte laden
+      mapSystem.advanceStageRound();
     } else {
-      cardLoader.setNextPair();
+      mapSystem.advanceStageRound();
+      cardLoader.setNextPair(false, null, null, mapSystem.getCardParams());
     }
-  }, [currentRound, achievements, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, setScore, synergyEngine, animateToScore]);
+  }, [currentRound, achievements, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, setScore, synergyEngine, animateToScore, mapSystem]);
 
   const handlePerkSelect = useCallback(async (perk) => {
     const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
@@ -1007,45 +1190,7 @@ export default function Game({
     const hasDoubleDip = relicSystem.hasRelic('double_dip');
     if (hasDoubleDip) flashRelic('double_dip');
 
-    if (perk.type === 'filter' && !perk.isBoost) {
-      // Hard-Filter (Exclude): Karten neu vom Backend laden
-      const currentFilterPerks = perkSystem.getActiveFilterPerks();
-      const otherFilterPerks = currentFilterPerks.filter(p => p.filterType !== perk.filterType && !p.isBoost);
-      const allHardFilterPerks = [...otherFilterPerks, perk];
-      const filters = {};
-      allHardFilterPerks.forEach(filterPerk => {
-        switch (filterPerk.effect) {
-          case FILTER_EFFECTS.COLOR_EXCLUDE:   filters.color_exclude = filterPerk.value; break;
-          case FILTER_EFFECTS.CMC_EXCLUDE:     filters.cmc_exclude = filterPerk.value; break;
-          case FILTER_EFFECTS.RARITY_EXCLUDE:  filters.rarity_exclude = filterPerk.value; break;
-          case FILTER_EFFECTS.TYPE_EXCLUDE:    filters.type_exclude = filterPerk.value; break;
-          default: break;
-        }
-      });
-      const newCards = await cardLoader.preloadCards(filters);
-      perkSystem.selectPerk(perk, { hasEternalFlame, hasUpgradeMaster, doubleDip: hasDoubleDip });
-      achievements.trackPerkCollected();
-      await cardLoader.setNextPair(false, newCards);
-    } else if (perk.type === 'filter' && perk.isBoost) {
-      // Boost-Filter: frische Karten laden damit der Boost sofort auf neuen Pool wirkt.
-      // activeBoosts state ist hier noch nicht geupdated → Boosts manuell berechnen und übergeben.
-      let finalPerk = perk;
-      if (relicSystem.hasRelic('parasite') && perk.duration > 0) {
-        finalPerk = { ...perk, duration: -1 };
-        relicSystem.consumeRelic('parasite');
-        flashRelic('parasite');
-      }
-      const newCards = await cardLoader.preloadCards();
-      perkSystem.selectPerk(finalPerk, { hasEternalFlame, hasUpgradeMaster, doubleDip: hasDoubleDip });
-      achievements.trackPerkCollected();
-      // Merge des neuen Boosts mit bestehenden activeBoosts
-      const existingBoost = cardLoader.activeBoosts.find(b => b.id === finalPerk.id);
-      const mergedBoost = existingBoost
-        ? { ...existingBoost, boostPercent: (existingBoost.boostPercent ?? 40) + (finalPerk.boostPercent ?? 40) }
-        : finalPerk;
-      const updatedBoosts = [...cardLoader.activeBoosts.filter(b => b.id !== finalPerk.id), mergedBoost];
-      await cardLoader.setNextPair(false, newCards, updatedBoosts);
-    } else {
+    {
       // Parasite: macht temporären Perk permanent, verbraucht sich dabei
       let finalPerk = perk;
       if (relicSystem.hasRelic('parasite') && perk.duration > 0) {
@@ -1117,37 +1262,7 @@ export default function Game({
       runLogger.logRelicSelected({ level: level.level, relic_id: pick.id, relic_name: pick.name });
       if (pick.effect === 'glass_cannon') setLives(1);
     } else if (pick.category === 'item') {
-      // Hard-Filter (Exclude): Karten neu vom Backend laden, genau wie in handlePerkSelect
-      if (pick.type === 'filter' && !pick.isBoost) {
-        const currentFilterPerks = perkSystem.getActiveFilterPerks();
-        const otherFilterPerks = currentFilterPerks.filter(p => p.filterType !== pick.filterType && !p.isBoost);
-        const allHardFilterPerks = [...otherFilterPerks, pick];
-        const filters = {};
-        allHardFilterPerks.forEach(filterPerk => {
-          switch (filterPerk.effect) {
-            case FILTER_EFFECTS.COLOR_EXCLUDE:   filters.color_exclude = filterPerk.value; break;
-            case FILTER_EFFECTS.CMC_EXCLUDE:     filters.cmc_exclude = filterPerk.value; break;
-            case FILTER_EFFECTS.RARITY_EXCLUDE:  filters.rarity_exclude = filterPerk.value; break;
-            case FILTER_EFFECTS.TYPE_EXCLUDE:    filters.type_exclude = filterPerk.value; break;
-            default: break;
-          }
-        });
-        const newCards = await cardLoader.preloadCards(filters);
-        perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
-        await cardLoader.setNextPair(false, newCards);
-      } else if (pick.type === 'filter' && pick.isBoost) {
-        // Boost-Filter: frische Karten + explizite Boosts (state noch nicht geupdated)
-        const newCards = await cardLoader.preloadCards();
-        perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
-        const existingBoost = cardLoader.activeBoosts.find(b => b.id === pick.id);
-        const mergedBoost = existingBoost
-          ? { ...existingBoost, boostPercent: (existingBoost.boostPercent ?? 40) + (pick.boostPercent ?? 40) }
-          : pick;
-        const updatedBoosts = [...cardLoader.activeBoosts.filter(b => b.id !== pick.id), mergedBoost];
-        await cardLoader.setNextPair(false, newCards, updatedBoosts);
-      } else {
-        perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
-      }
+      perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
       achievements.trackPerkCollected();
       runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'level_up', offered_ids: [] });
     } else if (pick.category === 'upgrade') {
@@ -1155,32 +1270,8 @@ export default function Game({
       runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'upgrade', offered_ids: [] });
     }
     level.dismissLevelUp();
-  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold, cardLoader]);
+  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold]);
 
-  const handleRelicRoundSelect = useCallback((pick) => {
-    console.log('[RelicRound]', pick.name, `(${pick.id})`);
-    // Soft-Cap: ab 6 Relics kostet jedes weitere 25 Gold
-    const RELIC_FREE_CAP = 6;
-    if (relicSystem.activeRelics.length >= RELIC_FREE_CAP) {
-      if (!gold.spendGold(25)) return; // nicht genug Gold → abbrechen
-    }
-    if (pick.effect === 'blueprint_copy') {
-      const otherRelics = relicSystem.activeRelics.filter(r => r.id !== 'blueprint');
-      if (otherRelics.length > 0) {
-        const src = otherRelics[Math.floor(Math.random() * otherRelics.length)];
-        relicSystem.addRelic({ ...src, id: `blueprint_copy_${Date.now()}`, name: `Blueprint (${src.name})`, icon: '📋', description: `Kopie: ${src.description}` });
-      } else {
-        relicSystem.addRelic(pick);
-      }
-    } else {
-      relicSystem.addRelic(pick);
-    }
-    if (pick.effect === 'glass_cannon') setLives(1);
-    achievements.trackRelicCollected();
-    runLogger.logRelicSelected({ level: level.level, relic_id: pick.id, relic_name: pick.name });
-    setShowRelicSelection(false);
-    cardLoader.setNextPair();
-  }, [relicSystem, achievements, runLogger, level, setLives, cardLoader, gold]);
 
   const handlePerkSkip = useCallback(() => {
     perkSystem.skipPerkSelection();
@@ -1201,15 +1292,78 @@ export default function Game({
     setLevelUpRerollKey(k => k + 1);
   }, [gold]);
 
-  const handleRelicSkip = useCallback(() => {
-    setShowRelicSelection(false);
-    cardLoader.setNextPair();
-  }, [cardLoader]);
 
-  const handleRelicReroll = useCallback(() => {
-    if (!gold.spendGold(15)) return;
-    setRelicRerollKey(k => k + 1);
-  }, [gold]);
+  // ── Shop callbacks ──────────────────────────────────────────
+  const handleShopBuyRelic = useCallback((relic, price) => {
+    if (!gold.spendGold(price)) return;
+    const RELIC_FREE_CAP = 6;
+    if (relicSystem.activeRelics.length >= RELIC_FREE_CAP) {
+      const discount = relicSystem.hasRelic('hoarder') ? 10 : 25;
+      if (!gold.spendGold(discount)) return;
+    }
+    if (relic.effect === 'blueprint_copy') {
+      const others = relicSystem.activeRelics.filter(r => r.id !== 'blueprint');
+      if (others.length > 0) {
+        const src = others[Math.floor(Math.random() * others.length)];
+        relicSystem.addRelic({ ...src, id: `blueprint_copy_${Date.now()}`, name: `Blueprint (${src.name})`, icon: '📋', description: `Kopie: ${src.description}` });
+      } else {
+        relicSystem.addRelic(relic);
+      }
+    } else {
+      relicSystem.addRelic(relic);
+    }
+    if (relic.effect === 'glass_cannon') setLives(1);
+    achievements.trackRelicCollected();
+  }, [gold, relicSystem, achievements, setLives]);
+
+  const handleShopBuyPerk = useCallback((perk, price) => {
+    if (!gold.spendGold(price)) return;
+    const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
+    const hasUpgradeMaster = relicSystem.hasRelic('upgrade_master');
+    perkSystem.selectPerk(perk, { keepOpen: true, hasEternalFlame, hasUpgradeMaster });
+    achievements.trackPerkCollected();
+  }, [gold, perkSystem, relicSystem, achievements]);
+
+  const handleShopHeal = useCallback(() => {
+    const healCost = 30;
+    if (!gold.spendGold(healCost)) return;
+    const maxLives = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
+    setLives(prev => Math.min(prev + 1, maxLives));
+  }, [gold, relicSystem, setLives]);
+
+  const handleShopUpgradePerk = useCallback((perkOrOpen) => {
+    // Called from Healer: costs gold, extends a perk's duration
+    if (!gold.canAfford(25)) return;
+    // If called without a specific perk, noop (UI flow handles perk selection inside ShopScreen)
+    if (perkOrOpen && perkOrOpen.id) {
+      if (!gold.spendGold(25)) return;
+      perkSystem.selectPerk({ ...perkOrOpen, bonusDuration: 3 }, { keepOpen: true });
+    }
+  }, [gold, perkSystem]);
+
+  const handleShopBuySynergySlot = useCallback(() => {
+    const cost = 80;
+    if (!gold.spendGold(cost)) return;
+    relicSystem.addRelic(RELICS.SYNERGY_EXPANDER);
+  }, [gold, relicSystem]);
+
+  const handleShopComplete = useCallback(() => {
+    mapSystem.completeShop();
+  }, [mapSystem]);
+
+  // ── Rest callbacks ──────────────────────────────────────────
+  const handleRest = useCallback(() => {
+    const maxLives = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
+    setLives(prev => Math.min(prev + 2, maxLives));
+    mapSystem.completeRest();
+  }, [relicSystem, setLives, mapSystem]);
+
+  const handleRestUpgradePerk = useCallback((perk) => {
+    // Extend perk duration for free at rest site
+    if (!perk?.id) return;
+    perkSystem.selectPerk({ ...perk, bonusDuration: 3 }, { keepOpen: true });
+    mapSystem.completeRest();
+  }, [perkSystem, mapSystem]);
 
   const handleSkipCard = useCallback(() => {
     if (perkSystem.hasPerk("skip_card")) {
@@ -1287,12 +1441,16 @@ export default function Game({
     setMasochistMult(0);
     setFortressRegenCount(0);
     bestComboMultiplierRef.current = 1;
+    stageScoreRef.current = {};
+    stageCorrectRef.current = 0;
     achievements.resetGameStats();
     runLogger.reset();
+    mapSystem.reset();
 
     await cardLoader.preloadCards();
     await cardLoader.setNextPair();
-  }, [setScore, streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, gold, achievements, runLogger, saveCurrentRun]);
+    mapSystem.generateMap();
+  }, [setScore, streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, gold, achievements, runLogger, saveCurrentRun, mapSystem]);
 
   const handleImageLoad = useCallback((index) => {
     setImagesLoaded((prev) => {
@@ -1456,17 +1614,6 @@ export default function Game({
               <span className="text-yellow-300 text-xs font-bold">{gold.gold}</span>
             </motion.div>
           </AnimatePresence>
-
-          {/* Filter Odds Button */}
-          {perkSystem.getActiveFilterPerks().length > 0 && (
-            <button
-              onClick={() => setShowFilterOdds(true)}
-              title="Card Pool Filter Odds"
-              className="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
-            >
-              <GameIcon name="magnifier" size={16} color="amber" />
-            </button>
-          )}
 
           {/* Roadmap Button */}
           <button
@@ -1651,12 +1798,6 @@ export default function Game({
         )}
       </div>
 
-      <FilterOddsModal
-        show={showFilterOdds}
-        onClose={() => setShowFilterOdds(false)}
-        activeBoosts={cardLoader.activeBoosts}
-        activeFilters={cardLoader.activeFilters}
-      />
 
       <AnimatePresence>
         {showRoadmap && (
@@ -1683,20 +1824,6 @@ export default function Game({
         rerollKey={levelUpRerollKey}
       />
 
-      <LevelUpModal
-        show={showRelicSelection}
-        newLevel={currentRound}
-        activeRelics={relicSystem.activeRelics}
-        activePerks={perkSystem.activePerks}
-        activeSynergies={synergyEngine.activeSynergies}
-        maxSynergySlots={synergyEngine.maxSynergySlots}
-        onSelect={handleRelicRoundSelect}
-        onSkip={handleRelicSkip}
-        onReroll={handleRelicReroll}
-        gold={gold.gold}
-        rerollKey={relicRerollKey}
-        forceRelicMode
-      />
 
       <SynergyConflictModal
         show={synergyConflictQueue.length > 0}
@@ -1719,6 +1846,81 @@ export default function Game({
       />
 
       <SynergyToast synergy={synergyToast} onDismiss={() => setSynergyToast(null)} />
+
+      {/* ── Roguelike Stage Screens ─────────────────────────── */}
+      <AnimatePresence>
+        {mapSystem.showStageComplete && !gameOver && (
+          <StageCompleteScreen
+            stage={mapSystem.currentStage}
+            totalStages={TOTAL_STAGES}
+            stageScore={stageScoreRef.current[mapSystem.currentStage] ?? 0}
+            stageCorrect={stageCorrectRef.current}
+            level={level.level}
+            gold={gold.gold}
+            nodeType={mapSystem.map?.currentNodeType}
+            onContinue={() => {
+              stageCorrectRef.current = 0;
+              // Checkpoint speichern
+              if (!user?.guest) {
+                const runSummary = runLogger.getRunSummary(synergyEngine.activeSynergies);
+                saveStageCheckpoint({
+                  client_session_id: runSummary.client_session_id,
+                  stages_cleared:    mapSystem.currentStage,
+                  node_path:         mapSystem.getChosenPathSoFar(),
+                  score_per_stage:   stageScoreRef.current,
+                  current_score:     score,
+                  current_level:     level.level,
+                  perks:             runSummary.perks,
+                  relics:            runSummary.relics,
+                  synergies:         runSummary.synergies,
+                });
+              }
+              mapSystem.dismissStageComplete();
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {mapSystem.showMap && !gameOver && (
+          <MapScreen
+            map={mapSystem.map}
+            currentStage={mapSystem.currentStage}
+            gold={gold.gold}
+            onChooseNode={(optIdx) => mapSystem.chooseNode(optIdx)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {mapSystem.showShop && !gameOver && (
+          <ShopScreen
+            gold={gold.gold}
+            lives={lives}
+            maxLives={relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES}
+            activeRelics={relicSystem.activeRelics}
+            activePerks={perkSystem.activePerks}
+            onClose={handleShopComplete}
+            onBuyRelic={handleShopBuyRelic}
+            onBuyPerk={handleShopBuyPerk}
+            onHeal={handleShopHeal}
+            onUpgradePerk={handleShopUpgradePerk}
+            onBuySynergySlot={handleShopBuySynergySlot}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {mapSystem.showRest && !gameOver && (
+          <RestScreen
+            lives={lives}
+            maxLives={relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES}
+            activePerks={perkSystem.activePerks}
+            onRest={handleRest}
+            onUpgradePerk={handleRestUpgradePerk}
+          />
+        )}
+      </AnimatePresence>
 
       {gameOver && (
         <GameOverScreen

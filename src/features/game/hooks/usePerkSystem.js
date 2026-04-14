@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { PERKS, RARITY_WEIGHTS, PERK_CONFIG, PERK_TYPES, getBasePerkId, isExtendedPerk } from '../constants/perkDefinitions';
 
 export const usePerkSystem = () => {
@@ -8,6 +8,14 @@ export const usePerkSystem = () => {
   const [availablePerks, setAvailablePerks] = useState([]);
   const [selectedPermanentPerks, setSelectedPermanentPerks] = useState([]);
   const [correctAnswersForRegen, setCorrectAnswersForRegen] = useState(0);
+
+  // Balatro-Perk-Zustandsrefs — useRef für synchronen Zugriff ohne Re-Renders
+  const chainLightningCounterRef = useRef(0);  // consecutive correct count
+  const timeBombCounterRef = useRef(0);         // correct answers while active
+  const compoundInterestAccRef = useRef(0);     // accumulated flat bonus
+  const echoLastBonusRef = useRef(0);           // last answer's bonus delta
+  const bloodlustChargesRef = useRef(0);        // charges from wrong answers
+  const momentumFlatStackRef = useRef(0);       // current stacking flat bonus
 
   const generateRandomPerks = useCallback(() => {
     const allPerks = Object.values(PERKS);
@@ -245,7 +253,7 @@ export const usePerkSystem = () => {
     }
   }, [roundsPlayed]);
 
-  const decrementPerkDurations = useCallback((hasRecycler = false) => {
+  const decrementPerkDurations = useCallback((hasRecycler = false, onPerkExpire = null) => {
     setActivePerks(prev => {
       return prev.reduce((acc, perk) => {
         if (perk.duration === -1) {
@@ -258,8 +266,16 @@ export const usePerkSystem = () => {
         } else if (hasRecycler && Math.random() < 0.3) {
           // Perk Recycler: 30% chance to renew expired perk
           acc.push({ ...perk, remainingDuration: perk.duration });
+        } else {
+          // Perk abgelaufen — Callback für Payouts (Time Bomb, Compound Interest)
+          onPerkExpire?.(perk);
+          // Counter-Refs resetten
+          if (perk.effect === 'chain_lightning_counter') chainLightningCounterRef.current = 0;
+          if (perk.effect === 'time_bomb_counter') timeBombCounterRef.current = 0;
+          if (perk.effect === 'compound_interest') compoundInterestAccRef.current = 0;
+          if (perk.effect === 'momentum_flat') momentumFlatStackRef.current = 0;
+          if (perk.effect === 'bloodlust_charges') bloodlustChargesRef.current = 0;
         }
-        // else: perk expired
         return acc;
       }, []);
     });
@@ -356,6 +372,13 @@ export const usePerkSystem = () => {
     setAvailablePerks([]);
     setSelectedPermanentPerks([]);
     setCorrectAnswersForRegen(0);
+    // Balatro-Perk-Refs zurücksetzen
+    chainLightningCounterRef.current = 0;
+    timeBombCounterRef.current = 0;
+    compoundInterestAccRef.current = 0;
+    echoLastBonusRef.current = 0;
+    bloodlustChargesRef.current = 0;
+    momentumFlatStackRef.current = 0;
   }, []);
 
   return {
@@ -378,5 +401,12 @@ export const usePerkSystem = () => {
     correctAnswersForRegen,
     clearPerks,
     reset,
+    // Balatro-Perk-Refs (für Game.jsx Score-Berechnung)
+    chainLightningCounterRef,
+    timeBombCounterRef,
+    compoundInterestAccRef,
+    echoLastBonusRef,
+    bloodlustChargesRef,
+    momentumFlatStackRef,
   };
 };

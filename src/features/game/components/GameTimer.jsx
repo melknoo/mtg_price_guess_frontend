@@ -7,7 +7,7 @@ export default function GameTimer({ timeLeft, possiblePoints, progress }) {
     <>
       {/* Timer Info */}
       <div className="w-full max-w-xl flex justify-between items-center mb-2 px-1">
-        <div className="flex items-center gap-2 text-gray-800 font-semibold">
+        <div className="flex items-center gap-2 text-gray-800 font-semibold whitespace-nowrap">
           <FaStopwatch />
           <span>{timeLeft.toFixed(1)} sec</span>
         </div>
@@ -17,7 +17,7 @@ export default function GameTimer({ timeLeft, possiblePoints, progress }) {
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex items-center gap-1 text-green-700 font-semibold"
+          className="flex items-center gap-1 text-green-700 font-semibold whitespace-nowrap"
         >
           <FaStar className="text-yellow-400" />
           <span>+{possiblePoints} Points possible</span>

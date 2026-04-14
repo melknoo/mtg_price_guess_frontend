@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { fetchLeaderboard } from "../api/leaderboardApi";
+import GameIcon from "../../../shared/components/GameIcon";
 
-export default function Leaderboard({ onBack, onShowFull, compact = false, mobileLimit = 5 }) {
+export default function Leaderboard({ onBack, onShowFull, compact = false, mobileLimit = 3 }) {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,7 +48,7 @@ export default function Leaderboard({ onBack, onShowFull, compact = false, mobil
 
   return (
     <div className={`text-gray-900 text-center ${compact ? "w-full" : "max-w-md mx-auto"}`}>
-      <h2 className={`font-bold ${compact ? "text-xl mb-3" : "text-3xl mb-6"}`}>🏆 Leaderboard</h2>
+      <h2 className={`font-bold ${compact ? "text-xl mb-3" : "text-3xl mb-6"}`}><GameIcon name="trophy" size={18} color="amber" /> Leaderboard</h2>
 
       {players.length === 0 ? (
         <p className="text-gray-600 py-4 text-sm">

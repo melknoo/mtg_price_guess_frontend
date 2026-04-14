@@ -52,11 +52,11 @@ export default function ProgressionRoadmapModal({ onClose, currentRound, level, 
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 12 }}
         transition={{ duration: 0.2 }}
-        className="relative w-full max-w-md bg-gradient-to-b from-[#1a2f5e] to-[#0d1b3e] border border-white/20 rounded-2xl shadow-2xl text-white overflow-y-auto max-h-[90dvh]"
+        className="relative w-full max-w-md bg-[#0d1117] border-2 border-indigo-500/50 rounded-sm shadow-pixel text-white overflow-y-auto max-h-[90dvh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-[#1a2f5e]/95 backdrop-blur px-5 pt-4 pb-3 border-b border-white/10 flex items-start justify-between">
+        <div className="sticky top-0 bg-[#0d1117]/95 backdrop-blur px-5 pt-4 pb-3 border-b-2 border-indigo-500/30 flex items-start justify-between">
           <div className="flex items-center gap-2">
             <GameIcon name="map" size={18} color="amber" />
             <div>
@@ -82,9 +82,9 @@ export default function ProgressionRoadmapModal({ onClose, currentRound, level, 
               <span className="text-xs text-amber-300 font-semibold uppercase tracking-widest">Current XP</span>
               <span className="text-xs text-white/50">{level.xp} / {level.xpToNextLevel}</span>
             </div>
-            <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden">
+            <div className="w-full h-2.5 bg-white/10 rounded-sm overflow-hidden shadow-pixel-inset">
               <motion.div
-                className="h-full bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full"
+                className="h-full bg-amber-400 rounded-sm"
                 initial={false}
                 animate={{ width: `${xpPercent}%` }}
                 transition={{ duration: 0.4 }}
@@ -98,7 +98,7 @@ export default function ProgressionRoadmapModal({ onClose, currentRound, level, 
           {/* Quick summary badges */}
           <div className="grid grid-cols-3 gap-2">
             {!hasNoPerkRelic && nextPerkEvent ? (
-              <div className="bg-purple-500/15 border border-purple-400/30 rounded-xl p-3 text-center">
+              <div className="bg-purple-500/15 border border-purple-400/30 rounded-sm p-3 text-center">
                 <div className="text-purple-300 text-lg font-bold">R{nextPerkEvent.round}</div>
                 <div className="flex items-center justify-center gap-1 text-purple-200/70 text-xs mt-0.5">
                   <GameIcon name="glow" size={11} color="purple" />
@@ -107,13 +107,13 @@ export default function ProgressionRoadmapModal({ onClose, currentRound, level, 
                 <div className="text-white/40 text-xs">in {nextPerkEvent.round - currentRound}r</div>
               </div>
             ) : (
-              <div className="bg-gray-500/15 border border-gray-400/20 rounded-xl p-3 text-center">
+              <div className="bg-gray-500/15 border border-gray-400/20 rounded-sm p-3 text-center">
                 <div className="text-gray-400 text-lg font-bold">—</div>
                 <div className="text-gray-400/70 text-xs mt-0.5">Perks off</div>
               </div>
             )}
             {nextRelicEvent && (
-              <div className="bg-yellow-500/15 border border-yellow-400/30 rounded-xl p-3 text-center">
+              <div className="bg-yellow-500/15 border border-yellow-400/30 rounded-sm p-3 text-center">
                 <div className="text-yellow-300 text-lg font-bold">R{nextRelicEvent.round}</div>
                 <div className="flex items-center justify-center gap-1 text-yellow-200/70 text-xs mt-0.5">
                   <GameIcon name="gem" size={11} color="amber" />
@@ -122,7 +122,7 @@ export default function ProgressionRoadmapModal({ onClose, currentRound, level, 
                 <div className="text-white/40 text-xs">in {nextRelicEvent.round - currentRound}r</div>
               </div>
             )}
-            <div className="bg-amber-500/15 border border-amber-400/30 rounded-xl p-3 text-center">
+            <div className="bg-amber-500/15 border border-amber-400/30 rounded-sm p-3 text-center">
               <div className="text-amber-300 text-lg font-bold">Lv {level.level + 1}</div>
               <div className="flex items-center justify-center gap-1 text-amber-200/70 text-xs mt-0.5">
                 <GameIcon name="star" size={11} color="amber" />
@@ -145,7 +145,7 @@ export default function ProgressionRoadmapModal({ onClose, currentRound, level, 
                 return (
                   <div
                     key={event.round}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
+                    className={`flex items-center gap-3 rounded-sm px-3 py-2 ${
                       event.isRelic
                         ? isFirst
                           ? 'bg-yellow-500/20 border border-yellow-400/40'
@@ -196,7 +196,7 @@ export default function ProgressionRoadmapModal({ onClose, currentRound, level, 
               {upcomingLevels.map((item, i) => (
                 <div
                   key={item.level}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
+                  className={`flex items-center gap-3 rounded-sm px-3 py-2 ${
                     i === 0
                       ? 'bg-amber-500/15 border border-amber-400/30'
                       : 'bg-white/5 border border-white/5'
