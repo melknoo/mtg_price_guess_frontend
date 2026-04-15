@@ -1075,7 +1075,8 @@ export default function Game({
         await cardLoader.setNextPair();
       }
     }
-  }, [achievements, cardLoader, initialCards]);
+    mapSystem.generateMap();
+  }, [achievements, cardLoader, initialCards, mapSystem]);
 
   // Initial Load
   useEffect(() => {
