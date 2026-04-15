@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { MERCHANT_TYPES, SHOP_PRICES } from '../constants/mapDefinitions';
 import { RELICS, RELIC_RARITY } from '../constants/relicDefinitions';
 import { PERKS } from '../constants/perkDefinitions';
+import GameIcon from '../../../shared/components/GameIcon';
+import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
 const RARITY_WEIGHTS = { common: 50, rare: 30, epic: 15, legendary: 5 };
 
@@ -58,7 +60,11 @@ function ItemCard({ item, price, gold, canAfford, onBuy }) {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xl shrink-0">{item.icon ?? '✨'}</span>
+          {ITEM_ICONS[item.id]
+            ? <GameIcon name={ITEM_ICONS[item.id].icon} color={ITEM_ICONS[item.id].color} size={20} />
+            : item._gameIcon
+              ? <GameIcon name={item._gameIcon.icon} color={item._gameIcon.color} size={20} />
+              : <GameIcon name="star" size={20} color="amber" />}
           <div className="min-w-0">
             <div className={`font-bold text-sm truncate ${RARITY_COLOR[item.rarity] ?? 'text-white'}`}>
               {item.name}
@@ -66,7 +72,7 @@ function ItemCard({ item, price, gold, canAfford, onBuy }) {
             <div className="text-indigo-300/70 text-xs line-clamp-1">{item.description}</div>
           </div>
         </div>
-        <div className="shrink-0 text-amber-300 font-black text-sm">🪙{price}</div>
+        <div className="shrink-0 text-amber-300 font-black text-sm inline-flex items-center gap-0.5"><GameIcon name="coin" size={13} color="amber" />{price}</div>
       </div>
     </motion.button>
   );
@@ -78,7 +84,7 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
     return (
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-2xl">⚔️</span>
+          <GameIcon name="sword" size={24} color="white" />
           <div>
             <div className="font-black text-white">Armorer</div>
             <div className="text-indigo-300/60 text-xs">Deals in relics and equipment</div>
@@ -107,7 +113,7 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
     return (
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-2xl">🏥</span>
+          <GameIcon name="heart" size={24} color="pink" />
           <div>
             <div className="font-black text-white">Healer</div>
             <div className="text-indigo-300/60 text-xs">Restoration and perk upgrades</div>
@@ -115,14 +121,14 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
         </div>
         <div className="flex flex-col gap-2">
           <ItemCard
-            item={{ name: 'Healing Potion', description: `Restore 1 life (max ${maxLives})`, icon: '❤️', rarity: 'common' }}
+            item={{ id: '_heal', name: 'Healing Potion', description: `Restore 1 life (max ${maxLives})`, _gameIcon: { icon: 'heart', color: 'red' }, rarity: 'common' }}
             price={healCost}
             gold={gold}
             canAfford={gold >= healCost && lives < maxLives}
             onBuy={onHeal}
           />
           <ItemCard
-            item={{ name: 'Perk Upgrade', description: 'Extend a perk\'s duration by 3 rounds', icon: '⬆️', rarity: 'rare' }}
+            item={{ id: '_perk_upgrade', name: 'Perk Upgrade', description: 'Extend a perk\'s duration by 3 rounds', _gameIcon: { icon: 'hammer', color: 'amber' }, rarity: 'rare' }}
             price={upgradeCost}
             gold={gold}
             canAfford={gold >= upgradeCost}
@@ -138,7 +144,7 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
     return (
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-2xl">🧙</span>
+          <GameIcon name="hat" size={24} color="purple" />
           <div>
             <div className="font-black text-white">Perk Vendor</div>
             <div className="text-indigo-300/60 text-xs">Sells temporary and permanent perks</div>
@@ -168,7 +174,7 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
     return (
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-2xl">🔮</span>
+          <GameIcon name="gem" size={24} color="purple" />
           <div>
             <div className="font-black text-white">Wandering Mage</div>
             <div className="text-indigo-300/60 text-xs">Rare artifacts and arcane upgrades</div>
@@ -176,7 +182,7 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
         </div>
         <div className="flex flex-col gap-2">
           <ItemCard
-            item={{ name: 'Synergy Slot', description: 'Unlock an extra synergy slot (+1 max)', icon: '🔗', rarity: 'epic' }}
+            item={{ id: '_synergy_slot', name: 'Synergy Slot', description: 'Unlock an extra synergy slot (+1 max)', _gameIcon: { icon: 'path_follow', color: 'teal' }, rarity: 'epic' }}
             price={synergySlotCost}
             gold={gold}
             canAfford={gold >= synergySlotCost}

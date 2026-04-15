@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MERCHANT_TYPES } from '../constants/mapDefinitions';
 import MerchantPanel from './MerchantPanel';
+import GameIcon from '../../../shared/components/GameIcon';
 
 const ALL_MERCHANT_TYPES = [
   MERCHANT_TYPES.ARMORER,
@@ -52,7 +53,7 @@ export default function ShopScreen({
             <h2 className="text-xl font-black text-amber-300">Shop</h2>
             <p className="text-indigo-300/60 text-xs">Spend your gold wisely</p>
           </div>
-          <span className="text-amber-300 font-black text-lg">🪙 {gold}</span>
+          <span className="text-amber-300 font-black text-lg inline-flex items-center gap-1"><GameIcon name="coin" size={16} color="amber" /> {gold}</span>
         </div>
 
         {/* Merchants */}

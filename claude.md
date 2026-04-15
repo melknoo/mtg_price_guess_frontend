@@ -2,11 +2,29 @@
 
 ## Icons & Visuals
 
-**Kein Emoji im UI-Code.** Ausschliesslich Icons aus `/src/assets/icons/` verwenden, eingebunden via `<GameIcon name="..." color="..." size={...} />`.
+### ⚠️ KEINE EMOJIS IM UI-CODE — STRICT RULE
 
-- Icon-Namen: Keys aus `src/shared/constants/iconMap.js` (z.B. `star`, `human_controller`, `heart`, `shield`, `trophy`)
-- Farben: `white`, `amber`, `blue`, `green`, `red`, `purple`, `orange`, `teal`, `gray`
-- Emoji-Ersetzungen in CATEGORY_STYLES, Headers, Badges, Labels etc. immer mit `GameIcon`
+**Niemals Emojis direkt in JSX oder als icon-Strings.** Ausschließlich Assets aus `src/assets/icons/` verwenden.
+
+```jsx
+// ✗ FALSCH — niemals so:
+<span>🔥 Streak</span>
+snap('Gold Rush', '💎', b)
+icon: '❤️'
+
+// ✓ RICHTIG — immer so:
+<GameIcon name="signal" size={16} color="orange" /> Streak
+snap('Gold Rush', gi('gold_rush'), b)
+_gameIcon: { icon: 'heart', color: 'red' }
+```
+
+**Vorgehen bei neuen Icons:**
+1. Icon-Name aus `src/shared/constants/iconMap.js` wählen (Keys: `star`, `heart`, `shield`, `trophy`, `sword`, `skull`, `coin`, `chest`, `glow`, `gem`, `hat`, `bag`, `time`, `thunder`, `signal`, `drop`, `ring`, `freeze`, `path_follow`, `target`, `target_2`, `sound`, `gear`, `gear_2`, `list`, `scroll`, `stat`, `boots`, `bullet`, `brain`, `magnifier`, `potion`, `duplicate`, `card`, `door`, `clear`, `disable`, `lock`, `map`, `parchment`, …)
+2. Farbe: `white`, `amber`, `blue`, `green`, `red`, `purple`, `orange`, `teal`, `gray`, `pink`
+3. `<GameIcon name="..." color="..." size={N} />` — Pixelgenau im Stil des `shadow-pixel`-Designs
+4. Für Perk/Relic-Icons: Eintrag in `src/shared/constants/itemIconMap.js` anlegen; `gi(id)` / `giPerk(perk)` in snap()-Calls nutzen
+
+**Stil:** Alle neuen UI-Elemente im vorhandenen Pixel-Art-Stil (`shadow-pixel`, `rounded-sm`, `border-2`, dunkle Hintergründe). Keine neuen Rounding-Werte, keine Schatten-Stile die nicht bereits genutzt werden.
 
 ## Komponenten-Struktur
 

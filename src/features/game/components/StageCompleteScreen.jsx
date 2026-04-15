@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { NODE_TYPES, TOTAL_STAGES } from '../constants/mapDefinitions';
+import GameIcon from '../../../shared/components/GameIcon';
 
 const NODE_LABELS = {
   [NODE_TYPES.NORMAL]: 'Normal',
@@ -29,7 +30,9 @@ export default function StageCompleteScreen({ stage, totalStages = TOTAL_STAGES,
       >
         {/* Stage badge */}
         <div className="flex justify-center mb-3">
-          <span className="text-4xl">{isBossStage ? '👑' : '⚔️'}</span>
+          {isBossStage
+            ? <GameIcon name="trophy" size={40} color="amber" />
+            : <GameIcon name="sword"  size={40} color="white"  />}
         </div>
 
         <h2 className="text-2xl font-black text-amber-300 mb-1 tracking-wide uppercase">

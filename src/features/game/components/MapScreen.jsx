@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion';
 import { NODE_TYPES, TOTAL_STAGES } from '../constants/mapDefinitions';
+import GameIcon from '../../../shared/components/GameIcon';
 
 const NODE_ICON = {
-  [NODE_TYPES.NORMAL]: '⚔️',
-  [NODE_TYPES.ELITE]: '💀',
-  [NODE_TYPES.SHOP]: '🛒',
-  [NODE_TYPES.REST]: '🔥',
-  [NODE_TYPES.BOSS]: '👑',
+  [NODE_TYPES.NORMAL]: <GameIcon name="sword"  size={20} color="white"  />,
+  [NODE_TYPES.ELITE]:  <GameIcon name="skull"  size={20} color="red"    />,
+  [NODE_TYPES.SHOP]:   <GameIcon name="chest"  size={20} color="amber"  />,
+  [NODE_TYPES.REST]:   <GameIcon name="glow"   size={20} color="orange" />,
+  [NODE_TYPES.BOSS]:   <GameIcon name="trophy" size={20} color="amber"  />,
 };
 
 const NODE_LABEL = {
@@ -48,7 +49,7 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode }) {
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-black text-amber-300 tracking-wide">CHOOSE YOUR PATH</h2>
-          <span className="text-amber-300 font-bold text-sm border border-amber-500/40 rounded-sm px-2 py-0.5">🪙 {gold}g</span>
+          <span className="text-amber-300 font-bold text-sm border border-amber-500/40 rounded-sm px-2 py-0.5 inline-flex items-center gap-1"><GameIcon name="coin" size={14} color="amber" /> {gold}g</span>
         </div>
 
         {/* Render stages bottom-to-top (boss at top, stage 1 at bottom) */}

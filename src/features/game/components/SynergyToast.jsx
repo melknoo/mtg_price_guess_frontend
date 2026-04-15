@@ -44,7 +44,7 @@ export default function SynergyToast({ synergy, onDismiss }) {
                   transition={{ delay: 0.1 }}
                   className="text-xs uppercase tracking-wider font-bold text-white/70 mb-0.5"
                 >
-                  🔗 Synergy Activated!
+                  <span className="inline-flex items-center gap-1"><GameIcon name="path_follow" size={10} color="white" /> Synergy Activated!</span>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}

@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
 import { GAME_CONFIG } from '../../../shared/utils/constants';
+import GameIcon from '../../../shared/components/GameIcon';
+import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
 export default function RestScreen({ lives, maxLives = GAME_CONFIG.INITIAL_LIVES, activePerks = [], onRest, onUpgradePerk }) {
   const upgradablePerks = activePerks.filter(p => p.duration > 0);
@@ -20,7 +22,7 @@ export default function RestScreen({ lives, maxLives = GAME_CONFIG.INITIAL_LIVES
         transition={{ type: 'spring', stiffness: 250, damping: 22 }}
       >
         <div className="text-center mb-5">
-          <div className="text-4xl mb-2">🔥</div>
+          <div className="mb-2"><GameIcon name="glow" size={40} color="orange" /></div>
           <h2 className="text-2xl font-black text-green-300">Rest Site</h2>
           <p className="text-indigo-300/70 text-sm mt-1">Recover or strengthen a perk</p>
         </div>
@@ -28,7 +30,7 @@ export default function RestScreen({ lives, maxLives = GAME_CONFIG.INITIAL_LIVES
         {/* Current lives */}
         <div className="flex justify-center gap-1 mb-5">
           {Array.from({ length: maxLives }).map((_, i) => (
-            <span key={i} className="text-xl">{i < lives ? '❤️' : '🖤'}</span>
+            <span key={i}><GameIcon name="heart" size={20} color={i < lives ? 'red' : 'gray'} /></span>
           ))}
         </div>
 
@@ -45,7 +47,7 @@ export default function RestScreen({ lives, maxLives = GAME_CONFIG.INITIAL_LIVES
             whileHover={canHeal ? { scale: 1.02 } : {}}
             whileTap={canHeal ? { scale: 0.98 } : {}}
           >
-            <div className="text-2xl mb-1">❤️❤️</div>
+            <div className="flex justify-center gap-1 mb-1"><GameIcon name="heart" size={22} color="red" /><GameIcon name="heart" size={22} color="red" /></div>
             <div>Rest</div>
             <div className="text-sm font-normal opacity-70">+2 lives (max {maxLives})</div>
             {!canHeal && <div className="text-xs text-red-300 mt-1">Already at full health</div>}
@@ -65,7 +67,9 @@ export default function RestScreen({ lives, maxLives = GAME_CONFIG.INITIAL_LIVES
                     whileTap={{ scale: 0.99 }}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">{perk.icon ?? '✨'}</span>
+                      {ITEM_ICONS[perk.id]
+                        ? <GameIcon name={ITEM_ICONS[perk.id].icon} color={ITEM_ICONS[perk.id].color} size={18} />
+                        : <GameIcon name="star" size={18} color="amber" />}
                       <div>
                         <div className="text-amber-200 font-bold text-sm">{perk.name}</div>
                         <div className="text-indigo-300/70 text-xs">+{perk.bonusDuration ?? perk.duration ?? 2} rounds duration</div>

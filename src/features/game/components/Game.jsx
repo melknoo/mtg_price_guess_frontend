@@ -38,6 +38,7 @@ import ProgressionRoadmapModal from "./ProgressionRoadmapModal";
 import SynergyToast from "./SynergyToast";
 import SynergyConflictModal from "./SynergyConflictModal";
 import GameIcon from "../../../shared/components/GameIcon";
+import { ITEM_ICONS } from "../../../shared/constants/itemIconMap";
 import ActivePerksDisplay from "./ActivePerksDisplay";
 import RegisterWithScore from "../../auth/components/RegisterWithScore";
 import DebugPanel from "./DebugPanel";
@@ -46,6 +47,11 @@ import StageCompleteScreen from "./StageCompleteScreen";
 import MapScreen from "./MapScreen";
 import ShopScreen from "./ShopScreen";
 import RestScreen from "./RestScreen";
+
+
+// Helper: liefert <GameIcon>-Element für snap()/extraBreakdown icon-Parameter
+const gi = (id) => { const m = ITEM_ICONS[id]; return m ? <GameIcon name={m.icon} color={m.color} size={12} /> : null; };
+const giPerk = (perk) => { const m = ITEM_ICONS[perk?.id]; return m ? <GameIcon name={m.icon} color={m.color} size={12} /> : null; };
 
 export default function Game({
   score,
@@ -74,6 +80,7 @@ export default function Game({
   const [comboMultiplier, setComboMultiplier] = useState(1);   // Combo Master Relic
   const [ironWillActive, setIronWillActive] = useState(false); // Iron Will Relic
   const [nextRoundDouble, setNextRoundDouble] = useState(false); // Perfectionist Echo Relic
+  const [sacrificeRitualActive, setSacrificeRitualActive] = useState(false); // Sacrifice Ritual Perk
   const [synergyToast, setSynergyToast] = useState(null);      // aktuelle Synergy-Notification
   const bestComboMultiplierRef = useRef(1);                    // Für Game-Over Summary
   const runLoggedRef = useRef(false);                          // Verhindert doppeltes Logging
@@ -274,6 +281,7 @@ export default function Game({
       if (Math.abs(delta) >= 1) breakdown.push({ label, icon, delta, isMult });
     };
 
+
     // Setup: gemeinsame Hilfswerte
     const hermitActive = relicSystem.hasRelic('hermit');
     const currentDuration = getTimerDuration();
@@ -286,7 +294,7 @@ export default function Game({
     let flatPerkBonus = 0; // Summe der rohen Perk-Flats — für Alchemist & Treasure Hunter
 
     const flatPerk = perkSystem.activePerks.find(p => p.effect === 'flat_bonus');
-    if (flatPerk?.value) { const b = finalPoints; finalPoints += flatPerk.value; flatPerkBonus += flatPerk.value; snap(flatPerk.name, flatPerk.icon, b); }
+    if (flatPerk?.value) { const b = finalPoints; finalPoints += flatPerk.value; flatPerkBonus += flatPerk.value; snap(flatPerk.name, giPerk(flatPerk), b); }
 
     // Color Mastery Perks: +N points wenn die korrekte Karte die passende Farbe hat
     if (winnerCard) {
@@ -295,7 +303,7 @@ export default function Game({
         const matches = cbp.colorValue === 'colorless'
           ? (!cardColor || cardColor === 'colorless')
           : cardColor.includes(cbp.colorValue);
-        if (matches) { const b = finalPoints; finalPoints += cbp.value; flatPerkBonus += cbp.value; snap(cbp.name, cbp.icon, b); }
+        if (matches) { const b = finalPoints; finalPoints += cbp.value; flatPerkBonus += cbp.value; snap(cbp.name, giPerk(cbp), b); }
       });
     }
 
@@ -306,7 +314,7 @@ export default function Game({
       const momentumPerk = perkSystem.activePerks.find(p => p.effect === 'momentum_flat');
       perkSystem.momentumFlatStackRef.current += momentumPerk?.value ?? 15;
       const bonus = perkSystem.momentumFlatStackRef.current;
-      const b = finalPoints; finalPoints += bonus; flatPerkBonus += bonus; snap('Momentum', momentumPerk?.icon ?? '🌊', b);
+      const b = finalPoints; finalPoints += bonus; flatPerkBonus += bonus; snap('Momentum', giPerk(momentumPerk), b);
     }
 
     // Compound Interest: accumulate +10 per correct; payout on expiry via decrementPerkDurations callback
@@ -326,7 +334,7 @@ export default function Game({
       if (chainCount > 1) {
         const bonus = Math.floor(finalPoints * (chainCount - 1) * 0.5);
         const b = finalPoints; finalPoints += bonus; flatPerkBonus += bonus;
-        snap(`Chain Lightning ×${chainCount}`, '⚡', b);
+        snap(`Chain Lightning ×${chainCount}`, gi('chain_lightning'), b);
       }
     }
 
@@ -334,72 +342,78 @@ export default function Game({
     if (perkSystem.bloodlustChargesRef.current > 0 && perkSystem.activePerks.some(p => p.effect === 'bloodlust_charges')) {
       const charges = perkSystem.bloodlustChargesRef.current;
       perkSystem.bloodlustChargesRef.current = 0;
-      const b = finalPoints; finalPoints += charges; flatPerkBonus += charges; snap('Bloodlust', '🩸', b);
+      const b = finalPoints; finalPoints += charges; flatPerkBonus += charges; snap('Bloodlust', gi('bloodlust'), b);
     }
 
     // Echo Chamber: repeat last answer's bonus delta
     if (perkSystem.activePerks.some(p => p.effect === 'echo_chamber') && perkSystem.echoLastBonusRef.current > 0) {
       const echo = perkSystem.echoLastBonusRef.current;
-      const b = finalPoints; finalPoints += echo; flatPerkBonus += echo; snap('Echo Chamber', '🔊', b);
+      const b = finalPoints; finalPoints += echo; flatPerkBonus += echo; snap('Echo Chamber', gi('echo_chamber'), b);
     }
 
     // ════════════════════════════════════════════════════════════
     // PHASE B — PERK-MULTIPLIKATOR (nach den Flats — multipliziert Base + alle Perk-Flats)
     // ════════════════════════════════════════════════════════════
-    if (multiplierPerk?.value) { const b = finalPoints; finalPoints *= multiplierPerk.value; snap(multiplierPerk.name, multiplierPerk.icon, b, true); }
+    if (multiplierPerk?.value) { const b = finalPoints; finalPoints *= multiplierPerk.value; snap(multiplierPerk.name, giPerk(multiplierPerk), b, true); }
 
     // ── Balatro Phase B: Mult-Effekte ──────────────────────────
 
     // Perfectionist: ×3 on perfect answer (replaces old flat perfect_bonus)
     if (isPerfect && perkSystem.activePerks.some(p => p.effect === 'perfect_multiplier')) {
-      const b = finalPoints; finalPoints *= 3; snap('Perfectionist', '✨', b, true);
+      const b = finalPoints; finalPoints *= 3; snap('Perfectionist', gi('perfectionist'), b, true);
     }
 
     // Glass Mind: ×3 on perfect; wrong = extra -1 life (handled in handleChoice)
     if (isPerfect && perkSystem.activePerks.some(p => p.effect === 'glass_mind')) {
-      const b = finalPoints; finalPoints *= 3; snap('Glass Mind', '🔮', b, true);
+      const b = finalPoints; finalPoints *= 3; snap('Glass Mind', gi('glass_mind'), b, true);
     }
 
     // Dead Man's Hand: ×5 at 1 life (effectiveLives for Deaths Mask compat)
     if (effectiveLives === 1 && perkSystem.activePerks.some(p => p.effect === 'dead_mans_hand')) {
-      const b = finalPoints; finalPoints *= 5; snap("Dead Man's Hand", '☠️', b, true);
+      const b = finalPoints; finalPoints *= 5; snap("Dead Man's Hand", gi('dead_mans_hand'), b, true);
       if (lives !== 1) fakeBonus += finalPoints - b;
     }
 
     // Overclock: ×2 (timer also runs at 2× speed via getTimerSpeed)
     if (perkSystem.activePerks.some(p => p.effect === 'overclock')) {
-      const b = finalPoints; finalPoints *= 2; snap('Overclock', '⚡⚡', b, true);
+      const b = finalPoints; finalPoints *= 2; snap('Overclock', gi('overclock'), b, true);
+    }
+
+    // Sacrifice Ritual: ×3 wenn manuell aktiviert (kostet 1 Leben beim Aktivieren)
+    if (sacrificeRitualActive) {
+      const b = finalPoints; finalPoints *= 3; snap('Sacrifice Ritual', gi('sacrifice_ritual'), b, true);
+      setSacrificeRitualActive(false);
     }
 
     // Adrenaline: +20% per active temp perk (duration > 0)
     const tempPerkCount = perkSystem.activePerks.filter(p => p.duration > 0 && p.effect !== 'adrenaline_mult').length;
     if (tempPerkCount > 0 && perkSystem.activePerks.some(p => p.effect === 'adrenaline_mult')) {
-      const b = finalPoints; finalPoints *= 1 + tempPerkCount * 0.2; snap(`Adrenaline ×${tempPerkCount}`, '💉', b, true);
+      const b = finalPoints; finalPoints *= 1 + tempPerkCount * 0.2; snap(`Adrenaline ×${tempPerkCount}`, gi('adrenaline'), b, true);
     }
 
     // Gambler: 60% ×2, 40% ×0
     if (perkSystem.activePerks.some(p => p.effect === 'gambler_roll')) {
       const b = finalPoints;
       const roll = Math.random();
-      if (roll < 0.6) { finalPoints *= 2; snap('Gambler Win', '🎲', b, true); }
-      else { finalPoints = 0; snap('Gambler Loss', '🎲💀', b, true); }
+      if (roll < 0.6) { finalPoints *= 2; snap('Gambler Win', gi('gambler'), b, true); }
+      else { finalPoints = 0; snap('Gambler Loss', gi('gambler'), b, true); }
     }
 
     // Roulette: ×(1–8) zufällig
     if (perkSystem.activePerks.some(p => p.effect === 'roulette')) {
       const b = finalPoints;
       const roll = Math.floor(Math.random() * 8) + 1;
-      finalPoints *= roll; snap(`Roulette ×${roll}`, '🎰', b, true);
+      finalPoints *= roll; snap(`Roulette ×${roll}`, gi('roulette'), b, true);
     }
 
     // Wildcard: random effect
     if (perkSystem.activePerks.some(p => p.effect === 'wildcard')) {
       const wildcardRoll = Math.random();
       const b = finalPoints;
-      if (wildcardRoll < 0.25) { finalPoints *= 2; snap('Wildcard ×2', '🃏', b, true); }
-      else if (wildcardRoll < 0.45) { finalPoints *= 3; snap('Wildcard ×3', '🃏', b, true); }
-      else if (wildcardRoll < 0.65) { finalPoints += 50; snap('Wildcard +50', '🃏', b); }
-      else if (wildcardRoll < 0.85) { finalPoints += 100; snap('Wildcard +100', '🃏', b); }
+      if (wildcardRoll < 0.25) { finalPoints *= 2; snap('Wildcard ×2', gi('wildcard'), b, true); }
+      else if (wildcardRoll < 0.45) { finalPoints *= 3; snap('Wildcard ×3', gi('wildcard'), b, true); }
+      else if (wildcardRoll < 0.65) { finalPoints += 50; snap('Wildcard +50', gi('wildcard'), b); }
+      else if (wildcardRoll < 0.85) { finalPoints += 100; snap('Wildcard +100', gi('wildcard'), b); }
       // else: nothing (~15%)
     }
 
@@ -414,14 +428,14 @@ export default function Game({
     if (relicSystem.hasRelic('collector_bonus')) {
       const b = finalPoints;
       finalPoints += relicSystem.activeRelics.length * relicSystem.getRelicValue('per_relic_flat_bonus');
-      snap('Collector Bonus', '🏛️', b);
+      snap('Collector Bonus', gi('collector_bonus'), b);
     }
 
     // Treasure Hunter: Perk-Flat-Boni werden als Relic-Flat hinzugefügt (danach multipliziert)
     if (relicSystem.hasRelic('treasure_hunter') && flatPerkBonus > 0) {
       const b = finalPoints;
       finalPoints += flatPerkBonus * (relicSystem.getRelicValue('perk_bonus_amplifier') - 1);
-      snap('Treasure Hunter', '🗝️', b);
+      snap('Treasure Hunter', gi('treasure_hunter'), b);
     }
 
     // ════════════════════════════════════════════════════════════
@@ -429,28 +443,28 @@ export default function Game({
     // ════════════════════════════════════════════════════════════
 
     if (relicSystem.hasRelic('glass_cannon')) {
-      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('glass_cannon'); snap('Glass Cannon', '💥', b, true);
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('glass_cannon'); snap('Glass Cannon', gi('glass_cannon'), b, true);
     }
     if (ironWillActive && relicSystem.hasRelic('iron_will')) {
-      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('comeback_bonus'); snap('Iron Will', '🛡️', b, true);
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('comeback_bonus'); snap('Iron Will', gi('iron_will'), b, true);
     }
     if (comboMultiplier > 1) {
-      const b = finalPoints; finalPoints *= comboMultiplier; snap(`Combo ×${comboMultiplier.toFixed(2)}`, '🔗', b, true);
+      const b = finalPoints; finalPoints *= comboMultiplier; snap(`Combo ×${comboMultiplier.toFixed(2)}`, gi('combo_master'), b, true);
     }
 
     // Synergy-Effekte (Hermit deaktiviert diese)
     if (!hermitActive && synergyEngine.hasSynergy('gold_rush')) {
-      const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('permanent_score_mult'); snap('Gold Rush', '💎💎', b, true);
+      const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('permanent_score_mult'); snap('Gold Rush', gi('gold_rush'), b, true);
     }
     // Berserker: effectiveLives — Deaths Mask macht es permanent aktiv
     if (!hermitActive && synergyEngine.hasSynergy('berserker') && effectiveLives === 1) {
-      const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('low_hp_bonus'); snap('Berserker', '😤', b, true);
+      const b = finalPoints; finalPoints *= synergyEngine.getSynergyValue('low_hp_bonus'); snap('Berserker', gi('berserker'), b, true);
       if (lives !== 1) fakeBonus += finalPoints - b; // Deaths Mask triggered this
     }
 
     // Alchemist: Perk-Flat-Boni → Multiplikator (nutzt rohe flatPerkBonus-Summe)
     if (relicSystem.hasRelic('alchemist') && flatPerkBonus > 0) {
-      const b = finalPoints; finalPoints *= 1 + (flatPerkBonus * relicSystem.getRelicValue('flat_to_mult')); snap('Alchemist', '⚗️', b, true);
+      const b = finalPoints; finalPoints *= 1 + (flatPerkBonus * relicSystem.getRelicValue('flat_to_mult')); snap('Alchemist', gi('alchemist'), b, true);
     }
 
     // Risk & Reward: weniger Restzeit = höherer Multiplikator (nutzt echte Zeit, kein Fake)
@@ -461,7 +475,7 @@ export default function Game({
         const timeUsed = Math.max(0, maxTime - timeLeft);
         const riskFactor = 1 + (timeUsed / maxTime) * (relicSystem.getRelicValue('time_risk_mult') - 1);
         finalPoints *= riskFactor;
-        snap('Risk & Reward', '🎲', b, true);
+        snap('Risk & Reward', gi('risk_reward'), b, true);
       }
     }
 
@@ -473,7 +487,7 @@ export default function Game({
         ? snowballMult * (synergyEngine.getSynergyValue('triple_snowball') ?? 3)
         : snowballMult;
       finalPoints *= 1 + (currentRound * finalMult);
-      snap((!hermitActive && synergyEngine.hasSynergy('infinite_engine')) ? 'Snowball ∞' : 'Snowball', '☃️', b, true);
+      snap((!hermitActive && synergyEngine.hasSynergy('infinite_engine')) ? 'Snowball ∞' : 'Snowball', gi('snowball'), b, true);
     }
 
     // Tag Master: +0.1× pro einzigartigen Tag
@@ -484,46 +498,46 @@ export default function Game({
         (item.tags || []).forEach(tag => uniqueTags.add(tag));
       });
       finalPoints *= 1 + (uniqueTags.size * relicSystem.getRelicValue('unique_tag_mult'));
-      snap('Tag Master', '🏷️', b, true);
+      snap('Tag Master', gi('tag_master'), b, true);
     }
 
     // Synergy Chain: +0.25× pro aktive Synergy
     if (relicSystem.hasRelic('synergy_chain')) {
       const b = finalPoints;
       const synCount = hermitActive ? 0 : synergyEngine.activeSynergies.length;
-      if (synCount > 0) { finalPoints *= 1 + (synCount * relicSystem.getRelicValue('per_synergy_mult')); snap('Synergy Chain', '⛓️', b, true); }
+      if (synCount > 0) { finalPoints *= 1 + (synCount * relicSystem.getRelicValue('per_synergy_mult')); snap('Synergy Chain', gi('synergy_chain'), b, true); }
     }
 
     // Perk Mastery: +0.15× pro aktiven Perk
     if (relicSystem.hasRelic('perk_mastery')) {
       const b = finalPoints;
       finalPoints *= 1 + (perkSystem.activePerks.length * relicSystem.getRelicValue('per_perk_mult'));
-      snap('Perk Mastery', '🎓', b, true);
+      snap('Perk Mastery', gi('perk_mastery'), b, true);
     }
 
     // Level Power: +2% pro Level
     if (relicSystem.hasRelic('level_power')) {
       const b = finalPoints;
       finalPoints *= 1 + (level.level * relicSystem.getRelicValue('level_scaling'));
-      snap('Level Power', '📈', b, true);
+      snap('Level Power', gi('level_power'), b, true);
     }
 
     // Last Stand: effectiveLives — Deaths Mask macht es permanent aktiv
     if (relicSystem.hasRelic('last_stand') && effectiveLives === 1) {
-      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('last_stand_double'); snap('Last Stand', '⚔️', b, true);
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('last_stand_double'); snap('Last Stand', gi('last_stand'), b, true);
       if (lives !== 1) fakeBonus += finalPoints - b; // Deaths Mask triggered this
     }
 
     // Chain Reaction: Iron Will oder Combo aktiv → +50% Bonus
     if (relicSystem.hasRelic('chain_reaction') && (ironWillActive || comboMultiplier > 1.15)) {
-      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('chain_reaction'); snap('Chain Reaction', '💥⚡', b, true);
+      const b = finalPoints; finalPoints *= relicSystem.getRelicValue('chain_reaction'); snap('Chain Reaction', gi('chain_reaction'), b, true);
     }
 
     // Synergy Amplifier: +10% pro aktive Synergy (kein Hermit-Block, da Relic-basiert)
     if (relicSystem.hasRelic('synergy_amp') && !hermitActive && synergyEngine.activeSynergies.length > 0) {
       const b = finalPoints;
       finalPoints *= 1 + (synergyEngine.activeSynergies.length * relicSystem.getRelicValue('synergy_multiplier'));
-      snap('Synergy Amp', '🔗📡', b, true);
+      snap('Synergy Amp', gi('synergy_amp'), b, true);
     }
 
     // Mirror: Bei mind. 2 Multiplikatoren → +30% auf Gesamt
@@ -538,13 +552,13 @@ export default function Game({
         relicSystem.hasRelic('glass_cannon'),
       ].filter(Boolean).length;
       if (multCount >= 2) {
-        const b = finalPoints; finalPoints *= relicSystem.getRelicValue('equalize_multipliers'); snap('Mirror', '🪞', b, true);
+        const b = finalPoints; finalPoints *= relicSystem.getRelicValue('equalize_multipliers'); snap('Mirror', gi('mirror'), b, true);
       }
     }
 
     // Masochist Synergy: permanenter Damage-Multiplikator
     if (masochistMult > 0) {
-      const b = finalPoints; finalPoints *= 1 + masochistMult; snap('Masochist', '🩸🩸', b, true);
+      const b = finalPoints; finalPoints *= 1 + masochistMult; snap('Masochist', gi('masochist'), b, true);
     }
 
     // Sacrifice Reward Synergy: +50% pro Sacrifice-Relic
@@ -553,7 +567,7 @@ export default function Game({
       if (sacrificeRelics > 0) {
         const b = finalPoints;
         finalPoints *= 1 + (sacrificeRelics * (synergyEngine.getSynergyValue('per_sacrifice_mult') ?? 0.5));
-        snap('Sacrifice Reward', '🔥💀', b, true);
+        snap('Sacrifice Reward', gi('sacrifice_reward'), b, true);
       }
     }
 
@@ -567,7 +581,7 @@ export default function Game({
       if (finalPoints > threshold) {
         const b = finalPoints;
         finalPoints = threshold + (finalPoints - threshold) * 2;
-        snap('Overkill', '💀', b);
+        snap('Overkill', gi('overkill'), b);
       }
     }
 
@@ -575,35 +589,35 @@ export default function Game({
     if (relicSystem.hasRelic('amplifier')) {
       const b = finalPoints;
       finalPoints += (finalPoints - basePoints) * (relicSystem.getRelicValue('mult_amplifier') - 1);
-      snap('Amplifier', '📡', b);
+      snap('Amplifier', gi('amplifier'), b);
     }
 
     // Echo: Gesamt-Gain verdoppeln
     if (relicSystem.hasRelic('echo')) {
-      const b = finalPoints; finalPoints += (finalPoints - basePoints); snap('Echo', '🔁', b);
+      const b = finalPoints; finalPoints += (finalPoints - basePoints); snap('Echo', gi('echo'), b);
     }
 
     // Hermit: Relic-Anteil (alles über afterPerks) verdoppeln
     if (hermitActive) {
       const relicBonus = finalPoints - afterPerks;
-      if (relicBonus > 0) { const b = finalPoints; finalPoints += relicBonus; snap('Hermit', '🏚️', b); }
+      if (relicBonus > 0) { const b = finalPoints; finalPoints += relicBonus; snap('Hermit', gi('hermit'), b); }
     }
 
     // Minimalist: Relic-Anteil verdreifachen (×3 total → add 2× extra)
     if (relicSystem.hasRelic('minimalist')) {
       const relicBonus = finalPoints - afterPerks;
-      if (relicBonus > 0) { const b = finalPoints; finalPoints += relicBonus * 2; snap('Minimalist', '🧹', b); }
+      if (relicBonus > 0) { const b = finalPoints; finalPoints += relicBonus * 2; snap('Minimalist', gi('minimalist'), b); }
     }
 
     // Cheater Synergy: Fake-getriggerte Boni verdoppeln
     if (!hermitActive && synergyEngine.hasSynergy('cheater') && fakeBonus > 0) {
-      const b = finalPoints; finalPoints += fakeBonus; snap('Cheater', '🃏🃏', b);
+      const b = finalPoints; finalPoints += fakeBonus; snap('Cheater', gi('cheater'), b);
     }
 
     // Overcautious: Score-Cap 100 per answer
     if (perkSystem.activePerks.some(p => p.effect === 'overcautious')) {
       if (finalPoints > 100) {
-        const b = finalPoints; finalPoints = 100; snap('Overcautious', '🛡️🐢', b);
+        const b = finalPoints; finalPoints = 100; snap('Overcautious', gi('overcautious'), b);
       }
     }
 
@@ -613,7 +627,7 @@ export default function Game({
     }
 
     return { total: Math.floor(finalPoints), breakdown };
-  }, [perkSystem, getTimerDuration, relicSystem, ironWillActive, comboMultiplier, synergyEngine, lives, level, currentRound, masochistMult]);
+  }, [perkSystem, getTimerDuration, relicSystem, ironWillActive, comboMultiplier, sacrificeRitualActive, synergyEngine, lives, level, currentRound, masochistMult]);
 
   const saveCurrentRun = useCallback(() => {
     if (user?.guest || currentRound <= 1 || runLoggedRef.current) return;
@@ -695,7 +709,7 @@ export default function Game({
         if (nextRoundDouble) {
           const _nrd = totalPoints;
           totalPoints *= relicSystem.getRelicValue('perfect_next_double') ?? 2;
-          extraBreakdown.push({ label: 'Perfectionist Echo', icon: '✨🔁', delta: Math.round(totalPoints - _nrd) });
+          extraBreakdown.push({ label: 'Perfectionist Echo', icon: gi('perfectionist_echo'), delta: Math.round(totalPoints - _nrd) });
           setNextRoundDouble(false);
           relicEventQueue.push({ id: 'perfectionist_echo', type: 'flash' });
         }
@@ -773,7 +787,7 @@ export default function Game({
           if (overflow > 0) {
             const xpBonus = overflow * (relicSystem.getRelicValue('xp_to_score') ?? 2);
             totalPoints += xpBonus;
-            extraBreakdown.push({ label: 'XP Converter', icon: '💱', delta: xpBonus });
+            extraBreakdown.push({ label: 'XP Converter', icon: gi('xp_converter'), delta: xpBonus });
             relicEventQueue.push({ id: 'xp_converter', type: 'flash' });
           }
         }
@@ -782,7 +796,7 @@ export default function Game({
         if (synergyEngine.hasSynergy('jackpot') && correctCountRef.current % 10 === 0) {
           const _jp = totalPoints;
           totalPoints *= synergyEngine.getSynergyValue('jackpot') ?? 10;
-          extraBreakdown.push({ label: 'Jackpot!', icon: '🎰🎰', delta: Math.round(totalPoints - _jp) });
+          extraBreakdown.push({ label: 'Jackpot!', icon: gi('jackpot'), delta: Math.round(totalPoints - _jp) });
         }
 
         // Perfectionist Echo trigger: effectiveTime für Timeless
@@ -842,7 +856,7 @@ export default function Game({
         if (regenResult.shouldRegenerate && lives >= _overflowMaxLives && relicSystem.hasRelic('overflow') && !synergyEngine.hasSynergy('ascension')) {
           const overflowVal = relicSystem.getRelicValue('overflow_hp_to_score') ?? 100;
           totalPoints += overflowVal;
-          extraBreakdown.push({ label: 'Overflow', icon: '🫀', delta: overflowVal });
+          extraBreakdown.push({ label: 'Overflow', icon: gi('overflow'), delta: overflowVal });
         }
 
         const newScore = score + totalPoints;
@@ -864,8 +878,8 @@ export default function Game({
 
         // Build and store score breakdown for hover tooltip
         const baseBreakdown = [];
-        if (timeBonus > 0) baseBreakdown.push({ label: 'Zeit-Bonus', icon: '⏱️', delta: timeBonus });
-        if (effectiveStreakForBonus > 0) baseBreakdown.push({ label: `Streak ${effectiveStreakForBonus}x${effectiveStreakForBonus > streak.streak ? ' 👻' : ''}`, icon: '🔥', delta: streakBonus });
+        if (timeBonus > 0) baseBreakdown.push({ label: 'Zeit-Bonus', icon: <GameIcon name='time' size={12} color='blue' />, delta: timeBonus });
+        if (effectiveStreakForBonus > 0) baseBreakdown.push({ label: `Streak ${effectiveStreakForBonus}x`, icon: <GameIcon name='signal' size={12} color='orange' />, delta: streakBonus });
         setComboAnimationDone(false);
         setScoreBreakdown({ total: totalPoints, items: [...baseBreakdown, ...perkBreakdown, ...extraBreakdown] });
 
@@ -1055,7 +1069,7 @@ export default function Game({
         }
       });
     },
-    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult, runLogger, saveCurrentRun, gold, mapSystem]
+    [cardLoader.currentPair, timer, streak, score, lives, user, setScore, setUser, refreshUser, perkSystem, achievements, applyPerkEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, sacrificeRitualActive, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult, runLogger, saveCurrentRun, gold, mapSystem]
   );
 
   // Update handleChoiceRef when handleChoice changes
@@ -1379,6 +1393,15 @@ export default function Game({
     }
   }, [perkSystem, cardLoader, timer]);
 
+  const handleSacrificeRitual = useCallback(() => {
+    if (!perkSystem.hasPerk("sacrifice_ritual")) return;
+    if (lives <= 1) return; // kein Selbstmord
+    setLives(prev => prev - 1);
+    setSacrificeRitualActive(true);
+    perkSystem.consumePerk("sacrifice_ritual");
+    setMessage("🩸 Sacrifice activated! Next answer ×3!");
+  }, [perkSystem, lives]);
+
   // Keyboard Controls
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -1406,11 +1429,16 @@ export default function Game({
         e.preventDefault();
         handleSkipCard();
       }
+
+      if (key === "r" && perkSystem.hasPerk("sacrifice_ritual") && selectedCard === null && !showPrices && lives > 1) {
+        e.preventDefault();
+        handleSacrificeRitual();
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedCard, showPrices, gameOver, perkSystem.showPerkSelection, perkSystem, handleChoice, handleNextPair, handleSkipCard, level.showLevelUp]);
+  }, [selectedCard, showPrices, gameOver, perkSystem.showPerkSelection, perkSystem, handleChoice, handleNextPair, handleSkipCard, handleSacrificeRitual, level.showLevelUp, lives]);
 
   const handleRestart = useCallback(async () => {
     saveCurrentRun();
@@ -1468,7 +1496,7 @@ export default function Game({
   if (cardLoader.error) {
     return (
       <div className="text-center text-red-400">
-        <p>❌ {cardLoader.error}</p>
+        <p className='flex items-center gap-2'><GameIcon name='clear' size={18} color='red' /> {cardLoader.error}</p>
         <button onClick={initGame} className="mt-4 bg-amber-600 px-6 py-3 rounded hover:bg-amber-500">
           Try Again
         </button>
@@ -1483,7 +1511,7 @@ export default function Game({
       <div className="flex sm:hidden flex-row w-full justify-between items-center mb-1 gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <div className="bg-[#111827] rounded-sm px-2 py-1 border-2 border-[#2d3a5c] shrink-0">
-            <span className="text-amber-300 text-xs font-semibold">🎯 R{currentRound}</span>
+            <span className="text-amber-300 text-xs font-semibold flex items-center gap-1"><GameIcon name='target' size={13} color='amber' /> R{currentRound}</span>
           </div>
           <div className="relative min-w-0">
             <span className="font-bold text-lg text-gray-900">Pts: {displayScore.toLocaleString()}</span>
@@ -1510,7 +1538,7 @@ export default function Game({
         <div className="sm:w-3/4 flex md:text-left sm:flex-row flex-col">
           <div className="flex items-center justify-start gap-4 mb-2">
             <div className="bg-[#111827] sm:mb-auto rounded-sm px-4 py-2 border-2 border-[#2d3a5c]">
-              <span className="text-amber-300 text-sm font-semibold">🎯 Round {currentRound}</span>
+              <span className="text-amber-300 text-sm font-semibold flex items-center gap-1"><GameIcon name='target' size={14} color='amber' /> Round {currentRound}</span>
             </div>
           </div>
           <div className="flex flex-col sm:ml-3">
@@ -1549,7 +1577,7 @@ export default function Game({
               transition={{ duration: 0.6 }}
               className="bg-[#111827] border-2 border-amber-600 rounded-sm px-3 py-1 shrink-0"
             >
-              <span className="text-amber-300 text-sm font-bold">⭐ Level {level.level}</span>
+              <span className="text-amber-300 text-sm font-bold flex items-center gap-1"><GameIcon name='star' size={13} color='amber' /> Level {level.level}</span>
             </motion.div>
           </AnimatePresence>
 
@@ -1653,7 +1681,7 @@ export default function Game({
           <div className="bg-[#111827] border-2 border-pink-500 rounded-sm px-2 py-1 sm:p-2">
             <div className="flex items-center justify-between mb-1">
               <span className="text-pink-200 text-xs sm:text-sm font-semibold">
-                💖 Heart Regen: {perkSystem.getHeartRegenProgress().current}/{perkSystem.getHeartRegenProgress().threshold}
+                <span className='flex items-center gap-1'><GameIcon name='heart' size={13} color='pink' /> Heart Regen: {perkSystem.getHeartRegenProgress().current}/{perkSystem.getHeartRegenProgress().threshold}</span>
               </span>
             </div>
             <div className="w-full h-1.5 sm:h-2 bg-gray-700 rounded overflow-hidden">
@@ -1727,7 +1755,21 @@ export default function Game({
               className="bg-yellow-600 text-lg font-semibold hover:bg-yellow-500 active:scale-95 text-white px-6 py-4 rounded-sm transition shadow-pixel border-2 border-yellow-400"
               title="Press S to skip"
             >
-              ⭐ Skip{(() => { const sc = perkSystem.activePerks.find(p => p.id === 'skip_card'); return sc && sc.value > 1 ? ` (×${sc.value})` : ''; })()}
+              <span className='flex items-center gap-1'><GameIcon name='star' size={18} color='amber' /> Skip{(() => { const sc = perkSystem.activePerks.find(p => p.id === 'skip_card'); return sc && sc.value > 1 ? ` (×${sc.value})` : ''; })()}</span>
+            </button>
+          )}
+          {perkSystem.hasPerk("sacrifice_ritual") && selectedCard === null && !gameOver && !showPrices && (
+            <button
+              onClick={handleSacrificeRitual}
+              disabled={lives <= 1}
+              className={`text-lg font-semibold text-white px-6 py-4 rounded-sm transition shadow-pixel border-2 active:scale-95
+                ${lives <= 1
+                  ? "bg-red-900/50 border-red-900 cursor-not-allowed opacity-50"
+                  : "bg-red-700 border-red-500 hover:bg-red-600"
+                }`}
+              title="Press R to sacrifice (costs 1 life)"
+            >
+              <span className='flex items-center gap-1'><GameIcon name='drop' size={18} color='red' /> Sacrifice{sacrificeRitualActive ? ' ✓' : ''}</span>
             </button>
           )}
           {selectedCard !== null && !gameOver && (
@@ -1753,7 +1795,20 @@ export default function Game({
                 onClick={handleSkipCard}
                 className="bg-yellow-600 text-base font-semibold hover:bg-yellow-500 active:scale-95 text-white px-5 py-3 rounded-sm transition shadow-pixel border-2 border-yellow-400"
               >
-                ⭐ Skip{(() => { const sc = perkSystem.activePerks.find(p => p.id === 'skip_card'); return sc && sc.value > 1 ? ` (×${sc.value})` : ''; })()}
+                <span className='flex items-center gap-1'><GameIcon name='star' size={16} color='amber' /> Skip{(() => { const sc = perkSystem.activePerks.find(p => p.id === 'skip_card'); return sc && sc.value > 1 ? ` (×${sc.value})` : ''; })()}</span>
+              </button>
+            )}
+            {perkSystem.hasPerk("sacrifice_ritual") && selectedCard === null && !gameOver && !showPrices && (
+              <button
+                onClick={handleSacrificeRitual}
+                disabled={lives <= 1}
+                className={`text-base font-semibold text-white px-5 py-3 rounded-sm transition shadow-pixel border-2 active:scale-95
+                  ${lives <= 1
+                    ? "bg-red-900/50 border-red-900 cursor-not-allowed opacity-50"
+                    : "bg-red-700 border-red-500 hover:bg-red-600"
+                  }`}
+              >
+                <span className='flex items-center gap-1'><GameIcon name='drop' size={16} color='red' /> Sacrifice{sacrificeRitualActive ? ' ✓' : ''}</span>
               </button>
             )}
             {selectedCard !== null && !gameOver && (

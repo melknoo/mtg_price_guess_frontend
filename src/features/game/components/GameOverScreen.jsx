@@ -20,15 +20,15 @@ export default function GameOverScreen({
   return (
     <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-10 p-4">
       <div className="bg-[#0d1b3e] border-2 border-[#2d3a5c] rounded-sm shadow-pixel p-8 flex flex-col items-center text-center max-w-sm w-full overflow-y-auto max-h-[90vh]">
-        <h2 className="text-2xl mb-2 font-bold text-amber-200">❌ Wrong Guess!</h2>
+        <h2 className="text-2xl mb-2 font-bold text-amber-200 inline-flex items-center gap-2"><GameIcon name="clear" size={22} color="red" /> Wrong Guess!</h2>
         <p className="mb-3 text-white/80">{message}</p>
 
         <div className="text-4xl font-bold text-white mb-1">{score.toLocaleString()}</div>
         <div className="text-xs text-gray-400 uppercase tracking-wider mb-3">Points</div>
 
         {bestStreak > 0 && (
-          <p className="mb-3 text-xl text-orange-400 font-bold">
-            🔥 Best Streak: {bestStreak}
+          <p className="mb-3 text-xl text-orange-400 font-bold inline-flex items-center gap-1">
+            <GameIcon name="signal" size={18} color="orange" /> Best Streak: {bestStreak}
           </p>
         )}
 
@@ -37,17 +37,17 @@ export default function GameOverScreen({
           <div className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-2">Run Summary</div>
 
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-amber-300 font-bold">⭐ Level {level}</span>
+            <span className="text-amber-300 font-bold inline-flex items-center gap-1"><GameIcon name="star" size={13} color="amber" /> Level {level}</span>
             {bestComboMultiplier > 1 && (
-              <span className="text-yellow-400 text-xs font-semibold ml-auto">
-                🔗 Best Combo: x{bestComboMultiplier.toFixed(2)}
+              <span className="text-yellow-400 text-xs font-semibold ml-auto inline-flex items-center gap-1">
+                <GameIcon name="ring" size={11} color="amber" /> Best Combo: x{bestComboMultiplier.toFixed(2)}
               </span>
             )}
           </div>
 
           {relics.length > 0 && (
             <div className="mt-2">
-              <div className="text-xs text-amber-400 font-semibold mb-1">⭐ Relics ({relics.length})</div>
+              <div className="text-xs text-amber-400 font-semibold mb-1 inline-flex items-center gap-1"><GameIcon name="star" size={11} color="amber" /> Relics ({relics.length})</div>
               <div className="flex flex-wrap gap-1">
                 {relics.map(r => (
                   <span key={r.id} title={r.description} className="inline-flex items-center gap-1 bg-amber-500/20 border border-amber-400/40 rounded-sm px-1.5 py-0.5 text-xs text-amber-200">
@@ -62,7 +62,7 @@ export default function GameOverScreen({
 
           {synergies.length > 0 && (
             <div className="mt-2">
-              <div className="text-xs text-teal-400 font-semibold mb-1">🔗 Synergies ({synergies.length})</div>
+              <div className="text-xs text-teal-400 font-semibold mb-1 inline-flex items-center gap-1"><GameIcon name="path_follow" size={11} color="teal" /> Synergies ({synergies.length})</div>
               <div className="flex flex-wrap gap-1">
                 {synergies.map(s => (
                   <span key={s.id} title={s.description} className="inline-flex items-center gap-1 bg-teal-500/20 border border-teal-400/40 rounded-sm px-1.5 py-0.5 text-xs text-teal-200">

@@ -10,7 +10,7 @@ function getTotalTier(pts) {
     transition: { type: 'spring', stiffness: 500, damping: 8 },
     initial: { scale: 0.2, opacity: 0, rotate: -6 },
     animate: { scale: 1, opacity: 1, rotate: 0 },
-    label: '🔥 INSANE COMBO 🔥',
+    label: 'INSANE COMBO',
     labelClass: 'text-yellow-300/90 text-sm font-black tracking-widest uppercase mb-1',
   };
   if (pts >= 100) return {

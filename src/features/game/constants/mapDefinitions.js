@@ -16,11 +16,11 @@ export const NODE_WEIGHTS = {
 };
 
 export const NODE_ICONS = {
-  normal: '⚔️',
-  elite: '💀',
-  shop: '🛒',
-  rest: '🔥',
-  boss: '👑',
+  normal: 'sword',
+  elite: 'skull',
+  shop: 'chest',
+  rest: 'glow',
+  boss: 'trophy',
 };
 
 export const NODE_LABELS = {
@@ -47,10 +47,10 @@ export const MERCHANT_TYPES = {
 };
 
 export const MERCHANT_LABELS = {
-  armorer: '⚒️ Armorer',
-  healer: '💊 Healer',
-  perk_vendor: '🪄 Perk Vendor',
-  wandering_mage: '🌟 Wandering Mage',
+  armorer: 'Armorer',
+  healer: 'Healer',
+  perk_vendor: 'Perk Vendor',
+  wandering_mage: 'Wandering Mage',
 };
 
 export const MERCHANT_DESCRIPTIONS = {
