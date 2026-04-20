@@ -2,7 +2,7 @@ export const SYNERGIES = {
   SPEED_DEMON: {
     id: 'speed_demon_combo',
     name: 'Speed Demon',
-    description: 'All timer bonuses are doubled',
+    description: 'Timer bonus XP is doubled',
     icon: '⚡⚡',
     requiredTags: { speed: 3 },
     effect: 'double_time_bonus',
@@ -20,10 +20,10 @@ export const SYNERGIES = {
   GOLD_RUSH: {
     id: 'gold_rush',
     name: 'Gold Rush',
-    description: 'Permanent 1.5× score multiplier',
+    description: 'Permanent 1.5× Gold multiplier',
     icon: '💎💎',
-    requiredTags: { score: 4 },
-    effect: 'permanent_score_mult',
+    requiredTags: { gold: 4 },
+    effect: 'permanent_gold_mult',
     value: 1.5,
   },
   SCHOLAR: {
@@ -38,7 +38,7 @@ export const SYNERGIES = {
   HOT_STREAK: {
     id: 'hot_streak',
     name: 'Hot Streak',
-    description: 'Streak bonus scales exponentially — long streaks are massively rewarded',
+    description: 'Streak Gold bonus scales exponentially — long streaks are massively rewarded',
     icon: '🔥🔥',
     requiredTags: { streak: 3 },
     effect: 'exponential_streak_bonus',
@@ -56,25 +56,25 @@ export const SYNERGIES = {
   BERSERKER: {
     id: 'berserker',
     name: 'Berserker',
-    description: '2× XP + 2× score when down to 1 life',
+    description: '2× XP + 2× Gold when down to 1 life',
     icon: '😤',
-    requiredTags: { score: 1, defense: 1, streak: 2 },
+    requiredTags: { gold: 1, defense: 1, streak: 2 },
     effect: 'low_hp_bonus',
     value: 2,
   },
   INFINITE_ENGINE: {
     id: 'infinite_engine',
     name: 'Infinite Engine',
-    description: 'Snowball scaling triples',
+    description: 'Snowball XP scaling triples',
     icon: '♾️',
-    requiredTags: { score: 5 },
+    requiredTags: { xp: 5 },
     effect: 'triple_snowball',
     value: 3,
   },
   JACKPOT: {
     id: 'jackpot',
     name: 'Jackpot',
-    description: 'Every 10th correct answer: score ×10',
+    description: 'Every 10th correct answer: Gold ×10',
     icon: '🎰🎰',
     requiredTags: { luck: 4 },
     effect: 'jackpot',
@@ -94,7 +94,7 @@ export const SYNERGIES = {
   CHEATER: {
     id: 'cheater',
     name: 'Cheater',
-    description: 'Faked conditions grant double their bonus instead of normal',
+    description: 'Faked conditions grant double their Gold bonus instead of normal',
     icon: '🃏🃏',
     requiredTags: { fake: 2 },
     effect: 'double_fake_bonus',
@@ -103,7 +103,7 @@ export const SYNERGIES = {
   MASOCHIST: {
     id: 'masochist',
     name: 'Masochist',
-    description: 'Each life lost permanently adds +20% multiplier for the entire run',
+    description: 'Each life lost permanently adds +20% Gold multiplier for the entire run',
     icon: '🩸🩸',
     requiredTags: { sacrifice: 1, defense: 2 },
     effect: 'permanent_damage_mult',
@@ -112,7 +112,7 @@ export const SYNERGIES = {
   ASCENSION: {
     id: 'ascension',
     name: 'Ascension',
-    description: 'Overflow healing grants ×1.5 score multiplier instead of a flat 100',
+    description: 'Overflow healing grants ×1.5 XP multiplier instead of a flat bonus',
     icon: '🫀✨',
     requiredTags: { defense: 4 },
     effect: 'overflow_multiplier',
@@ -130,7 +130,7 @@ export const SYNERGIES = {
   SACRIFICE_REWARD: {
     id: 'sacrifice_reward',
     name: 'Sacrifice Reward',
-    description: 'Per sacrifice relic: +50% global multiplier',
+    description: 'Per sacrifice relic: +50% global Gold multiplier',
     icon: '🔥💀',
     requiredTags: { sacrifice: 3 },
     effect: 'per_sacrifice_mult',

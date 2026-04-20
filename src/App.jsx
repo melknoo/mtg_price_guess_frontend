@@ -36,7 +36,6 @@ function AppContent() {
   }, []);
   const [screen, setScreen] = useState("menu");
   const [showRegister, setShowRegister] = useState(false);
-  const [score, setScore] = useState(0);
   const [gameKey, setGameKey] = useState(0);
   const [resetToken, setResetToken] = useState(null);
   const [resetSuccess, setResetSuccess] = useState("");
@@ -79,7 +78,6 @@ function AppContent() {
     logout();
     setUser(null);
     setShowRegister(false);
-    setScore(0);
     setGameKey((k) => k + 1);
     setScreen("menu");
   };
@@ -249,7 +247,7 @@ function AppContent() {
               {/* Primary Actions */}
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <button
-                  onClick={() => { setShowRegister(false); setScore(0); setGameKey((k) => k + 1); setScreen("game"); }}
+                  onClick={() => { setShowRegister(false); setGameKey((k) => k + 1); setScreen("game"); }}
                   className="bg-emerald-700 hover:bg-emerald-600 border-2 border-emerald-400 rounded-sm py-4 text-white font-semibold text-lg transition-all shadow-pixel active:scale-95"
                 >
                   <span className="inline-flex items-center justify-center gap-2">
@@ -340,7 +338,7 @@ function AppContent() {
 
               {user?.guest && showRegister && (
                 <RegisterWithScore
-                  score={user?.highscore ?? score}
+                  score={user?.highscore ?? 0}
                   className="mt-4"
                   onSuccess={(newUser) => { setUser(newUser); refreshUser(); setShowRegister(false); }}
                 />
@@ -378,8 +376,6 @@ function AppContent() {
         {screen === "game" && (
           <Game
             key={gameKey}
-            score={score}
-            setScore={setScore}
             onBack={() => setScreen("menu")}
             showRegister={showRegister}
             setShowRegister={setShowRegister}

@@ -23,8 +23,11 @@ export default function GameOverScreen({
         <h2 className="text-2xl mb-2 font-bold text-amber-200 inline-flex items-center gap-2"><GameIcon name="clear" size={22} color="red" /> Wrong Guess!</h2>
         <p className="mb-3 text-white/80">{message}</p>
 
-        <div className="text-4xl font-bold text-white mb-1">{score.toLocaleString()}</div>
-        <div className="text-xs text-gray-400 uppercase tracking-wider mb-3">Points</div>
+        <div className="flex items-center gap-2 mb-1">
+          <GameIcon name="coin" color="amber" size={22} />
+          <div className="text-4xl font-bold text-amber-300">{score.toLocaleString()}</div>
+        </div>
+        <div className="text-xs text-gray-400 uppercase tracking-wider mb-3">Gold Earned</div>
 
         {bestStreak > 0 && (
           <p className="mb-3 text-xl text-orange-400 font-bold inline-flex items-center gap-1">
