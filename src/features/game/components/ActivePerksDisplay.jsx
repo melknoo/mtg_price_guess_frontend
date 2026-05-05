@@ -130,7 +130,7 @@ function getCounterInfo(item, currentRound, heartRegenProgress, fortressRegenCou
   return null;
 }
 
-export default function ActivePerksDisplay({ perks, relics = [], synergies = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1, showPerkSelection = false, passiveSlotInfo = null, utilitySlotInfo = null }) {
+export default function ActivePerksDisplay({ perks, relics = [], synergies = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1, showPerkSelection = false, passiveSlotInfo = null, utilitySlotInfo = null, compoundAccRef = null }) {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSynergyId, setExpandedSynergyId] = useState(null);
 
@@ -183,8 +183,15 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
             <AnimatePresence>
               {perks.map((perk) => {
                 const s = getItemRarityStyle(perk, false);
-                return <DesktopPerkCard key={perk.id} item={perk} borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />;
+                const compoundAcc = (compoundAccRef && perk.effect === 'compound_interest') ? (compoundAccRef.current ?? 0) : null;
+                return <DesktopPerkCard key={perk.id} item={perk} borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} extraInfo={compoundAcc !== null ? `Acc: +${compoundAcc} XP` : null} />;
               })}
+              {/* Leere Passive-Slots als Placeholder */}
+              {passiveSlotInfo && Array.from({ length: passiveSlotInfo.max - passiveSlotInfo.used }).map((_, i) => (
+                <div key={`empty-passive-${i}`} className="min-w-[80px] rounded-sm p-2 border-2 border-dashed border-white/15 bg-white/3 flex items-center justify-center" style={{ minHeight: 68 }}>
+                  <span className="text-white/20 text-[9px] font-bold uppercase tracking-wide text-center">Empty<br />Slot</span>
+                </div>
+              ))}
               {relics.map((relic) => {
                 const s = getItemRarityStyle(relic, true);
                 return <DesktopPerkCard key={relic.id} item={relic} borderColor={s.borderColor} gradientColor={s.gradient} badge="⭐" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />;
@@ -317,7 +324,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
   );
 }
 
-function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", badge, contributors, triggered, ticking, counterInfo, ctx }) {
+function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", badge, contributors, triggered, ticking, counterInfo, ctx, extraInfo }) {
   const cardRef = useRef(null);
   const [tooltipStyle, setTooltipStyle] = useState(null);
 
@@ -408,6 +415,9 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
             {item.duration === undefined && <div className="text-amber-300 text-xs mt-1">♾️</div>}
             {counterInfo && (
               <div className="text-amber-200 text-[10px] mt-1 font-mono">{counterInfo.current}/{counterInfo.max}</div>
+            )}
+            {extraInfo && (
+              <div className="text-teal-300 text-[9px] mt-1 font-bold">{extraInfo}</div>
             )}
           </div>
           <TagChips tags={item.tags} small />

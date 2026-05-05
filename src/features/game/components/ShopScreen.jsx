@@ -79,8 +79,8 @@ export default function ShopScreen({
                 ownedRelicIds={ownedRelicIds}
                 activePerkIds={activePerkIds}
                 canOfferPerk={canOfferPerk}
-                canBuyPerkSlot={Boolean(perkSlotInfo && perkSlotInfo.used < perkSlotInfo.max)}
-                canBuyUtilitySlot={Boolean(utilitySlotInfo && utilitySlotInfo.used < utilitySlotInfo.max)}
+                canBuyPerkSlot={Boolean(perkSlotInfo && perkSlotInfo.max < 5)}
+                canBuyUtilitySlot={Boolean(utilitySlotInfo && utilitySlotInfo.max < 2)}
                 onBuyRelic={onBuyRelic}
                 onBuyPerk={onBuyPerk}
                 onHeal={onHeal}

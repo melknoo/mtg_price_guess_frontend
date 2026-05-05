@@ -3,19 +3,20 @@ import { GAME_CONFIG } from '../../../shared/utils/constants';
 import GameIcon from '../../../shared/components/GameIcon';
 import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
-export default function RestScreen({ lives, maxLives = GAME_CONFIG.INITIAL_LIVES, activePerks = [], onRest, onUpgradePerk }) {
+export default function RestScreen({ lives, maxLives = GAME_CONFIG.INITIAL_LIVES, activePerks = [], onRest, onUpgradePerk, onSkip }) {
   const upgradablePerks = activePerks.filter(p => p.duration > 0);
   const canHeal = lives < maxLives;
+  const hasOptions = canHeal || upgradablePerks.length > 0;
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
       <motion.div
-        className="relative w-full max-w-sm mx-4 rounded-2xl border border-green-400/40 bg-gradient-to-b from-slate-900 to-green-950 shadow-2xl p-6"
+        className="relative w-full max-w-sm mx-4 border border-green-400/40 bg-gradient-to-b from-slate-900 to-green-950 shadow-2xl p-6"
         initial={{ scale: 0.88, y: 30 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.88, y: 30 }}
@@ -40,7 +41,7 @@ export default function RestScreen({ lives, maxLives = GAME_CONFIG.INITIAL_LIVES
           <motion.button
             onClick={onRest}
             disabled={!canHeal}
-            className={`w-full py-4 rounded-xl border font-bold text-base transition-all
+            className={`w-full py-4 border font-bold text-base transition-all
               ${canHeal
                 ? 'border-green-400/60 bg-green-900/30 hover:bg-green-800/50 text-green-200'
                 : 'border-white/10 bg-white/5 text-white/30 cursor-not-allowed'}`}
@@ -62,7 +63,7 @@ export default function RestScreen({ lives, maxLives = GAME_CONFIG.INITIAL_LIVES
                   <motion.button
                     key={perk.id}
                     onClick={() => onUpgradePerk(perk)}
-                    className="w-full text-left px-3 py-2 rounded-lg border border-amber-400/40 bg-amber-900/20 hover:bg-amber-800/30 transition-colors"
+                    className="w-full text-left px-3 py-2 border border-amber-400/40 bg-amber-900/20 hover:bg-amber-800/30 transition-colors"
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                   >
@@ -81,6 +82,18 @@ export default function RestScreen({ lives, maxLives = GAME_CONFIG.INITIAL_LIVES
             </div>
           ) : (
             <div className="text-center text-white/30 text-sm py-2">No upgradable perks active</div>
+          )}
+
+          {/* Skip / Continue — always shown when no options available, otherwise as fallback */}
+          {!hasOptions && (
+            <motion.button
+              onClick={onSkip}
+              className="w-full py-3 border border-indigo-400/40 bg-indigo-900/20 hover:bg-indigo-800/30 text-indigo-200 font-bold text-sm transition-all"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Continue
+            </motion.button>
           )}
         </div>
       </motion.div>

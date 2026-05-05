@@ -26,6 +26,7 @@ import {
   calculateBaseGold,
   calculateBaseXP,
   calculateStreakGold,
+  calculateStreakXP,
   calculateTimeBonusXP,
   calculateHotStreakGoldBonus,
 } from "../utils/rewardCalculator";
@@ -52,6 +53,7 @@ import MapScreen from "./MapScreen";
 import ShopScreen from "./ShopScreen";
 import RestScreen from "./RestScreen";
 import ReplacePerkModal from "./ReplacePerkModal";
+import RunCompleteModal from "./RunCompleteModal";
 
 
 // Helper: liefert <GameIcon>-Element für snap()/extraBreakdown icon-Parameter
@@ -94,12 +96,20 @@ export default function Game({
   const [masochistMult, setMasochistMult] = useState(0); // Masochist Synergy: permanent per damage
   const [showRoadmap, setShowRoadmap] = useState(false);
   const [levelUpRerollKey, setLevelUpRerollKey] = useState(0);
+  // Relic-Milestone-Queue: true = Relic-Modal, false = Normal-Modal (für je gewonnenes Level)
+  const [relicMilestoneQueue, setRelicMilestoneQueue] = useState([]);
+  const prevLevelRef = useRef(1);
+  // Run-Seed für Anzeige (rein kosmetisch)
+  const [runSeed] = useState(() => Math.random().toString(36).slice(2, 6).toUpperCase());
   // Stage/Map System
   const mapSystem = useMapSystem();
   const stageScoreRef = useRef({}); // { stageIndex: score } — für Backend + StageCompleteScreen
   const stageCorrectRef = useRef(0); // richtige Antworten in dieser Stage
   const [synergyConflictQueue, setSynergyConflictQueue] = useState([]); // Queue wartender Synergy-Konflikte
+  const [eliteRelicPending, setEliteRelicPending] = useState(false); // Relic-Drop nach Elite-Stage
   const [xpBling, setXpBling] = useState(false); // XP-Bar Bling bei Level-Up
+  const [runComplete, setRunComplete] = useState(false); // Boss besiegt — End/Continue Wahl
+  const [endlessDifficulty, setEndlessDifficulty] = useState(0); // +1 pro Endless-Runde
   const [perkReplacementState, setPerkReplacementState] = useState(null);
   const xpBlingLevelRef = useRef(1); // Track letztes Level für Bling-Trigger
 
@@ -137,6 +147,18 @@ export default function Game({
       return () => clearTimeout(t);
     }
     xpBlingLevelRef.current = level.level;
+  }, [level.level]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Relic-Milestone-Queue: jedes 3. Level → Relic-Modal
+  useEffect(() => {
+    if (level.level > prevLevelRef.current) {
+      const queue = [];
+      for (let l = prevLevelRef.current + 1; l <= level.level; l++) {
+        queue.push(l % 3 === 0);
+      }
+      setRelicMilestoneQueue(prev => [...prev, ...queue]);
+      prevLevelRef.current = level.level;
+    }
   }, [level.level]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Blinkt ein Relic kurz auf (1.2s) — visuelles Feedback wenn es triggert
@@ -188,8 +210,10 @@ export default function Game({
     // Node-Schwierigkeit: Elite -2s, Boss -3s
     if (mapSystem.currentNodeType === NODE_TYPES.ELITE) duration -= 2;
     if (mapSystem.currentNodeType === NODE_TYPES.BOSS) duration -= 3;
+    // Endless Mode: jede Difficulty-Stufe -1s extra
+    if (endlessDifficulty > 0) duration -= endlessDifficulty;
     return Math.max(3, duration); // nie unter 3s
-  }, [perkSystem, relicSystem, synergyEngine, mapSystem]);
+  }, [perkSystem, relicSystem, synergyEngine, mapSystem, endlessDifficulty]);
 
   const getTimerSpeed = useCallback(() => {
     // Overclock Perk: Timer läuft 2× schnell
@@ -312,8 +336,8 @@ export default function Game({
     // Double Gold: ×2
     if (multiplierPerk?.value) { const b = finalGold; finalGold *= multiplierPerk.value; snap(multiplierPerk.name, giPerk(multiplierPerk), b, true); }
 
-    // Glass Mind: ×3 Gold on perfect (risk: -2 lives on wrong)
-    if (isPerfect && perkSystem.activePerks.some(p => p.effect === 'glass_mind')) {
+    // Glass Mind: ×3 Gold on all correct answers (risk: -2 lives on wrong)
+    if (perkSystem.activePerks.some(p => p.effect === 'glass_mind')) {
       const b = finalGold; finalGold *= 3; snap('Glass Mind', gi('glass_mind'), b, true);
     }
 
@@ -619,6 +643,8 @@ export default function Game({
         const currentDuration = getTimerDuration();
         let xpGained = calculateBaseXP() + timeBonusXP; // 10 base + 0-10 timer bonus
         if (newStreakValue % 5 === 0 && newStreakValue > 0) xpGained += 15; // Streak-Milestone
+        // Exponentieller Streak-XP-Bonus ab Streak 5 (pro Antwort)
+        const streakXPBonus = calculateStreakXP(effectiveStreakForBonus);
 
         // Perfectionist Perk: ×3 XP auf perfekte Antwort
         if (isPerfect && perkSystem.activePerks.some(p => p.effect === 'perfect_multiplier')) {
@@ -799,10 +825,12 @@ export default function Game({
         if (relicSystem.hasRelic('glass_cannon')) achievements.trackGlassCannonScore(gold.totalEarnedGoldRef.current);
 
         // Build and store reward breakdown for combo popup
+        xpGained += streakXPBonus;
         const goldBaseBreakdown = [];
         if (streakGold > 0) goldBaseBreakdown.push({ label: `Streak ${effectiveStreakForBonus}x`, icon: <GameIcon name='signal' size={12} color='orange' />, delta: streakGold });
         const xpBaseBreakdown = [];
         if (timeBonusXP > 0) xpBaseBreakdown.push({ label: 'Timer Bonus', icon: <GameIcon name='time' size={12} color='blue' />, delta: timeBonusXP });
+        if (streakXPBonus > 0) xpBaseBreakdown.push({ label: `Streak ${effectiveStreakForBonus}x`, icon: <GameIcon name='signal' size={12} color='orange' />, delta: streakXPBonus });
         setComboAnimationDone(false);
         setRewardBreakdown({
           goldData: { total: Math.floor(totalGold), items: [...goldBaseBreakdown, ...perkGoldBreakdown, ...extraGoldBreakdown] },
@@ -1061,12 +1089,13 @@ export default function Game({
   // Start Timer when images loaded
   useEffect(() => {
     const anyModalOpen = mapSystem.showStageComplete || mapSystem.showMap ||
-      mapSystem.showShop || mapSystem.showRest || Boolean(perkReplacementState);
+      mapSystem.showShop || mapSystem.showRest || Boolean(perkReplacementState) ||
+      level.showLevelUp || eliteRelicPending;
     if (imagesLoaded.every(Boolean) && !showPrices && !anyModalOpen) {
       timer.start();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imagesLoaded, showPrices, perkReplacementState]);
+  }, [imagesLoaded, showPrices, perkReplacementState, level.showLevelUp, eliteRelicPending]);
 
   // Reset bei neuem Paar
   useEffect(() => {
@@ -1237,6 +1266,7 @@ export default function Game({
       runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'upgrade', offered_ids: [] });
     }
     level.dismissLevelUp();
+    setRelicMilestoneQueue(prev => prev.slice(1));
   }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold, queuePerkReplacement]);
 
 
@@ -1252,6 +1282,7 @@ export default function Game({
 
   const handleLevelUpSkip = useCallback(() => {
     level.dismissLevelUp();
+    setRelicMilestoneQueue(prev => prev.slice(1));
   }, [level]);
 
   const handleLevelUpReroll = useCallback(() => {
@@ -1451,6 +1482,11 @@ export default function Game({
     synergyEngine.reset();
     gold.reset();
     setSynergyConflictQueue([]);
+    setRelicMilestoneQueue([]);
+    prevLevelRef.current = 1;
+    setRunComplete(false);
+    setEndlessDifficulty(0);
+    setEliteRelicPending(false);
     setComboMultiplier(1);
     setIronWillActive(false);
     setNextRoundDouble(false);
@@ -1574,28 +1610,28 @@ export default function Game({
             </div>
           </div>
 
-          {/* Gold-Anzeige */}
+          {/* Gold-Anzeige — prominent */}
           <AnimatePresence mode="wait">
             <motion.div
               key={gold.gold}
-              initial={{ scale: 1.2 }}
+              initial={{ scale: 1.25 }}
               animate={{ scale: 1 }}
-              className="shrink-0 flex items-center gap-1 bg-[#111827] border-2 border-yellow-700 rounded-sm px-2 py-1"
+              transition={{ type: 'spring', stiffness: 500, damping: 18 }}
+              className="shrink-0 flex items-center gap-1.5 bg-[#111827] border-2 border-yellow-500 rounded-sm px-3 py-1.5 shadow-pixel-sm"
               title="Gold — earned from correct answers and streaks"
             >
-              <GameIcon name="coin" color="amber" size={14} />
-              <span className="text-yellow-300 text-xs font-bold">{gold.gold}</span>
+              <GameIcon name="coin" color="amber" size={18} />
+              <span className="text-yellow-300 text-sm font-black">{gold.gold}</span>
             </motion.div>
           </AnimatePresence>
 
-          {/* Roadmap Button */}
-          <button
-            onClick={() => setShowRoadmap(true)}
-            title="Progression Roadmap"
-            className="shrink-0 opacity-40 hover:opacity-80 transition-opacity"
+          {/* Run-Seed Badge */}
+          <div
+            className="shrink-0 text-[9px] font-bold text-white/30 tracking-widest"
+            title="Run ID"
           >
-            <GameIcon name="map" size={16} color="amber" />
-          </button>
+            #{runSeed}
+          </div>
         </div>
       </div>
 
@@ -1612,6 +1648,7 @@ export default function Game({
         showPerkSelection={perkSystem.showPerkSelection}
         passiveSlotInfo={perkSystem.passiveSlotInfo}
         utilitySlotInfo={perkSystem.utilitySlotInfo}
+        compoundAccRef={perkSystem.compoundInterestAccRef}
       />
 
       <StreakDisplay
@@ -1826,6 +1863,34 @@ export default function Game({
         onReroll={handleLevelUpReroll}
         gold={gold.gold}
         rerollKey={levelUpRerollKey}
+        forceRelicMode={relicMilestoneQueue[0] === true}
+      />
+
+      {/* Elite Stage Relic Drop — zeigt nach Elite-Stage-Completion */}
+      <LevelUpModal
+        show={eliteRelicPending && !gameOver && !level.showLevelUp}
+        newLevel={level.level}
+        activeRelics={relicSystem.activeRelics}
+        activePerks={perkSystem.activePerks}
+        activeSynergies={synergyEngine.activeSynergies}
+        maxSynergySlots={synergyEngine.maxSynergySlots}
+        onSelect={(pick) => {
+          // Nur Relic-Auswahl — kein dismissLevelUp (kein pending level-up)
+          if (pick.category === 'relic') {
+            const RELIC_FREE_CAP = 6;
+            if (relicSystem.activeRelics.length >= RELIC_FREE_CAP) {
+              const relicCost = relicSystem.hasRelic('hoarder') ? 10 : 25;
+              if (!gold.spendGold(relicCost)) return;
+            }
+            relicSystem.addRelic(pick);
+            achievements.trackRelicCollected();
+          }
+          setEliteRelicPending(false);
+        }}
+        onSkip={() => setEliteRelicPending(false)}
+        gold={gold.gold}
+        rerollKey={0}
+        forceRelicMode={true}
       />
 
 
@@ -1838,6 +1903,27 @@ export default function Game({
           setSynergyConflictQueue(prev => prev.slice(1));
         }}
       />
+
+      <AnimatePresence>
+        {runComplete && !gameOver && (
+          <RunCompleteModal
+            gold={gold.gold}
+            xp={level.xp}
+            level={level.level}
+            onEndRun={() => {
+              setRunComplete(false);
+              setGameOver(true);
+              setMessage('Run Complete! You defeated the Boss!');
+            }}
+            onContinue={() => {
+              setRunComplete(false);
+              setEndlessDifficulty(prev => prev + 1);
+              mapSystem.reset();
+              mapSystem.generateMap();
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       <ReplacePerkModal
         show={Boolean(perkReplacementState)}
@@ -1892,7 +1978,15 @@ export default function Game({
                   synergies:         runSummary.synergies,
                 });
               }
+              // Elite-Stage Relic-Drop: vor dismissStageComplete setzen
+              if (mapSystem.map?.currentNodeType === NODE_TYPES.ELITE) {
+                setEliteRelicPending(true);
+              }
               mapSystem.dismissStageComplete();
+              // Nach Boss-Stage: Run-Complete-Modal anzeigen statt Map
+              if (mapSystem.currentStage >= TOTAL_STAGES) {
+                setRunComplete(true);
+              }
             }}
           />
         )}
@@ -1940,6 +2034,7 @@ export default function Game({
             activePerks={perkSystem.activePerks}
             onRest={handleRest}
             onUpgradePerk={handleRestUpgradePerk}
+            onSkip={mapSystem.completeRest}
           />
         )}
       </AnimatePresence>

@@ -3,54 +3,65 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import GameIcon from '../../../shared/components/GameIcon';
 
-function getGoldTier(gold) {
-  if (gold >= 50) return {
-    textClass: 'text-5xl sm:text-6xl font-black tracking-tight',
-    colorClass: 'text-yellow-200',
-    glowStyle: { textShadow: '0 0 32px #fde68a, 0 0 64px #fbbf24, 0 0 3px #fff' },
-    transition: { type: 'spring', stiffness: 460, damping: 9 },
-    initial: { scale: 0.2, opacity: 0, rotate: -5 },
+// XP-Tiers für bombastischeres Popup-Overlay
+function getXpTier(xp) {
+  if (xp >= 80) return {
+    textClass: 'text-6xl sm:text-7xl font-black tracking-tight',
+    colorClass: 'text-purple-200',
+    glowStyle: { textShadow: '0 0 40px #c4b5fd, 0 0 80px #a78bfa, 0 0 4px #fff' },
+    transition: { type: 'spring', stiffness: 500, damping: 8 },
+    initial: { scale: 0.15, opacity: 0, rotate: -8 },
     animate: { scale: 1, opacity: 1, rotate: 0 },
-    label: 'JACKPOT',
-    labelClass: 'text-yellow-300/90 text-xs font-black tracking-widest uppercase mb-1',
+    label: 'LEVEL BURST',
+    labelClass: 'text-purple-300/90 text-xs font-black tracking-widest uppercase mb-1',
+    particles: true,
   };
-  if (gold >= 25) return {
-    textClass: 'text-4xl sm:text-5xl font-black',
-    colorClass: 'text-amber-300',
-    glowStyle: { textShadow: '0 0 24px #fbbf24, 0 0 48px #f59e0b' },
-    transition: { type: 'spring', stiffness: 420, damping: 11 },
-    initial: { scale: 0.3, opacity: 0 },
-    animate: { scale: 1, opacity: 1 },
-    label: 'RICH COMBO',
-    labelClass: 'text-amber-400/80 text-xs font-bold tracking-widest uppercase mb-1',
+  if (xp >= 40) return {
+    textClass: 'text-5xl sm:text-6xl font-black',
+    colorClass: 'text-purple-300',
+    glowStyle: { textShadow: '0 0 28px #a78bfa, 0 0 56px #8b5cf6' },
+    transition: { type: 'spring', stiffness: 440, damping: 10 },
+    initial: { scale: 0.25, opacity: 0, y: 10 },
+    animate: { scale: 1, opacity: 1, y: 0 },
+    label: 'COMBO SURGE',
+    labelClass: 'text-purple-400/80 text-xs font-bold tracking-widest uppercase mb-1',
+    particles: false,
   };
-  if (gold >= 10) return {
-    textClass: 'text-3xl sm:text-4xl font-extrabold',
-    colorClass: 'text-amber-400',
-    glowStyle: { textShadow: '0 0 14px #fbbf24' },
-    transition: { type: 'spring', stiffness: 360, damping: 13 },
-    initial: { scale: 0.4, opacity: 0 },
+  if (xp >= 20) return {
+    textClass: 'text-4xl sm:text-5xl font-extrabold',
+    colorClass: 'text-indigo-300',
+    glowStyle: { textShadow: '0 0 18px #818cf8' },
+    transition: { type: 'spring', stiffness: 380, damping: 13 },
+    initial: { scale: 0.35, opacity: 0 },
     animate: { scale: 1, opacity: 1 },
-    label: null,
-    labelClass: '',
+    label: 'NICE COMBO',
+    labelClass: 'text-indigo-400/80 text-xs font-semibold tracking-widest uppercase mb-1',
+    particles: false,
   };
   return {
-    textClass: 'text-2xl sm:text-3xl font-bold',
-    colorClass: 'text-amber-400',
+    textClass: 'text-3xl sm:text-4xl font-bold',
+    colorClass: 'text-purple-400',
     glowStyle: {},
     transition: { duration: 0.22, ease: 'easeOut' },
     initial: { opacity: 0, y: 5 },
     animate: { opacity: 1, y: 0 },
     label: null,
     labelClass: '',
+    particles: false,
   };
+}
+
+// Gold-Tier für das Gold-Badge im Overlay (kleiner, sekundär)
+function getGoldTier(gold) {
+  if (gold >= 30) return { colorClass: 'text-yellow-200', glowStyle: { textShadow: '0 0 12px #fbbf24' } };
+  if (gold >= 15) return { colorClass: 'text-amber-300', glowStyle: {} };
+  return { colorClass: 'text-amber-400', glowStyle: {} };
 }
 
 function BreakdownColumn({ items, total, icon, color, label, revealedCount, showTotalLine }) {
   const visibleItems = (items ?? []).slice(0, revealedCount);
   return (
     <div className="flex flex-col gap-px flex-1 min-w-0">
-      {/* Column header */}
       <div className="flex items-center gap-1 mb-0.5 px-1">
         <GameIcon name={icon} color={color} size={13} />
         <span className={`text-xs font-bold text-${color}-300`}>{label}</span>
@@ -102,17 +113,17 @@ export default function RewardComboReveal({ goldData, xpData, visible, onComplet
   const onCompleteRef = useRef(onComplete);
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
-  const allItems = [...(goldData?.items ?? []), ...(xpData?.items ?? [])];
+  // Nur XP-Items im Breakdown anzeigen
+  const xpItems = xpData?.items ?? [];
 
   useEffect(() => {
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
 
-    if (!visible || !allItems.length) {
+    if (!visible || !xpItems.length) {
       setRevealedCount(0);
       setShowTotal(false);
       setShowTotalLine(false);
-      // Even with no items, signal completion so modals aren't blocked
       if (visible) {
         const t = setTimeout(() => onCompleteRef.current?.(), 100);
         timeoutsRef.current.push(t);
@@ -127,7 +138,7 @@ export default function RewardComboReveal({ goldData, xpData, visible, onComplet
     const INITIAL_DELAY = 200;
     const STAGGER = 160;
 
-    allItems.forEach((_, i) => {
+    xpItems.forEach((_, i) => {
       const t = setTimeout(() => setRevealedCount(i + 1), INITIAL_DELAY + i * STAGGER);
       timeoutsRef.current.push(t);
     });
@@ -141,56 +152,81 @@ export default function RewardComboReveal({ goldData, xpData, visible, onComplet
         timeoutsRef.current.push(doneT);
       }, 700);
       timeoutsRef.current.push(dismissT);
-    }, INITIAL_DELAY + allItems.length * STAGGER + 100);
+    }, INITIAL_DELAY + xpItems.length * STAGGER + 100);
     timeoutsRef.current.push(totalT);
 
     return () => { timeoutsRef.current.forEach(clearTimeout); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [goldData, xpData, visible]);
+  }, [xpData, visible]);
 
-  if (!goldData && !xpData) return null;
+  if (!xpData) return null;
   if (!visible) return null;
 
-  const goldItems = goldData?.items ?? [];
-  const xpItems = xpData?.items ?? [];
-  const goldRevealedCount = Math.min(revealedCount, goldItems.length);
-  const xpRevealedCount = Math.max(0, revealedCount - goldItems.length);
-
-  const goldTier = getGoldTier(goldData?.total ?? 0);
+  const xpTotal = xpData?.total ?? 0;
+  const goldTotal = goldData?.total ?? 0;
+  const xpTier = getXpTier(xpTotal);
+  const goldTier = getGoldTier(goldTotal);
 
   const totalOverlay = createPortal(
     <AnimatePresence>
       {showTotal && (
         <motion.div
-          initial={goldTier.initial}
-          animate={goldTier.animate}
-          exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.18 } }}
-          transition={goldTier.transition}
+          initial={xpTier.initial}
+          animate={xpTier.animate}
+          exit={{ opacity: 0, scale: 0.82, transition: { duration: 0.18 } }}
+          transition={xpTier.transition}
           className="fixed inset-0 flex flex-col items-center justify-center select-none pointer-events-none z-[55]"
         >
-          <div className="flex gap-4 items-center bg-slate-800 border-2 border-[#2d3a5c] rounded-sm px-6 py-3 shadow-pixel">
-            {goldTier.label && (
-              <span className={goldTier.labelClass + ' absolute -top-5 left-1/2 -translate-x-1/2'}>
-                {goldTier.label}
+          {/* Partikel bei sehr hohem XP */}
+          {xpTier.particles && (
+            <>
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 rounded-full bg-purple-400"
+                  initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                  animate={{
+                    x: (Math.cos((i / 6) * Math.PI * 2) * 80),
+                    y: (Math.sin((i / 6) * Math.PI * 2) * 80),
+                    opacity: 0,
+                    scale: 0,
+                  }}
+                  transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
+                />
+              ))}
+            </>
+          )}
+          <div className="relative flex flex-col items-center bg-slate-800 border-2 border-[#2d3a5c] rounded-sm px-6 py-3 shadow-pixel">
+            {xpTier.label && (
+              <span className={xpTier.labelClass + ' absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap'}>
+                {xpTier.label}
               </span>
             )}
-            <div className="flex flex-col items-center">
-              <GameIcon name="coin" color="amber" size={20} />
+            {/* XP — prominent */}
+            <div className="flex flex-col items-center mb-1">
+              <GameIcon name="star" color="purple" size={22} />
               <span
-                className={`${goldTier.textClass} ${goldTier.colorClass}`}
-                style={goldTier.glowStyle}
+                className={`${xpTier.textClass} ${xpTier.colorClass}`}
+                style={xpTier.glowStyle}
               >
-                +{goldData?.total ?? 0}G
+                +{xpTotal}XP
               </span>
             </div>
-            <div className="w-px h-10 bg-slate-500/60 self-stretch" />
-            <div className="flex flex-col items-center">
-              <GameIcon name="star" color="purple" size={20} />
-              <span className="text-3xl sm:text-4xl font-bold text-purple-300"
-                style={{ textShadow: '0 0 12px #a78bfa' }}>
-                +{xpData?.total ?? 0}XP
-              </span>
-            </div>
+            {/* Gold — sekundär, kleiner */}
+            {goldTotal > 0 && (
+              <>
+                <div className="w-full h-px bg-slate-600/60 my-1" />
+                <div className="flex items-center gap-1.5">
+                  <GameIcon name="coin" color="amber" size={14} />
+                  <span
+                    className={`text-lg font-bold ${goldTier.colorClass}`}
+                    style={goldTier.glowStyle}
+                  >
+                    +{goldTotal}G
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </motion.div>
       )}
@@ -198,34 +234,19 @@ export default function RewardComboReveal({ goldData, xpData, visible, onComplet
     document.body
   );
 
-  const hasBreakdownItems = goldItems.length > 0 || xpItems.length > 0;
-
   return (
     <>
-      {hasBreakdownItems && (
+      {xpItems.length > 0 && (
         <div className="w-full flex gap-2">
-          {goldItems.length > 0 && (
-            <BreakdownColumn
-              items={goldItems}
-              total={goldData?.total ?? 0}
-              icon="coin"
-              color="amber"
-              label="Gold"
-              revealedCount={goldRevealedCount}
-              showTotalLine={showTotalLine}
-            />
-          )}
-          {xpItems.length > 0 && (
-            <BreakdownColumn
-              items={xpItems}
-              total={xpData?.total ?? 0}
-              icon="star"
-              color="purple"
-              label="XP"
-              revealedCount={xpRevealedCount}
-              showTotalLine={showTotalLine}
-            />
-          )}
+          <BreakdownColumn
+            items={xpItems}
+            total={xpTotal}
+            icon="star"
+            color="purple"
+            label="XP"
+            revealedCount={revealedCount}
+            showTotalLine={showTotalLine}
+          />
         </div>
       )}
       {!suppressOverlay && totalOverlay}

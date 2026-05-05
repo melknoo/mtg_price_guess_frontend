@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MERCHANT_TYPES, SHOP_PRICES } from '../constants/mapDefinitions';
 import { RELICS, RELIC_RARITY } from '../constants/relicDefinitions';
@@ -78,33 +79,81 @@ function ItemCard({ item, price, gold, canAfford, onBuy }) {
   );
 }
 
-export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicIds = new Set(), activePerkIds = new Set(), canOfferPerk, canBuyPerkSlot = false, canBuyUtilitySlot = false, onBuyRelic, onBuyPerk, onHeal, onUpgradePerk, onBuySynergySlot, onBuyPerkSlot, onBuyUtilitySlot }) {
-  if (type === MERCHANT_TYPES.ARMORER) {
-    const relics = pickRelics(3, ownedRelicIds);
-    return (
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <GameIcon name="sword" size={24} color="white" />
-          <div>
-            <div className="font-black text-white">Armorer</div>
-            <div className="text-indigo-300/60 text-xs">Deals in relics and equipment</div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          {relics.map(relic => (
-            <ItemCard
-              key={relic.id}
-              item={relic}
-              price={SHOP_PRICES.relic[relic.rarity] ?? 45}
-              gold={gold}
-              canAfford={gold >= (SHOP_PRICES.relic[relic.rarity] ?? 45)}
-              onBuy={() => onBuyRelic(relic, SHOP_PRICES.relic[relic.rarity] ?? 45)}
-            />
-          ))}
-          {relics.length === 0 && <div className="text-white/30 text-sm text-center py-2">No relics available</div>}
+// Stabiler Armorer: Relics werden einmal gepickt und bleiben nach Kauf ohne den gekauften
+function ArmorerPanel({ gold, ownedRelicIds, onBuyRelic }) {
+  const [availableRelics, setAvailableRelics] = useState(() => pickRelics(3, ownedRelicIds));
+
+  const handleBuy = (relic) => {
+    const price = SHOP_PRICES.relic[relic.rarity] ?? 45;
+    onBuyRelic(relic, price);
+    setAvailableRelics(prev => prev.filter(r => r.id !== relic.id));
+  };
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <GameIcon name="sword" size={24} color="white" />
+        <div>
+          <div className="font-black text-white">Armorer</div>
+          <div className="text-indigo-300/60 text-xs">Deals in relics and equipment</div>
         </div>
       </div>
-    );
+      <div className="flex flex-col gap-2">
+        {availableRelics.map(relic => (
+          <ItemCard
+            key={relic.id}
+            item={relic}
+            price={SHOP_PRICES.relic[relic.rarity] ?? 45}
+            gold={gold}
+            canAfford={gold >= (SHOP_PRICES.relic[relic.rarity] ?? 45)}
+            onBuy={() => handleBuy(relic)}
+          />
+        ))}
+        {availableRelics.length === 0 && <div className="text-white/30 text-sm text-center py-2">No relics available</div>}
+      </div>
+    </div>
+  );
+}
+
+// Stabiler Perk Vendor: Perks werden einmal gepickt und bleiben nach Kauf ohne den gekauften
+function PerkVendorPanel({ gold, activePerkIds, canOfferPerk, onBuyPerk }) {
+  const [availablePerks, setAvailablePerks] = useState(() => pickPerks(3, activePerkIds, canOfferPerk));
+
+  const handleBuy = (perk) => {
+    const price = SHOP_PRICES.perk[perk.rarity] ?? 30;
+    onBuyPerk(perk, price);
+    setAvailablePerks(prev => prev.filter(p => p.id !== perk.id));
+  };
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <GameIcon name="hat" size={24} color="purple" />
+        <div>
+          <div className="font-black text-white">Perk Vendor</div>
+          <div className="text-indigo-300/60 text-xs">Sells temporary and permanent perks</div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        {availablePerks.map(perk => (
+          <ItemCard
+            key={perk.id}
+            item={perk}
+            price={SHOP_PRICES.perk[perk.rarity] ?? 30}
+            gold={gold}
+            canAfford={gold >= (SHOP_PRICES.perk[perk.rarity] ?? 30)}
+            onBuy={() => handleBuy(perk)}
+          />
+        ))}
+        {availablePerks.length === 0 && <div className="text-white/30 text-sm text-center py-2">No perks available</div>}
+      </div>
+    </div>
+  );
+}
+
+export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicIds = new Set(), activePerkIds = new Set(), canOfferPerk, canBuyPerkSlot = false, canBuyUtilitySlot = false, onBuyRelic, onBuyPerk, onHeal, onUpgradePerk, onBuySynergySlot, onBuyPerkSlot, onBuyUtilitySlot }) {
+  if (type === MERCHANT_TYPES.ARMORER) {
+    return <ArmorerPanel gold={gold} ownedRelicIds={ownedRelicIds} onBuyRelic={onBuyRelic} />;
   }
 
   if (type === MERCHANT_TYPES.HEALER) {
@@ -140,31 +189,7 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
   }
 
   if (type === MERCHANT_TYPES.PERK_VENDOR) {
-    const perks = pickPerks(3, activePerkIds, canOfferPerk);
-    return (
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <GameIcon name="hat" size={24} color="purple" />
-          <div>
-            <div className="font-black text-white">Perk Vendor</div>
-            <div className="text-indigo-300/60 text-xs">Sells temporary and permanent perks</div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          {perks.map(perk => (
-            <ItemCard
-              key={perk.id}
-              item={perk}
-              price={SHOP_PRICES.perk[perk.rarity] ?? 30}
-              gold={gold}
-              canAfford={gold >= (SHOP_PRICES.perk[perk.rarity] ?? 30)}
-              onBuy={() => onBuyPerk(perk, SHOP_PRICES.perk[perk.rarity] ?? 30)}
-            />
-          ))}
-          {perks.length === 0 && <div className="text-white/30 text-sm text-center py-2">No perks available</div>}
-        </div>
-      </div>
-    );
+    return <PerkVendorPanel gold={gold} activePerkIds={activePerkIds} canOfferPerk={canOfferPerk} onBuyPerk={onBuyPerk} />;
   }
 
   if (type === MERCHANT_TYPES.WANDERING_MAGE) {

@@ -6,10 +6,16 @@ export const calculateBaseGold = () => {
   return REWARD_CONFIG.BASE_GOLD;
 };
 
-// Berechnet Streak-Gold-Bonus (kein Timer — Streak = Combo = Geld)
+// Berechnet Streak-Gold-Bonus — exponentiell ab Streak 5 (pro Antwort)
 export const calculateStreakGold = (streak) => {
   if (streak < 5) return 0;
-  return Math.floor(streak / REWARD_CONFIG.STREAK_GOLD_DIVISOR) * REWARD_CONFIG.STREAK_GOLD_POINTS;
+  return Math.floor(streak * 0.4);
+};
+
+// Streak-XP-Bonus — gleiche Kurve wie Gold (ab Streak 5, pro Antwort)
+export const calculateStreakXP = (streak) => {
+  if (streak < 5) return 0;
+  return Math.floor(streak * 0.4);
 };
 
 // Berechnet Timer-Bonus als XP (Schnelligkeit = Wissen = XP)

@@ -48,12 +48,17 @@ src/
 │   │   │   ├── AchievementsDisplay.jsx
 │   │   │   ├── AchievementToast.jsx
 │   │   │   ├── DailyChallengeGame.jsx
-│   │   │   └── StatsDisplay.jsx
+│   │   │   ├── StatsDisplay.jsx
+│   │   │   ├── RunCompleteModal.jsx     # NEW: shown after boss defeat (End Run / Continue Endless)
+│   │   │   ├── RewardComboReveal.jsx    # XP-only popup with tiered animations
+│   │   │   ├── ShopScreen.jsx          # Shop with 2 random merchants per visit
+│   │   │   └── MerchantPanel.jsx       # Per-merchant panels (ArmorerPanel, PerkVendorPanel sub-components)
 │   │   ├── constants/
 │   │   │   ├── achievementDefinitions.js
 │   │   │   ├── perkDefinitions.js       # Perks, types, rarities, tags, extended variants
 │   │   │   ├── relicDefinitions.js      # Relics with tags, effects, rarities
-│   │   │   └── synergyDefinitions.js    # Synergy combos: requiredTags → effect
+│   │   │   ├── synergyDefinitions.js    # Synergy combos: requiredTags → effect
+│   │   │   └── mapDefinitions.js        # Stage types, map structure, merchant types
 │   │   ├── context/
 │   │   │   └── AchievementContext.jsx
 │   │   ├── hooks/
@@ -64,10 +69,13 @@ src/
 │   │   │   ├── useRelicSystem.js        # Permanent relics for the entire run
 │   │   │   ├── useSynergyEngine.js      # Tag counting, synergy activation, permanence
 │   │   │   ├── useLevel.js             # XP/Level system with thresholdMultiplier
+│   │   │   ├── useGold.js              # Gold currency: add/spend/totalEarned
+│   │   │   ├── useMapSystem.js         # Stage map generation, progression, stage completion
 │   │   │   ├── useAchievements.js
 │   │   │   └── useGameLogic.js         # Legacy — Game.jsx composes hooks directly
 │   │   └── utils/
 │   │       ├── cardComparison.js
+│   │       ├── rewardCalculator.js     # calculateBaseXP, calculateTimeBonusXP, calculateStreakGold, calculateStreakXP
 │   │       └── scoreCalculator.js
 │   ├── leaderboard/
 │   ├── suggestions/
@@ -84,8 +92,9 @@ src/
 
 ### Overview
 
-Every 5 rounds: `PerkSelectionModal` offers 3 perks.
+Every 3 rounds: `PerkSelectionModal` offers 3 perks.
 On level-up: `LevelUpModal` offers 3–4 options (perk / relic / upgrade to existing perk).
+Every 3rd level (3, 6, 9, …): LevelUpModal shows a **relic selection** instead of a perk — managed via `relicMilestoneQueue` state in Game.jsx.
 
 **Three layers:**
 1. **Perks** — temporary (duration-based) or permanent buffs. Defined in `perkDefinitions.js`.
@@ -147,6 +156,29 @@ Upgrade options use `basePerkId` / `isExtended` to find the matching base perk i
 
 Shows a synergy-prediction badge per option: which synergies would activate if you picked that option.
 
+**`forceRelicMode` prop:** When `true`, the modal skips the normal option generation and instead shows 3 random relics to choose from. Used for:
+- Level milestone rewards: `forceRelicMode={relicMilestoneQueue[0] === true}` (every 3rd level)
+- Elite stage relic drops: `eliteRelicPending` state triggers a second LevelUpModal instance with `forceRelicMode={true}`
+
+**Relic Milestone Queue Pattern (Game.jsx):**
+```js
+// relicMilestoneQueue: boolean[] — true = next modal is relic, false = normal perk/upgrade
+// Built when level increases:
+useEffect(() => {
+  if (level.level > prevLevelRef.current) {
+    const queue = [];
+    for (let l = prevLevelRef.current + 1; l <= level.level; l++) {
+      queue.push(l % 3 === 0); // true = relic milestone
+    }
+    setRelicMilestoneQueue(prev => [...prev, ...queue]);
+    prevLevelRef.current = level.level;
+  }
+}, [level.level]);
+// Pop queue head in both handleLevelUpSelect and handleLevelUpSkip:
+setRelicMilestoneQueue(prev => prev.slice(1));
+```
+This correctly handles multi-level-up: each pending modal gets the right type in order.
+
 ## ActivePerksDisplay
 
 Sidebar (desktop, scrollable full-height) / collapsible panel (mobile).
@@ -189,16 +221,34 @@ Tick triggers: `card_counter` (every non-trigger round), `heart_regeneration` + 
 - `upgradeCount` is read by `useSynergyEngine` to count tags multiple times per upgraded perk
 - `getPerkValue(effect)` returns the value of the first active perk with that effect
 
-## Score Calculation
+## Score / Reward Calculation
 
+Game uses **Gold + XP** dual rewards (no raw score). Calculations live in `rewardCalculator.js`.
+
+```js
+// Base XP per correct answer (rewardCalculator.js)
+calculateBaseXP(isCorrect, isPerfect, timeLeft, multipliers)
+calculateTimeBonusXP(timeLeft)
+
+// Streak bonuses (rewardCalculator.js) — both Gold and XP:
+calculateStreakGold(streak)   // streak < 5 → 0; else floor(streak * 0.4)
+calculateStreakXP(streak)     // same formula — streak 5→+2, 10→+4, 15→+6, 20→+8
+
+// Hot Streak synergy (exponential_streak_bonus): multiplies streak block bonus
 ```
-timeBonus     = ceil(timeLeft * 1)                        // 0–10 pts
-streakBonus   = floor(streak / STREAK_BONUS_DIVISOR) * STREAK_BONUS_POINTS
-// Hot Streak: STREAK_BONUS_POINTS * (2^blocks - 1) — exponential
-finalPoints   = applyPerkEffects(base + timeBonus + streakBonus)
-// Gold Rush multiplies final score
-// Berserker doubles XP + Score at 1 life
-```
+
+**Gold earn rates:**
+- +2G base per correct answer (+ Gold Wellspring relic bonus)
+- +5G / +10G / +15G at streak milestones
+- +15G on level-up
+- Streak per-answer bonus: `calculateStreakGold(streak)` (active from streak 5+)
+
+**XP earn rates:**
+- Base XP + time bonus per correct answer
+- Streak per-answer XP: `calculateStreakXP(streak)` added to xpGained and xpBreakdown
+- Scholar synergy: `addXP(amount, 0.8)` — 20% less XP needed per level
+
+**applyGoldEffects()** in `Game.jsx` — all relic/perk/synergy gold math lives here.
 
 ## Backend API Endpoints
 
@@ -217,12 +267,17 @@ finalPoints   = applyPerkEffects(base + timeBonus + streakBonus)
 ## Key Game Flow
 
 1. **Init:** `preloadCards()` → `setNextPair()` → images load → `timer.start()`
-2. **Each round:** Player picks → `handleChoice(index)` → timer stops → prices revealed → score/XP/streaks updated
+2. **Each round:** Player picks → `handleChoice(index)` → timer stops → prices revealed → XP/Gold/streaks updated
 3. **XP gain:** `level.addXP(amount, scholarMult)` — triggers `level.showLevelUp = true`
-4. **Level up:** `LevelUpModal` shown → player picks reward → `handleLevelUpSelect(pick)` — routes to `addRelic`, `selectPerk`, or perk upgrade
-5. **Next pair:** `handleNextPair()` → round++ → if round % 5 === 0 → `PerkSelectionModal` → else next card
+4. **Level up:** `LevelUpModal` shown → player picks reward → `handleLevelUpSelect(pick)` — routes to `addRelic`, `selectPerk`, or perk upgrade. Pop `relicMilestoneQueue` head in both select and skip.
+5. **Next pair:** `handleNextPair()` → round++ → if round % 3 === 0 → `PerkSelectionModal` → else next card
 6. **Card Counter:** every 10 rounds → +1 life, `flashRelic('card_counter')`
 7. **Wrong answer:** -1 life → if 0 → game over
+8. **Stage complete:** `StageCompleteScreen` shown → continue → if elite stage → `eliteRelicPending = true` (triggers relic drop); if boss stage → `runComplete = true` (triggers `RunCompleteModal`)
+9. **Run complete (boss):** `RunCompleteModal` shows with Gold/XP/Level stats and two options:
+   - **End Run** → `setGameOver(true)`
+   - **Continue (Endless Mode)** → `setEndlessDifficulty(prev => prev + 1)` + `mapSystem.reset()` + `mapSystem.generateMap()`
+10. **Endless Mode:** `endlessDifficulty` increments each loop; `getTimerDuration()` subtracts `endlessDifficulty` from timer (harder with each endless loop)
 
 ## Keyboard Controls
 - `1` / `A` — Select left card
@@ -242,12 +297,19 @@ finalPoints   = applyPerkEffects(base + timeBonus + streakBonus)
 3. **`upgradeCount` must flow through** — When a perk is upgraded (merged), `upgradeCount` increments. `useSynergyEngine` uses it to count tags multiple times. Don't flatten perks during merge.
 4. **Portal tooltips** — `DesktopPerkCard` renders its tooltip via `createPortal(content, document.body)` and positions with `position: fixed`. This is necessary because `overflow-y: auto` on the scrollable sidebar would clip absolute-positioned children. Don't revert to CSS group-hover tooltips inside the scroll container.
 5. **Independent regen counters** — Heart Regeneration perk and Fortress synergy have SEPARATE counters. Fortress uses `fortressRegenCount` in Game.jsx, NOT the perk system's counter. Each gives a heart independently.
-6. **`getTimerDuration` depends on `synergyEngine`** — Speed Demon multiplier is applied here. Make sure `synergyEngine` is in the dependency array.
+6. **`getTimerDuration` depends on `synergyEngine`** — Speed Demon multiplier is applied here, and `endlessDifficulty` subtracts from the base duration. Make sure both are in the dependency array.
 7. **Fortune synergy** — `generateOptions` in `LevelUpModal` checks `hasFortune` to generate a 4th slot. The grid changes to `md:grid-cols-4`.
 8. **Perk timing** — `decrementPerkDurations()` must be called AFTER answer processing. Perks activate immediately on selection.
 9. **Achievement tracking uses refs** — prevents duplicate unlocks in React strict mode. Don't convert to state.
 10. **Guest users** — `{ guest: true }`. Always check before auth-required API calls.
 11. **Prices in EUR** — all comparisons use `parseFloat(card.prices.eur)`.
+12. **Glass Mind** — fires on ANY correct answer (not just isPerfect). The condition is `isCorrect && hasPerk('glass_mind')`, NOT `isPerfect && ...`.
+13. **Shop stable item lists** — `ArmorerPanel` and `PerkVendorPanel` are separate sub-components in `MerchantPanel.jsx` with their own `useState(() => pickRelics(...))` / `useState(() => pickPerks(...))`. This prevents the item list from re-randomizing when gold changes (which causes re-renders). When a player buys an item, it's filtered out of the local state list — the other items remain stable.
+14. **Shop canBuyPerkSlot** — condition is `perkSlotInfo.max < 5` (can the cap be raised?), NOT `perkSlotInfo.used < perkSlotInfo.max` (are there free slots?). Same for `canBuyUtilitySlot`: `utilitySlotInfo.max < 2`.
+15. **Elite relic drop** — `eliteRelicPending` state in Game.jsx. After StageCompleteScreen dismisses for an elite node, a second `LevelUpModal` renders with `forceRelicMode={true}`. Its `onSelect` handler calls ONLY `relicSystem.addRelic(pick)` — NOT `level.dismissLevelUp()`, since there is no pending level-up.
+16. **Relic milestone queue** — `relicMilestoneQueue` is a `boolean[]` in Game.jsx. Pop head on BOTH select and skip in LevelUpModal. Never call `level.dismissLevelUp()` twice for the same modal.
+17. **Run seed** — `runSeed` state initialized with `useState(() => Math.random().toString(36).slice(2,6).toUpperCase())`. Cosmetic only, reset on restart. Displayed as `#XXXX` in HUD instead of the old roadmap button.
+18. **Compound Interest accumulated display** — `perkSystem.compoundInterestAccRef` is a ref (not state) for sync access. Passed as `compoundAccRef` prop to `ActivePerksDisplay`, which reads `.current` to show "Acc: +N XP" on the compound interest perk card.
 
 ## Code Style
 - Functional components only
