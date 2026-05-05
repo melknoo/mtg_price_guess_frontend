@@ -321,24 +321,16 @@ export const usePerkSystem = () => {
   }, [roundsPlayed]);
 
   const buyPassiveSlot = useCallback(() => {
-    let purchased = false;
-    setMaxPassiveSlots(prev => {
-      if (prev >= PERK_CONFIG.MAX_PASSIVE_SLOTS) return prev;
-      purchased = true;
-      return prev + 1;
-    });
-    return purchased;
-  }, []);
+    if (maxPassiveSlots >= PERK_CONFIG.MAX_PASSIVE_SLOTS) return false;
+    setMaxPassiveSlots(prev => prev + 1);
+    return true;
+  }, [maxPassiveSlots]);
 
   const buyUtilitySlot = useCallback(() => {
-    let purchased = false;
-    setMaxUtilitySlots(prev => {
-      if (prev >= PERK_CONFIG.MAX_UTILITY_SLOTS) return prev;
-      purchased = true;
-      return prev + 1;
-    });
-    return purchased;
-  }, []);
+    if (maxUtilitySlots >= PERK_CONFIG.MAX_UTILITY_SLOTS) return false;
+    setMaxUtilitySlots(prev => prev + 1);
+    return true;
+  }, [maxUtilitySlots]);
 
   const rechargeStageStartUtilities = useCallback(() => {
     setActivePerks(prev => prev.map(perk => {

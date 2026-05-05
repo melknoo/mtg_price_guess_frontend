@@ -27,17 +27,37 @@ const TAG_STYLES = {
 
 // Rarity-basiertes Styling für die Sidebar-Karten
 function getItemRarityStyle(item, isRelic = false) {
+  if (isRelic) {
+    // Relics: Amber/Gold-Identität — Background amber-getönt, Border immer amber
+    const gradients = {
+      common:    'bg-[#181200]',
+      rare:      'bg-[#1a1600]',
+      epic:      'bg-[#1a0e00]',
+      legendary: 'bg-[#221c00]',
+    };
+    const borders = {
+      common:    'border-amber-600/60',
+      rare:      'border-amber-400/80',
+      epic:      'border-amber-400',
+      legendary: 'border-yellow-300',
+    };
+    return {
+      gradient:    gradients[item.rarity] ?? gradients.common,
+      borderColor: borders[item.rarity] ?? borders.common,
+    };
+  }
+  // Perks: Indigo/Blau-Identität — Background blau-getönt, Border indigo-basiert
   const gradients = {
-    common:    'bg-[#111827]',
+    common:    'bg-[#0d1225]',
     rare:      'bg-[#0c1a3a]',
     epic:      'bg-[#1a0a2e]',
     legendary: 'bg-[#1a1500]',
   };
   const borders = {
-    common:    isRelic ? 'border-gray-400' : 'border-gray-500',
-    rare:      isRelic ? 'border-blue-400' : 'border-blue-500',
-    epic:      isRelic ? 'border-purple-400' : 'border-purple-500',
-    legendary: isRelic ? 'border-yellow-400' : 'border-yellow-500',
+    common:    'border-indigo-500/50',
+    rare:      'border-blue-500',
+    epic:      'border-purple-500',
+    legendary: 'border-yellow-500',
   };
   return {
     gradient:    gradients[item.rarity] ?? gradients.common,
@@ -181,10 +201,15 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
           )}
           <div className="flex flex-col gap-2 overflow-y-auto pr-0.5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
             <AnimatePresence>
+              {perks.length > 0 && (relics.length > 0 || synergies.length > 0) && (
+                <div className="text-[8px] font-bold text-indigo-400/50 uppercase tracking-widest border-b border-indigo-500/20 pb-0.5">
+                  Perks
+                </div>
+              )}
               {perks.map((perk) => {
                 const s = getItemRarityStyle(perk, false);
                 const compoundAcc = (compoundAccRef && perk.effect === 'compound_interest') ? (compoundAccRef.current ?? 0) : null;
-                return <DesktopPerkCard key={perk.id} item={perk} borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} extraInfo={compoundAcc !== null ? `Acc: +${compoundAcc} XP` : null} />;
+                return <DesktopPerkCard key={perk.id} item={perk} type="perk" borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} extraInfo={compoundAcc !== null ? `Acc: +${compoundAcc} XP` : null} />;
               })}
               {/* Leere Passive-Slots als Placeholder */}
               {passiveSlotInfo && Array.from({ length: passiveSlotInfo.max - passiveSlotInfo.used }).map((_, i) => (
@@ -192,17 +217,27 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                   <span className="text-white/20 text-[9px] font-bold uppercase tracking-wide text-center">Empty<br />Slot</span>
                 </div>
               ))}
+              {relics.length > 0 && (
+                <div className="text-[8px] font-bold text-amber-400/50 uppercase tracking-widest border-t border-amber-500/20 pt-1 mt-0.5">
+                  Relics
+                </div>
+              )}
               {relics.map((relic) => {
                 const s = getItemRarityStyle(relic, true);
-                return <DesktopPerkCard key={relic.id} item={relic} borderColor={s.borderColor} gradientColor={s.gradient} badge="⭐" triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />;
+                return <DesktopPerkCard key={relic.id} item={relic} type="relic" borderColor={s.borderColor} gradientColor={s.gradient} triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />;
               })}
+              {synergies.length > 0 && (
+                <div className="text-[8px] font-bold text-teal-400/50 uppercase tracking-widest border-t border-teal-500/20 pt-1 mt-0.5">
+                  Synergies
+                </div>
+              )}
               {synergies.map((syn) => (
                 <DesktopPerkCard
                   key={syn.id}
                   item={syn}
+                  type="synergy"
                   borderColor="border-teal-400/60"
                   gradientColor="from-teal-900/80 to-cyan-900/80"
-                  badge="🔗"
                   contributors={getContributors(syn, relics, perks)}
                   ticking={tickingRelics.has(syn.id)}
                   counterInfo={getCounterInfo(syn, currentRound, heartRegenProgress, fortressRegenCount)}
@@ -263,17 +298,17 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                   )}
                   {perks.map((perk) => {
                     const s = getItemRarityStyle(perk, false);
-                    return <MobilePerkCard key={perk.id} item={perk} borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />;
+                    return <MobilePerkCard key={perk.id} item={perk} type="perk" borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />;
                   })}
                   {relics.length > 0 && (
-                    <div className="text-xs text-amber-300/70 font-bold uppercase tracking-wider mt-1 mb-0.5">⭐ Relics</div>
+                    <div className="text-xs text-amber-400/70 font-bold uppercase tracking-wider mt-1 mb-0.5 border-t border-amber-500/20 pt-1">Relics</div>
                   )}
                   {relics.map((relic) => {
                     const s = getItemRarityStyle(relic, true);
-                    return <MobilePerkCard key={relic.id} item={relic} borderColor={s.borderColor} gradientColor={s.gradient} triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />;
+                    return <MobilePerkCard key={relic.id} item={relic} type="relic" borderColor={s.borderColor} gradientColor={s.gradient} triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />;
                   })}
                   {synergies.length > 0 && (
-                    <div className="text-xs text-teal-300/70 font-bold uppercase tracking-wider mt-1 mb-0.5">🔗 Synergies</div>
+                    <div className="text-xs text-teal-400/70 font-bold uppercase tracking-wider mt-1 mb-0.5 border-t border-teal-500/20 pt-1">Synergies</div>
                   )}
                   {synergies.map((syn) => {
                     const contributors = getContributors(syn, relics, perks);
@@ -282,6 +317,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                       <div key={syn.id}>
                         <MobilePerkCard
                           item={syn}
+                          type="synergy"
                           borderColor="border-teal-400/60"
                           gradientColor="from-teal-900/80 to-cyan-900/80"
                           onTap={contributors.length > 0 ? () => setExpandedSynergyId(isExpanded ? null : syn.id) : undefined}
@@ -324,7 +360,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
   );
 }
 
-function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", badge, contributors, triggered, ticking, counterInfo, ctx, extraInfo }) {
+function DesktopPerkCard({ item, type = "perk", borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", badge, contributors, triggered, ticking, counterInfo, ctx, extraInfo }) {
   const cardRef = useRef(null);
   const [tooltipStyle, setTooltipStyle] = useState(null);
 
@@ -388,6 +424,20 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
         transition={{ duration: triggered ? 0.4 : 0.25, ease: 'easeInOut' }}
         className={`relative ${gradientColor} rounded-sm p-2 border-2 ${borderColor} shadow-pixel-sm min-w-[80px] overflow-hidden`}
       >
+        {/* Typ-Overlay: Relic = diagonale Amber-Streifen */}
+        {type === 'relic' && (
+          <div
+            className="absolute inset-0 pointer-events-none rounded-sm"
+            style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(251,191,36,0.08) 0px, rgba(251,191,36,0.08) 1px, transparent 1px, transparent 10px)' }}
+          />
+        )}
+        {/* Typ-Overlay: Synergy = dezentes Teal Dot-Grid */}
+        {type === 'synergy' && (
+          <div
+            className="absolute inset-0 pointer-events-none rounded-sm"
+            style={{ backgroundImage: 'radial-gradient(circle, rgba(20,184,166,0.15) 1px, transparent 1px)', backgroundSize: '8px 8px' }}
+          />
+        )}
         {/* Heller Inner-Flash */}
         <AnimatePresence>
           {triggered && (
@@ -422,6 +472,10 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
           </div>
           <TagChips tags={item.tags} small />
         </div>
+        {/* Typ-Marker: farbiger Balken am unteren Rand */}
+        <div className={`absolute bottom-0 left-0 right-0 h-[3px] pointer-events-none ${
+          type === 'relic' ? 'bg-amber-500/50' : type === 'synergy' ? 'bg-teal-500/50' : 'bg-indigo-500/40'
+        }`} />
       </motion.div>
 
       {/* Tooltip via Portal — nicht vom overflow-y:auto der Sidebar abgeschnitten */}
@@ -474,7 +528,7 @@ function DesktopPerkCard({ item, borderColor = "border-blue-400/60", gradientCol
   );
 }
 
-function MobilePerkCard({ item, borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", onTap, tapHint, triggered, ticking, counterInfo, ctx }) {
+function MobilePerkCard({ item, type = "perk", borderColor = "border-blue-400/60", gradientColor = "from-blue-900/80 to-indigo-900/80", onTap, tapHint, triggered, ticking, counterInfo, ctx }) {
 
   return (
     <div className="relative">
@@ -510,6 +564,20 @@ function MobilePerkCard({ item, borderColor = "border-blue-400/60", gradientColo
         className={`relative ${gradientColor} rounded-sm p-2 border-2 ${borderColor} shadow-pixel-sm overflow-hidden ${onTap ? 'cursor-pointer active:opacity-80' : ''}`}
         onClick={onTap}
       >
+        {/* Typ-Overlay: Relic = diagonale Amber-Streifen */}
+        {type === 'relic' && (
+          <div
+            className="absolute inset-0 pointer-events-none rounded-sm"
+            style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(251,191,36,0.08) 0px, rgba(251,191,36,0.08) 1px, transparent 1px, transparent 10px)' }}
+          />
+        )}
+        {/* Typ-Overlay: Synergy = dezentes Teal Dot-Grid */}
+        {type === 'synergy' && (
+          <div
+            className="absolute inset-0 pointer-events-none rounded-sm"
+            style={{ backgroundImage: 'radial-gradient(circle, rgba(20,184,166,0.15) 1px, transparent 1px)', backgroundSize: '8px 8px' }}
+          />
+        )}
         <AnimatePresence>
           {triggered && (
             <motion.div
@@ -552,6 +620,10 @@ function MobilePerkCard({ item, borderColor = "border-blue-400/60", gradientColo
             <TagChips tags={item.tags} small />
           </div>
         </div>
+        {/* Typ-Marker: farbiger Balken am unteren Rand */}
+        <div className={`absolute bottom-0 left-0 right-0 h-[3px] pointer-events-none ${
+          type === 'relic' ? 'bg-amber-500/50' : type === 'synergy' ? 'bg-teal-500/50' : 'bg-indigo-500/40'
+        }`} />
       </motion.div>
     </div>
   );

@@ -113,14 +113,15 @@ export default function RewardComboReveal({ goldData, xpData, visible, onComplet
   const onCompleteRef = useRef(onComplete);
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
-  // Nur XP-Items im Breakdown anzeigen
   const xpItems = xpData?.items ?? [];
+  const goldItems = goldData?.items ?? [];
+  const maxItems = Math.max(xpItems.length, goldItems.length);
 
   useEffect(() => {
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
 
-    if (!visible || !xpItems.length) {
+    if (!visible || !maxItems) {
       setRevealedCount(0);
       setShowTotal(false);
       setShowTotalLine(false);
@@ -138,10 +139,10 @@ export default function RewardComboReveal({ goldData, xpData, visible, onComplet
     const INITIAL_DELAY = 200;
     const STAGGER = 160;
 
-    xpItems.forEach((_, i) => {
+    for (let i = 0; i < maxItems; i++) {
       const t = setTimeout(() => setRevealedCount(i + 1), INITIAL_DELAY + i * STAGGER);
       timeoutsRef.current.push(t);
-    });
+    }
 
     const totalT = setTimeout(() => {
       setShowTotal(true);
@@ -152,14 +153,14 @@ export default function RewardComboReveal({ goldData, xpData, visible, onComplet
         timeoutsRef.current.push(doneT);
       }, 700);
       timeoutsRef.current.push(dismissT);
-    }, INITIAL_DELAY + xpItems.length * STAGGER + 100);
+    }, INITIAL_DELAY + maxItems * STAGGER + 100);
     timeoutsRef.current.push(totalT);
 
     return () => { timeoutsRef.current.forEach(clearTimeout); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [xpData, visible]);
+  }, [xpData, goldData, visible]);
 
-  if (!xpData) return null;
+  if (!xpData && !goldData) return null;
   if (!visible) return null;
 
   const xpTotal = xpData?.total ?? 0;
@@ -236,17 +237,30 @@ export default function RewardComboReveal({ goldData, xpData, visible, onComplet
 
   return (
     <>
-      {xpItems.length > 0 && (
+      {maxItems > 0 && (
         <div className="w-full flex gap-2">
-          <BreakdownColumn
-            items={xpItems}
-            total={xpTotal}
-            icon="star"
-            color="purple"
-            label="XP"
-            revealedCount={revealedCount}
-            showTotalLine={showTotalLine}
-          />
+          {xpItems.length > 0 && (
+            <BreakdownColumn
+              items={xpItems}
+              total={xpTotal}
+              icon="star"
+              color="purple"
+              label="XP"
+              revealedCount={revealedCount}
+              showTotalLine={showTotalLine}
+            />
+          )}
+          {goldItems.length > 0 && (
+            <BreakdownColumn
+              items={goldItems}
+              total={goldTotal}
+              icon="coin"
+              color="amber"
+              label="Gold"
+              revealedCount={revealedCount}
+              showTotalLine={showTotalLine}
+            />
+          )}
         </div>
       )}
       {!suppressOverlay && totalOverlay}

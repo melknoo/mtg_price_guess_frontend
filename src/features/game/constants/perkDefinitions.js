@@ -206,10 +206,10 @@ export const PERKS = {
         tags: [PERK_TAGS.XP],
         effect: 'flat_bonus',
         value: 30,
-        duration: 9,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
         basePerkId: 'point_boost',
         isExtended: true,
-        bonusDuration: 2,
     },
 
     // ==================== UTILITY PERKS ====================
