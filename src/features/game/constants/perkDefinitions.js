@@ -19,6 +19,11 @@ export const PERK_TYPES = {
     FILTER: 'filter', // Legacy — kept for backward compat, no active filter perks remain
 };
 
+export const PERK_SLOT_TYPES = {
+    PASSIVE: 'passive',
+    UTILITY: 'utility',
+};
+
 export const PERK_RARITY = {
     COMMON: 'common',
     RARE: 'rare',
@@ -52,6 +57,7 @@ export const PERKS = {
         effect: 'heart_regen',
         value: 5,
         duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     SECOND_CHANCE: {
@@ -66,25 +72,28 @@ export const PERKS = {
         value: 1,
         duration: -1,
         consumable: true,
+        slotType: PERK_SLOT_TYPES.UTILITY,
+        maxCharges: 1,
     },
 
     TIME_BUFFER: {
         id: 'time_buffer',
         name: 'Time Buffer',
-        description: '+3 seconds extra time per round (5 rounds)',
+        description: '+1 second extra time per round',
         icon: '⏰',
         type: PERK_TYPES.DEFENSIVE,
         rarity: PERK_RARITY.COMMON,
         tags: [PERK_TAGS.SPEED, PERK_TAGS.DEFENSE],
         effect: 'time_bonus',
-        value: 3,
-        duration: 5,
+        value: 1,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     TIME_BUFFER_EXTENDED: {
         id: 'time_buffer_extended',
         name: 'Time Buffer+',
-        description: '+6 seconds extra time per round (7 rounds)',
+        description: '+2 seconds extra time per round',
         icon: '⏰',
         type: PERK_TYPES.DEFENSIVE,
         rarity: PERK_RARITY.RARE,
@@ -101,20 +110,21 @@ export const PERKS = {
     DOUBLE_POINTS: {
         id: 'double_points',
         name: 'Double Gold',
-        description: 'Double all Gold earned for the next 5 rounds',
+        description: 'Multiply all Gold earned by x1.5',
         icon: '⚡',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.EPIC,
         tags: [PERK_TAGS.GOLD],
         effect: 'point_multiplier',
-        value: 2,
-        duration: 5,
+        value: 1.5,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     DOUBLE_POINTS_EXTENDED: {
         id: 'double_points_extended',
         name: 'Double Gold+',
-        description: 'Double all Gold earned for the next 7 rounds',
+        description: 'Multiply all Gold earned by x2',
         icon: '⚡',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.EPIC,
@@ -139,25 +149,27 @@ export const PERKS = {
         value: 3,
         duration: -1,
         consumable: false,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     PERFECTIONIST: {
         id: 'perfectionist',
         name: 'Perfectionist',
-        description: '×3 XP when you answer at full time (5 rounds)',
+        description: '×2 XP when you answer at full time',
         icon: '🎯',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.RARE,
         tags: [PERK_TAGS.SPEED, PERK_TAGS.XP],
         effect: 'perfect_multiplier',
-        value: 3,
-        duration: 5,
+        value: 2,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     PERFECTIONIST_EXTENDED: {
         id: 'perfectionist_extended',
         name: 'Perfectionist+',
-        description: '×3 XP when you answer at full time (7 rounds)',
+        description: 'x3 XP when you answer at full time',
         icon: '🎯',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.RARE,
@@ -173,20 +185,21 @@ export const PERKS = {
     POINT_BOOST: {
         id: 'point_boost',
         name: 'XP Boost',
-        description: '+15 extra XP per correct answer (7 rounds)',
+        description: '+8 extra XP per correct answer',
         icon: '💎',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.COMMON,
         tags: [PERK_TAGS.XP],
         effect: 'flat_bonus',
-        value: 15,
-        duration: 7,
+        value: 8,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     POINT_BOOST_EXTENDED: {
         id: 'point_boost_extended',
         name: 'XP Boost+',
-        description: '+30 extra XP per correct answer (9 rounds)',
+        description: '+16 extra XP per correct answer',
         icon: '💎',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.RARE,
@@ -203,20 +216,21 @@ export const PERKS = {
     SLOW_TIME: {
         id: 'slow_time',
         name: 'Slow Motion',
-        description: 'Timer runs at 40% speed (5 rounds)',
+        description: 'Timer runs at 75% speed',
         icon: '⏱️',
         type: PERK_TYPES.UTILITY,
         rarity: PERK_RARITY.RARE,
         tags: [PERK_TAGS.SPEED],
         effect: 'slow_time',
-        value: 0.4,
-        duration: 5,
+        value: 0.75,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     SLOW_TIME_EXTENDED: {
         id: 'slow_time_extended',
         name: 'Slow Motion+',
-        description: 'Timer runs at 60% speed (7 rounds)',
+        description: 'Timer runs at 60% speed',
         icon: '⏱️',
         type: PERK_TYPES.UTILITY,
         rarity: PERK_RARITY.EPIC,
@@ -232,14 +246,15 @@ export const PERKS = {
     SET_REVEAL: {
         id: 'set_reveal',
         name: 'Set Reveal',
-        description: 'Shows the set of both cards for 7 rounds',
+        description: 'Shows the set of both cards',
         icon: '📖',
         type: PERK_TYPES.UTILITY,
         rarity: PERK_RARITY.COMMON,
         tags: [PERK_TAGS.LUCK],
         effect: 'show_set',
         value: 1,
-        duration: 7,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     SKIP_CARD: {
@@ -255,6 +270,9 @@ export const PERKS = {
         duration: -1,
         manual: true,
         consumable: true,
+        slotType: PERK_SLOT_TYPES.UTILITY,
+        maxCharges: 1,
+        rechargeRule: 'stage_start',
     },
 
     // ==================== BALATRO-STYLE PERKS ====================
@@ -269,20 +287,22 @@ export const PERKS = {
         tags: [PERK_TAGS.LUCK],
         effect: 'gambler_roll',
         value: 0.6,
-        duration: 4,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     CHAIN_LIGHTNING: {
         id: 'chain_lightning',
         name: 'Chain Lightning',
-        description: '+0.5× Gold multiplier per consecutive correct answer (resets on wrong)',
+        description: '+0.25x Gold multiplier per consecutive correct answer (resets on wrong)',
         icon: '⚡',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.RARE,
         tags: [PERK_TAGS.STREAK, PERK_TAGS.GOLD],
         effect: 'chain_lightning_counter',
-        value: 0.5,
-        duration: 6,
+        value: 0.25,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     TIME_BOMB: {
@@ -309,19 +329,21 @@ export const PERKS = {
         effect: 'dead_mans_hand',
         value: 5,
         duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     MIRROR_IMAGE: {
         id: 'mirror_image',
         name: 'Mirror Image',
-        description: 'XP gains also add 50% as Gold each answer',
+        description: 'XP gains also add 35% as Gold each answer',
         icon: '🪞',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.RARE,
         tags: [PERK_TAGS.XP, PERK_TAGS.GOLD],
         effect: 'mirror_image',
-        value: 0.5,
-        duration: 5,
+        value: 0.35,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     OVERCLOCK: {
@@ -350,19 +372,21 @@ export const PERKS = {
         duration: -1,
         manual: true,
         consumable: true,
+        slotType: PERK_SLOT_TYPES.UTILITY,
     },
 
     ADRENALINE: {
         id: 'adrenaline',
         name: 'Adrenaline',
-        description: '+20% XP multiplier per active temporary perk (including self)',
+        description: '+10% XP multiplier per active perk (including self)',
         icon: '💉',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.RARE,
         tags: [PERK_TAGS.XP, PERK_TAGS.STREAK],
         effect: 'adrenaline_mult',
-        value: 0.2,
-        duration: 5,
+        value: 0.1,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     WILDCARD: {
@@ -401,7 +425,8 @@ export const PERKS = {
         tags: [PERK_TAGS.GOLD],
         effect: 'echo_chamber',
         value: 1,
-        duration: 4,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     BLOODLUST: {
@@ -427,7 +452,8 @@ export const PERKS = {
         tags: [PERK_TAGS.LUCK],
         effect: 'roulette',
         value: 8,
-        duration: 3,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     GLASS_MIND: {
@@ -446,27 +472,30 @@ export const PERKS = {
     MOMENTUM_PERK: {
         id: 'momentum_perk',
         name: 'Momentum',
-        description: '+5 Gold stacking per consecutive correct answer (resets on wrong)',
+        description: '+3 Gold stacking per consecutive correct answer (resets on wrong)',
         icon: '🚀',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.COMMON,
         tags: [PERK_TAGS.STREAK, PERK_TAGS.GOLD],
         effect: 'momentum_flat',
-        value: 5,
-        duration: 6,
+        value: 3,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     TREASURE_MAP_PERK: {
         id: 'treasure_map_perk',
         name: 'Treasure Map',
-        description: '+20 Gold per correct answer, but 0 XP this round',
+        description: '+12 Gold per correct answer, but XP is halved',
         icon: '🗺️',
         type: PERK_TYPES.UTILITY,
         rarity: PERK_RARITY.COMMON,
         tags: [PERK_TAGS.GOLD, PERK_TAGS.SACRIFICE],
         effect: 'treasure_map_gold',
-        value: 20,
-        duration: 8,
+        value: 12,
+        xpMultiplier: 0.5,
+        duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 
     OVERCAUTIOUS: {
@@ -480,6 +509,7 @@ export const PERKS = {
         effect: 'overcautious',
         value: 50,
         duration: -1,
+        slotType: PERK_SLOT_TYPES.PASSIVE,
     },
 };
 
@@ -516,4 +546,8 @@ export const RARITY_WEIGHTS = {
 export const PERK_CONFIG = {
     ROUNDS_BETWEEN_PERKS: 5,
     PERKS_TO_CHOOSE: 3,
+    STARTING_PASSIVE_SLOTS: 3,
+    MAX_PASSIVE_SLOTS: 5,
+    STARTING_UTILITY_SLOTS: 1,
+    MAX_UTILITY_SLOTS: 2,
 };

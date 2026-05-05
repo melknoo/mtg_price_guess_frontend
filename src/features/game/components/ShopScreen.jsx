@@ -22,12 +22,17 @@ export default function ShopScreen({
   maxLives,
   activeRelics = [],
   activePerks = [],
+  perkSlotInfo = null,
+  utilitySlotInfo = null,
+  canOfferPerk = null,
   onClose,
   onBuyRelic,
   onBuyPerk,
   onHeal,
   onUpgradePerk,
   onBuySynergySlot,
+  onBuyPerkSlot,
+  onBuyUtilitySlot,
 }) {
   const [merchants] = useState(() => pickMerchants());
   const ownedRelicIds = new Set(activeRelics.map(r => r.id));
@@ -73,11 +78,16 @@ export default function ShopScreen({
                 maxLives={maxLives}
                 ownedRelicIds={ownedRelicIds}
                 activePerkIds={activePerkIds}
+                canOfferPerk={canOfferPerk}
+                canBuyPerkSlot={Boolean(perkSlotInfo && perkSlotInfo.used < perkSlotInfo.max)}
+                canBuyUtilitySlot={Boolean(utilitySlotInfo && utilitySlotInfo.used < utilitySlotInfo.max)}
                 onBuyRelic={onBuyRelic}
                 onBuyPerk={onBuyPerk}
                 onHeal={onHeal}
                 onUpgradePerk={onUpgradePerk}
                 onBuySynergySlot={onBuySynergySlot}
+                onBuyPerkSlot={onBuyPerkSlot}
+                onBuyUtilitySlot={onBuyUtilitySlot}
               />
             </motion.div>
           ))}

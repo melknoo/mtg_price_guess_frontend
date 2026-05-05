@@ -115,6 +115,9 @@ function getDynamicSuffix(item, ctx) {
 }
 
 function getCounterInfo(item, currentRound, heartRegenProgress, fortressRegenCount) {
+  if (item.consumable && item.duration === -1 && item.maxCharges != null) {
+    return { current: item.value ?? 0, max: item.maxCharges };
+  }
   if (item.effect === 'round_heal') {
     return { current: currentRound % item.value, max: item.value };
   }
@@ -127,7 +130,7 @@ function getCounterInfo(item, currentRound, heartRegenProgress, fortressRegenCou
   return null;
 }
 
-export default function ActivePerksDisplay({ perks, relics = [], synergies = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1, showPerkSelection = false }) {
+export default function ActivePerksDisplay({ perks, relics = [], synergies = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1, showPerkSelection = false, passiveSlotInfo = null, utilitySlotInfo = null }) {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSynergyId, setExpandedSynergyId] = useState(null);
 
@@ -162,6 +165,20 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
           <h3 className="text-[10px] font-bold text-amber-300/70 mb-2 text-center whitespace-nowrap shrink-0 uppercase tracking-widest">
             Boni
           </h3>
+          {(passiveSlotInfo || utilitySlotInfo) && (
+            <div className="mb-2 flex flex-col gap-1 shrink-0">
+              {passiveSlotInfo && (
+                <div className="inline-flex items-center justify-center gap-1 rounded-sm border border-amber-500/40 bg-amber-900/20 px-1 py-0.5 text-[9px] font-bold text-amber-200">
+                  <GameIcon name="grid" size={10} color="amber" /> {passiveSlotInfo.used}/{passiveSlotInfo.max}
+                </div>
+              )}
+              {utilitySlotInfo && (
+                <div className="inline-flex items-center justify-center gap-1 rounded-sm border border-teal-500/40 bg-teal-900/20 px-1 py-0.5 text-[9px] font-bold text-teal-200">
+                  <GameIcon name="bag" size={10} color="teal" /> {utilitySlotInfo.used}/{utilitySlotInfo.max}
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex flex-col gap-2 overflow-y-auto pr-0.5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
             <AnimatePresence>
               {perks.map((perk) => {

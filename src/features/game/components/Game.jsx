@@ -51,6 +51,7 @@ import StageCompleteScreen from "./StageCompleteScreen";
 import MapScreen from "./MapScreen";
 import ShopScreen from "./ShopScreen";
 import RestScreen from "./RestScreen";
+import ReplacePerkModal from "./ReplacePerkModal";
 
 
 // Helper: liefert <GameIcon>-Element für snap()/extraBreakdown icon-Parameter
@@ -99,6 +100,7 @@ export default function Game({
   const stageCorrectRef = useRef(0); // richtige Antworten in dieser Stage
   const [synergyConflictQueue, setSynergyConflictQueue] = useState([]); // Queue wartender Synergy-Konflikte
   const [xpBling, setXpBling] = useState(false); // XP-Bar Bling bei Level-Up
+  const [perkReplacementState, setPerkReplacementState] = useState(null);
   const xpBlingLevelRef = useRef(1); // Track letztes Level für Bling-Trigger
 
   // Combo-Animation: blockiert Level-Up/Relic-Modals bis die Combo-Sequenz fertig ist
@@ -117,6 +119,14 @@ export default function Game({
   const relicSystem = useRelicSystem();
   const runLogger = useRunLogger();
   const gold = useGold();
+
+  const queuePerkReplacement = useCallback((perk, onConfirm) => {
+    setPerkReplacementState({
+      perk,
+      replaceablePerks: perkSystem.getReplaceablePerks(perk),
+      onConfirm,
+    });
+  }, [perkSystem]);
 
   // XP-Bar Bling: triggert wenn Level steigt
   useEffect(() => {
@@ -215,7 +225,7 @@ export default function Game({
   const timer = useGameTimer({
     onTimeUp: () => handleChoiceRef.current?.(-1),
     // Timer pausiert bei Perk-Auswahl, Level-Up und Synergy-Konflikt-Modal
-    enabled: !showPrices && selectedCard === null && !level.showLevelUp && synergyConflictQueue.length === 0,
+    enabled: !showPrices && selectedCard === null && !level.showLevelUp && synergyConflictQueue.length === 0 && !perkReplacementState,
     duration: getTimerDuration(),
     speed: getTimerSpeed(),
   });
@@ -275,7 +285,8 @@ export default function Game({
       perkSystem.chainLightningCounterRef.current += 1;
       const chainCount = perkSystem.chainLightningCounterRef.current;
       if (chainCount > 1) {
-        const bonus = Math.floor(finalGold * (chainCount - 1) * 0.5);
+        const chainStep = perkSystem.getPerkValue('chain_lightning_counter') ?? 0.25;
+        const bonus = Math.floor(finalGold * (chainCount - 1) * chainStep);
         const b = finalGold; finalGold += bonus; flatGoldBonus += bonus;
         snap(`Chain Lightning ×${chainCount}`, gi('chain_lightning'), b);
       }
@@ -611,12 +622,12 @@ export default function Game({
 
         // Perfectionist Perk: ×3 XP auf perfekte Antwort
         if (isPerfect && perkSystem.activePerks.some(p => p.effect === 'perfect_multiplier')) {
-          xpGained = Math.floor(xpGained * 3);
+          xpGained = Math.floor(xpGained * (perkSystem.getPerkValue('perfect_multiplier') ?? 2));
         }
 
         // Adrenaline Perk: +20% XP pro aktivem Perk
         if (perkSystem.activePerks.some(p => p.effect === 'adrenaline_mult')) {
-          xpGained = Math.floor(xpGained * (1 + perkSystem.activePerks.length * 0.2));
+          xpGained = Math.floor(xpGained * (1 + perkSystem.activePerks.length * (perkSystem.getPerkValue('adrenaline_mult') ?? 0.1)));
         }
 
         // MOMENTUM Relic: +2 XP pro Streak-Stufe
@@ -707,17 +718,18 @@ export default function Game({
 
         // Mirror Image Perk: XP-Gain adds 50% as Gold
         if (perkSystem.activePerks.some(p => p.effect === 'mirror_image')) {
-          const mirrorGold = Math.floor(xpGained * 0.5);
+          const mirrorGold = Math.floor(xpGained * (perkSystem.getPerkValue('mirror_image') ?? 0.35));
           totalGold += mirrorGold;
           extraGoldBreakdown.push({ label: 'Mirror Image', icon: gi('mirror_image'), delta: mirrorGold });
         }
 
-        // Treasure Map Perk: +20G, aber 0 XP diese Runde
+        // Treasure Map Perk: flat Gold, but reduced XP this round
         if (perkSystem.activePerks.some(p => p.effect === 'treasure_map_gold')) {
-          const tmBonus = perkSystem.activePerks.find(p => p.effect === 'treasure_map_gold')?.value ?? 20;
+          const treasureMapPerk = perkSystem.activePerks.find(p => p.effect === 'treasure_map_gold');
+          const tmBonus = treasureMapPerk?.value ?? 12;
           totalGold += tmBonus;
           extraGoldBreakdown.push({ label: 'Treasure Map', icon: gi('treasure_map_perk'), delta: tmBonus });
-          xpGained = 0;
+          xpGained = Math.floor(xpGained * (treasureMapPerk?.xpMultiplier ?? 0.5));
         }
 
         // Heart Regeneration Overflow — vor level.addXP damit Ascension korrekt rechnet
@@ -1038,15 +1050,23 @@ export default function Game({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapSystem.showMap, mapSystem.showShop, mapSystem.showRest, mapSystem.showStageComplete]);
 
+  const previousStageRef = useRef(mapSystem.currentStage);
+  useEffect(() => {
+    if (mapSystem.currentStage > previousStageRef.current) {
+      perkSystem.rechargeStageStartUtilities();
+    }
+    previousStageRef.current = mapSystem.currentStage;
+  }, [mapSystem.currentStage, perkSystem]);
+
   // Start Timer when images loaded
   useEffect(() => {
     const anyModalOpen = mapSystem.showStageComplete || mapSystem.showMap ||
-      mapSystem.showShop || mapSystem.showRest;
+      mapSystem.showShop || mapSystem.showRest || Boolean(perkReplacementState);
     if (imagesLoaded.every(Boolean) && !showPrices && !anyModalOpen) {
       timer.start();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imagesLoaded, showPrices]);
+  }, [imagesLoaded, showPrices, perkReplacementState]);
 
   // Reset bei neuem Paar
   useEffect(() => {
@@ -1114,31 +1134,46 @@ export default function Game({
         relicSystem.consumeRelic('parasite');
         flashRelic('parasite');
       }
-      perkSystem.selectPerk(finalPerk, { hasEternalFlame, hasUpgradeMaster, doubleDip: hasDoubleDip });
-      achievements.trackPerkCollected();
+      const finishPerkSelect = async (replaceTargetId = null) => {
+        if (replaceTargetId) {
+          perkSystem.replacePerk(replaceTargetId, finalPerk, { hasEternalFlame, hasUpgradeMaster, doubleDip: hasDoubleDip });
+        } else {
+          const selected = perkSystem.selectPerk(finalPerk, { hasEternalFlame, hasUpgradeMaster, doubleDip: hasDoubleDip });
+          if (!selected) return false;
+        }
 
-      // Copycat: halbe Kopie des Perks (nur temporäre Perks)
-      if (relicSystem.hasRelic('copycat') && perk.duration > 0) {
-        const copyPerk = {
-          ...perk,
-          id: perk.id + '_copy',
-          name: perk.name + ' (Copy)',
-          value: typeof perk.value === 'number' ? Math.max(1, Math.floor(perk.value * 0.5)) : perk.value,
-          duration: Math.max(1, Math.ceil(perk.duration * 0.5)),
-        };
-        perkSystem.selectPerk(copyPerk, { hasEternalFlame, hasUpgradeMaster });
-        flashRelic('copycat');
+        achievements.trackPerkCollected();
+
+        if (relicSystem.hasRelic('copycat') && perk.duration > 0) {
+          const copyPerk = {
+            ...perk,
+            id: perk.id + '_copy',
+            name: perk.name + ' (Copy)',
+            value: typeof perk.value === 'number' ? Math.max(1, Math.floor(perk.value * 0.5)) : perk.value,
+            duration: Math.max(1, Math.ceil(perk.duration * 0.5)),
+          };
+          perkSystem.selectPerk(copyPerk, { hasEternalFlame, hasUpgradeMaster });
+          flashRelic('copycat');
+        }
+
+        await cardLoader.setNextPair();
+        runLogger.logPerkSelected({
+          round: currentRound,
+          perk_id: perk.id,
+          perk_name: perk.name,
+          offered_ids: perkSystem.availablePerks.map(p => p.id),
+        });
+        return true;
+      };
+
+      if (!perkSystem.hasCapacityForPerk(finalPerk)) {
+        queuePerkReplacement(finalPerk, finishPerkSelect);
+        return;
       }
 
-      await cardLoader.setNextPair();
+      await finishPerkSelect();
     }
-    runLogger.logPerkSelected({
-      round:       currentRound,
-      perk_id:     perk.id,
-      perk_name:   perk.name,
-      offered_ids: perkSystem.availablePerks.map(p => p.id),
-    });
-  }, [perkSystem, achievements, cardLoader, relicSystem, flashRelic, runLogger, currentRound]);
+  }, [perkSystem, achievements, cardLoader, relicSystem, flashRelic, runLogger, currentRound, queuePerkReplacement]);
 
   // Level-Up-Pick: Relic → relicSystem, Item (Perk) → perkSystem, Upgrade → perkSystem
   // WICHTIG: Kein cardLoader.setNextPair() hier!
@@ -1178,15 +1213,31 @@ export default function Game({
       runLogger.logRelicSelected({ level: level.level, relic_id: pick.id, relic_name: pick.name });
       if (pick.effect === 'glass_cannon') setLives(1);
     } else if (pick.category === 'item') {
-      perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
-      achievements.trackPerkCollected();
-      runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'level_up', offered_ids: [] });
+      const finishLevelPerk = (replaceTargetId = null) => {
+        if (replaceTargetId) {
+          perkSystem.replacePerk(replaceTargetId, pick, { hasEternalFlame, hasUpgradeMaster });
+        } else {
+          const selected = perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
+          if (!selected) return false;
+        }
+        achievements.trackPerkCollected();
+        runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'level_up', offered_ids: [] });
+        level.dismissLevelUp();
+        return true;
+      };
+
+      if (!perkSystem.hasCapacityForPerk(pick)) {
+        queuePerkReplacement(pick, finishLevelPerk);
+        return;
+      }
+
+      finishLevelPerk();
     } else if (pick.category === 'upgrade') {
       perkSystem.selectPerk(pick, { hasEternalFlame, hasUpgradeMaster });
       runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'upgrade', offered_ids: [] });
     }
     level.dismissLevelUp();
-  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold]);
+  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold, queuePerkReplacement]);
 
 
   const handlePerkSkip = useCallback(() => {
@@ -1233,12 +1284,30 @@ export default function Game({
   }, [gold, relicSystem, achievements, setLives]);
 
   const handleShopBuyPerk = useCallback((perk, price) => {
-    if (!gold.spendGold(price)) return;
     const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
     const hasUpgradeMaster = relicSystem.hasRelic('upgrade_master');
-    perkSystem.selectPerk(perk, { keepOpen: true, hasEternalFlame, hasUpgradeMaster });
-    achievements.trackPerkCollected();
-  }, [gold, perkSystem, relicSystem, achievements]);
+    const finishShopPerk = (replaceTargetId = null) => {
+      if (!gold.spendGold(price)) return false;
+      if (replaceTargetId) {
+        perkSystem.replacePerk(replaceTargetId, perk, { keepOpen: true, hasEternalFlame, hasUpgradeMaster });
+      } else {
+        const selected = perkSystem.selectPerk(perk, { keepOpen: true, hasEternalFlame, hasUpgradeMaster });
+        if (!selected) {
+          gold.addGold(price);
+          return false;
+        }
+      }
+      achievements.trackPerkCollected();
+      return true;
+    };
+
+    if (!perkSystem.hasCapacityForPerk(perk)) {
+      queuePerkReplacement(perk, finishShopPerk);
+      return;
+    }
+
+    finishShopPerk();
+  }, [gold, perkSystem, relicSystem, achievements, queuePerkReplacement]);
 
   const handleShopHeal = useCallback(() => {
     const healCost = 30;
@@ -1262,6 +1331,24 @@ export default function Game({
     if (!gold.spendGold(cost)) return;
     relicSystem.addRelic(RELICS.SYNERGY_EXPANDER);
   }, [gold, relicSystem]);
+
+  const handleShopBuyPerkSlot = useCallback(() => {
+    const cost = 90;
+    if (!gold.spendGold(cost)) return;
+    const purchased = perkSystem.buyPassiveSlot();
+    if (!purchased) {
+      gold.addGold(cost);
+    }
+  }, [gold, perkSystem]);
+
+  const handleShopBuyUtilitySlot = useCallback(() => {
+    const cost = 110;
+    if (!gold.spendGold(cost)) return;
+    const purchased = perkSystem.buyUtilitySlot();
+    if (!purchased) {
+      gold.addGold(cost);
+    }
+  }, [gold, perkSystem]);
 
   const handleShopComplete = useCallback(() => {
     mapSystem.completeShop();
@@ -1287,7 +1374,7 @@ export default function Game({
       setSelectedCard(null);
       setCorrectIndex(null);
       setShowPrices(false);
-      setMessage("⭐ Card skipped!");
+      setMessage("Card skipped!");
       cardLoader.setNextPair();
       timer.reset();
       setCurrentRound((prev) => prev + 1);
@@ -1300,7 +1387,7 @@ export default function Game({
     setLives(prev => prev - 1);
     setSacrificeRitualActive(true);
     perkSystem.consumePerk("sacrifice_ritual");
-    setMessage("🩸 Sacrifice activated! Next answer ×3!");
+    setMessage("Sacrifice activated! Next answer x3!");
   }, [perkSystem, lives]);
 
   // Keyboard Controls
@@ -1523,6 +1610,8 @@ export default function Game({
         fortressRegenCount={fortressRegenCount}
         level={level.level}
         showPerkSelection={perkSystem.showPerkSelection}
+        passiveSlotInfo={perkSystem.passiveSlotInfo}
+        utilitySlotInfo={perkSystem.utilitySlotInfo}
       />
 
       <StreakDisplay
@@ -1750,6 +1839,17 @@ export default function Game({
         }}
       />
 
+      <ReplacePerkModal
+        show={Boolean(perkReplacementState)}
+        pendingPerk={perkReplacementState?.perk ?? null}
+        replaceablePerks={perkReplacementState?.replaceablePerks ?? []}
+        onReplace={(targetId) => {
+          perkReplacementState?.onConfirm?.(targetId);
+          setPerkReplacementState(null);
+        }}
+        onCancel={() => setPerkReplacementState(null)}
+      />
+
       <PerkSelectionModal
         perks={perkSystem.availablePerks}
         onSelect={handlePerkSelect}
@@ -1758,6 +1858,8 @@ export default function Game({
         onSkip={handlePerkSkip}
         onReroll={handlePerkReroll}
         lives={lives}
+        passiveSlotInfo={perkSystem.passiveSlotInfo}
+        utilitySlotInfo={perkSystem.utilitySlotInfo}
       />
 
       <SynergyToast synergy={synergyToast} onDismiss={() => setSynergyToast(null)} />
@@ -1815,12 +1917,17 @@ export default function Game({
             maxLives={relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES}
             activeRelics={relicSystem.activeRelics}
             activePerks={perkSystem.activePerks}
+            perkSlotInfo={perkSystem.passiveSlotInfo}
+            utilitySlotInfo={perkSystem.utilitySlotInfo}
+            canOfferPerk={() => true}
             onClose={handleShopComplete}
             onBuyRelic={handleShopBuyRelic}
             onBuyPerk={handleShopBuyPerk}
             onHeal={handleShopHeal}
             onUpgradePerk={handleShopUpgradePerk}
             onBuySynergySlot={handleShopBuySynergySlot}
+            onBuyPerkSlot={handleShopBuyPerkSlot}
+            onBuyUtilitySlot={handleShopBuyUtilitySlot}
           />
         )}
       </AnimatePresence>

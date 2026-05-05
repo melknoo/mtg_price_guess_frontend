@@ -1,5 +1,92 @@
 import { useState, useCallback, useRef } from 'react';
-import { PERKS, RARITY_WEIGHTS, PERK_CONFIG, PERK_TYPES, getBasePerkId, isExtendedPerk } from '../constants/perkDefinitions';
+import { PERKS, RARITY_WEIGHTS, PERK_CONFIG, PERK_TYPES, PERK_SLOT_TYPES, getBasePerkId, isExtendedPerk } from '../constants/perkDefinitions';
+
+const applyPerkToList = (list, perk, roundsPlayed, { hasEternalFlame = false, hasUpgradeMaster = false } = {}) => {
+  const basePerkId = getBasePerkId(perk.id);
+  const isExtended = isExtendedPerk(perk.id);
+
+  const existingIndex = list.findIndex(p =>
+    p.id === perk.id ||
+    p.id === basePerkId ||
+    (isExtended && p.effect === perk.effect) ||
+    getBasePerkId(p.id) === perk.id
+  );
+
+  if (existingIndex >= 0) {
+    const updated = [...list];
+    const existing = updated[existingIndex];
+    const bonusDuration = perk.bonusDuration || perk.duration;
+    const isSamePerk = existing.id === perk.id;
+    const upgradeIncrement = hasUpgradeMaster ? 2 : 1;
+
+    const computeStackedValue = () => {
+      if (perk.effect === 'slow_time') {
+        return isSamePerk
+          ? (existing.value ?? 1) * (perk.value ?? 1)
+          : Math.min(existing.value ?? 1, perk.value ?? 1);
+      }
+      if (perk.effect === 'heart_regen') {
+        return isSamePerk ? Math.max(1, (existing.value ?? 5) - 1) : existing.value;
+      }
+      if (perk.effect === 'point_multiplier') {
+        return Math.max(existing.value ?? 0, perk.value ?? 0);
+      }
+      if (isSamePerk) {
+        if (typeof perk.value !== 'number') return existing.value;
+        return (existing.value ?? 0) + (perk.value ?? 0);
+      }
+      return Math.max(existing.value ?? 0, perk.value ?? 0);
+    };
+
+    if (existing.duration > 0 || perk.duration > 0) {
+      const newRemaining = Math.max(
+        existing.remainingDuration + bonusDuration,
+        perk.duration > 0 ? perk.duration : 0
+      );
+      const newValue = computeStackedValue();
+      updated[existingIndex] = {
+        ...existing,
+        value: newValue,
+        description: newValue === perk.value ? perk.description : existing.description,
+        remainingDuration: newRemaining,
+        upgradeCount: (existing.upgradeCount || 1) + upgradeIncrement,
+        name: existing.name.includes('+') ? existing.name : existing.name + '+',
+      };
+    } else if (isSamePerk) {
+      const newValue = computeStackedValue();
+      const newBoostPercent = perk.isBoost
+        ? (existing.boostPercent ?? 40) + (perk.boostPercent ?? 40)
+        : existing.boostPercent;
+      updated[existingIndex] = {
+        ...existing,
+        value: newValue,
+        ...(newBoostPercent !== undefined ? { boostPercent: newBoostPercent } : {}),
+        upgradeCount: (existing.upgradeCount || 1) + upgradeIncrement,
+        name: existing.name.includes('+') ? existing.name : existing.name + '+',
+      };
+    }
+    return updated;
+  }
+
+  const durationBonus = (hasEternalFlame && perk.duration > 0) ? 3 : 0;
+
+  if (perk.type === PERK_TYPES.FILTER && !perk.stackable) {
+    const filtered = list.filter(p =>
+      !(p.type === PERK_TYPES.FILTER && p.filterType === perk.filterType && !p.stackable)
+    );
+    return [...filtered, {
+      ...perk,
+      remainingDuration: perk.duration > 0 ? perk.duration + durationBonus : perk.duration,
+      activatedAt: roundsPlayed,
+    }];
+  }
+
+  return [...list, {
+    ...perk,
+    remainingDuration: perk.duration > 0 ? perk.duration + durationBonus : perk.duration,
+    activatedAt: roundsPlayed,
+  }];
+};
 
 export const usePerkSystem = () => {
   const [activePerks, setActivePerks] = useState([]);
@@ -8,6 +95,8 @@ export const usePerkSystem = () => {
   const [availablePerks, setAvailablePerks] = useState([]);
   const [selectedPermanentPerks, setSelectedPermanentPerks] = useState([]);
   const [correctAnswersForRegen, setCorrectAnswersForRegen] = useState(0);
+  const [maxPassiveSlots, setMaxPassiveSlots] = useState(PERK_CONFIG.STARTING_PASSIVE_SLOTS);
+  const [maxUtilitySlots, setMaxUtilitySlots] = useState(PERK_CONFIG.STARTING_UTILITY_SLOTS);
 
   // Balatro-Perk-Zustandsrefs — useRef für synchronen Zugriff ohne Re-Renders
   const chainLightningCounterRef = useRef(0);  // consecutive correct count
@@ -16,6 +105,86 @@ export const usePerkSystem = () => {
   const echoLastBonusRef = useRef(0);           // last answer's bonus delta
   const bloodlustChargesRef = useRef(0);        // charges from wrong answers
   const momentumFlatStackRef = useRef(0);       // current stacking flat bonus
+
+  const getPerkSlotType = useCallback((perk) => {
+    if (!perk) return null;
+    if (perk.slotType) return perk.slotType;
+    if (perk.duration === -1 && perk.consumable) return PERK_SLOT_TYPES.UTILITY;
+    if (perk.duration === -1 && !perk.consumable) return PERK_SLOT_TYPES.PASSIVE;
+    return null;
+  }, []);
+
+  const getUsedPassiveSlots = useCallback((perks = activePerks) => (
+    perks.filter(p => getPerkSlotType(p) === PERK_SLOT_TYPES.PASSIVE).length
+  ), [activePerks, getPerkSlotType]);
+
+  const getUsedUtilitySlots = useCallback((perks = activePerks) => (
+    perks.filter(p => getPerkSlotType(p) === PERK_SLOT_TYPES.UTILITY).length
+  ), [activePerks, getPerkSlotType]);
+
+  const hasCapacityForPerk = useCallback((perk, perks = activePerks) => {
+    const slotType = getPerkSlotType(perk);
+    if (!slotType) return true;
+
+    const basePerkId = getBasePerkId(perk.id);
+    const alreadyOwned = perks.some(p =>
+      p.id === perk.id ||
+      p.id === basePerkId ||
+      getBasePerkId(p.id) === basePerkId
+    );
+    if (alreadyOwned) return true;
+
+    if (slotType === PERK_SLOT_TYPES.PASSIVE) {
+      return getUsedPassiveSlots(perks) < maxPassiveSlots;
+    }
+
+    if (slotType === PERK_SLOT_TYPES.UTILITY) {
+      return getUsedUtilitySlots(perks) < maxUtilitySlots;
+    }
+
+    return true;
+  }, [activePerks, getPerkSlotType, getUsedPassiveSlots, getUsedUtilitySlots, maxPassiveSlots, maxUtilitySlots]);
+
+  const getReplaceablePerks = useCallback((perk, perks = activePerks) => {
+    const slotType = getPerkSlotType(perk);
+    if (!slotType) return [];
+    return perks.filter(p => getPerkSlotType(p) === slotType);
+  }, [activePerks, getPerkSlotType]);
+
+  const getWeightedRandomPerk = useCallback((perks, excludeIds, permanentExcludeIds, activeConsumableIds, activeExcludeFilterTypes) => {
+    const availablePerks = perks.filter(p => {
+      // Basic exclusions
+      if (excludeIds.has(p.id)) return false;
+      if (permanentExcludeIds.has(p.id)) return false;
+      if (activeConsumableIds.has(p.id)) return false;
+
+      // Block non-stackable (exclude) filter perks if same filterType is already active
+      // Stackable boost perks can always appear
+      if (p.type === PERK_TYPES.FILTER && !p.stackable && activeExcludeFilterTypes.has(p.filterType)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    if (availablePerks.length === 0) return null;
+
+    const totalWeight = availablePerks.reduce(
+      (sum, perk) => sum + RARITY_WEIGHTS[perk.rarity],
+      0
+    );
+
+    let random = Math.random() * totalWeight;
+
+    for (const perk of availablePerks) {
+      random -= RARITY_WEIGHTS[perk.rarity];
+      if (random <= 0) {
+        return perk;
+      }
+    }
+
+    return availablePerks[0];
+  }, []);
 
   const generateRandomPerks = useCallback(() => {
     const allPerks = Object.values(PERKS);
@@ -77,42 +246,7 @@ export const usePerkSystem = () => {
     }
 
     return selectedPerks;
-  }, [selectedPermanentPerks, activePerks]);
-
-  const getWeightedRandomPerk = (perks, excludeIds, permanentExcludeIds, activeConsumableIds, activeExcludeFilterTypes) => {
-    const availablePerks = perks.filter(p => {
-      // Basic exclusions
-      if (excludeIds.has(p.id)) return false;
-      if (permanentExcludeIds.has(p.id)) return false;
-      if (activeConsumableIds.has(p.id)) return false;
-
-      // Block non-stackable (exclude) filter perks if same filterType is already active
-      // Stackable boost perks can always appear
-      if (p.type === PERK_TYPES.FILTER && !p.stackable && activeExcludeFilterTypes.has(p.filterType)) {
-        return false;
-      }
-
-      return true;
-    });
-
-    if (availablePerks.length === 0) return null;
-
-    const totalWeight = availablePerks.reduce(
-      (sum, perk) => sum + RARITY_WEIGHTS[perk.rarity],
-      0
-    );
-
-    let random = Math.random() * totalWeight;
-
-    for (const perk of availablePerks) {
-      random -= RARITY_WEIGHTS[perk.rarity];
-      if (random <= 0) {
-        return perk;
-      }
-    }
-
-    return availablePerks[0];
-  };
+  }, [selectedPermanentPerks, activePerks, getWeightedRandomPerk]);
 
   const triggerPerkSelection = useCallback(() => {
     const perks = generateRandomPerks();
@@ -133,107 +267,13 @@ export const usePerkSystem = () => {
   }, []);
 
   const selectPerk = useCallback((perk, { keepOpen = false, hasEternalFlame = false, hasUpgradeMaster = false, doubleDip = false } = {}) => {
+    if (!hasCapacityForPerk(perk)) {
+      return false;
+    }
+
     setActivePerks(prev => {
-      // Helper: apply one stack of `perk` onto `list`
-      const applyOnce = (list) => {
-        const basePerkId = getBasePerkId(perk.id);
-        const isExtended = isExtendedPerk(perk.id);
-
-        const existingIndex = list.findIndex(p =>
-          p.id === perk.id ||
-          p.id === basePerkId ||
-          (isExtended && p.effect === perk.effect) ||
-          getBasePerkId(p.id) === perk.id
-        );
-
-        if (existingIndex >= 0) {
-          const updated = [...list];
-          const existing = updated[existingIndex];
-          const bonusDuration = perk.bonusDuration || perk.duration;
-          const isSamePerk = existing.id === perk.id;
-          const upgradeIncrement = hasUpgradeMaster ? 2 : 1;
-
-          const computeStackedValue = () => {
-            if (perk.effect === 'slow_time') {
-              // Lower = better: multiplicative for same perk, min for upgrade path
-              return isSamePerk
-                ? (existing.value ?? 1) * (perk.value ?? 1)
-                : Math.min(existing.value ?? 1, perk.value ?? 1);
-            }
-            if (perk.effect === 'heart_regen') {
-              // Lower threshold = better: reduce by 1 per extra pick (min 1)
-              return isSamePerk ? Math.max(1, (existing.value ?? 5) - 1) : existing.value;
-            }
-            if (perk.effect === 'point_multiplier') {
-              // Multipliers: keep value (Double Dip just extends duration)
-              return Math.max(existing.value ?? 0, perk.value ?? 0);
-            }
-            if (isSamePerk) {
-              // Non-numeric values (e.g. filter perks: value is a string like 'rare') — keep as-is, only duration extends
-              if (typeof perk.value !== 'number') return existing.value;
-              // Flat numeric values: additive stacking
-              return (existing.value ?? 0) + (perk.value ?? 0);
-            }
-            return Math.max(existing.value ?? 0, perk.value ?? 0);
-          };
-
-          if (existing.duration > 0 || perk.duration > 0) {
-            const newRemaining = Math.max(
-              existing.remainingDuration + bonusDuration,
-              perk.duration > 0 ? perk.duration : 0
-            );
-            const newValue = computeStackedValue();
-            updated[existingIndex] = {
-              ...existing,
-              value: newValue,
-              description: newValue === perk.value ? perk.description : existing.description,
-              remainingDuration: newRemaining,
-              upgradeCount: (existing.upgradeCount || 1) + upgradeIncrement,
-              name: existing.name.includes('+') ? existing.name : existing.name + '+',
-            };
-          } else if (isSamePerk) {
-            const newValue = computeStackedValue();
-            // Boost perks stack their boostPercent additively (e.g. 40+40=80%)
-            const newBoostPercent = perk.isBoost
-              ? (existing.boostPercent ?? 40) + (perk.boostPercent ?? 40)
-              : existing.boostPercent;
-            updated[existingIndex] = {
-              ...existing,
-              value: newValue,
-              ...(newBoostPercent !== undefined ? { boostPercent: newBoostPercent } : {}),
-              upgradeCount: (existing.upgradeCount || 1) + upgradeIncrement,
-              name: existing.name.includes('+') ? existing.name : existing.name + '+',
-            };
-          }
-          return updated;
-        } else {
-          // New perk - add it
-          const durationBonus = (hasEternalFlame && perk.duration > 0) ? 3 : 0;
-
-          if (perk.type === PERK_TYPES.FILTER && !perk.stackable) {
-            // Non-stackable exclude-filter: replace other non-stackable filters of same type,
-            // but preserve stackable boost perks (e.g. RED_FOCUS must survive COLOR_EXCLUDE pick)
-            const filtered = list.filter(p =>
-              !(p.type === PERK_TYPES.FILTER && p.filterType === perk.filterType && !p.stackable)
-            );
-            return [...filtered, {
-              ...perk,
-              remainingDuration: perk.duration > 0 ? perk.duration + durationBonus : perk.duration,
-              activatedAt: roundsPlayed
-            }];
-          }
-
-          return [...list, {
-            ...perk,
-            remainingDuration: perk.duration > 0 ? perk.duration + durationBonus : perk.duration,
-            activatedAt: roundsPlayed
-          }];
-        }
-      };
-
-      // First application; if Double Dip, apply a second time atomically
-      const afterFirst = applyOnce(prev);
-      return doubleDip ? applyOnce(afterFirst) : afterFirst;
+      const afterFirst = applyPerkToList(prev, perk, roundsPlayed, { hasEternalFlame, hasUpgradeMaster });
+      return doubleDip ? applyPerkToList(afterFirst, perk, roundsPlayed, { hasEternalFlame, hasUpgradeMaster }) : afterFirst;
     });
 
     // Track permanent perks (stackable perks are never tracked — they can always re-appear)
@@ -251,7 +291,64 @@ export const usePerkSystem = () => {
       setShowPerkSelection(false);
       setAvailablePerks([]);
     }
+    return true;
+  }, [roundsPlayed, hasCapacityForPerk]);
+
+  const replacePerk = useCallback((targetPerkId, perk, { keepOpen = false, hasEternalFlame = false, hasUpgradeMaster = false, doubleDip = false } = {}) => {
+    setActivePerks(prev => {
+      const filtered = prev.filter(p => p.id !== targetPerkId);
+      const afterFirst = applyPerkToList(filtered, perk, roundsPlayed, { hasEternalFlame, hasUpgradeMaster });
+      return doubleDip ? applyPerkToList(afterFirst, perk, roundsPlayed, { hasEternalFlame, hasUpgradeMaster }) : afterFirst;
+    });
+
+    const targetBaseId = getBasePerkId(targetPerkId);
+    setSelectedPermanentPerks(prev => prev.filter(id => id !== targetBaseId));
+
+    if (perk.duration === -1 && !perk.consumable && !perk.stackable) {
+      setSelectedPermanentPerks(prev => {
+        const idToAdd = getBasePerkId(perk.id);
+        if (!prev.includes(idToAdd)) {
+          return [...prev, idToAdd];
+        }
+        return prev;
+      });
+    }
+
+    if (!keepOpen) {
+      setShowPerkSelection(false);
+      setAvailablePerks([]);
+    }
   }, [roundsPlayed]);
+
+  const buyPassiveSlot = useCallback(() => {
+    let purchased = false;
+    setMaxPassiveSlots(prev => {
+      if (prev >= PERK_CONFIG.MAX_PASSIVE_SLOTS) return prev;
+      purchased = true;
+      return prev + 1;
+    });
+    return purchased;
+  }, []);
+
+  const buyUtilitySlot = useCallback(() => {
+    let purchased = false;
+    setMaxUtilitySlots(prev => {
+      if (prev >= PERK_CONFIG.MAX_UTILITY_SLOTS) return prev;
+      purchased = true;
+      return prev + 1;
+    });
+    return purchased;
+  }, []);
+
+  const rechargeStageStartUtilities = useCallback(() => {
+    setActivePerks(prev => prev.map(perk => {
+      if (perk.rechargeRule !== 'stage_start') return perk;
+      const maxCharges = perk.maxCharges ?? perk.value ?? 1;
+      const currentCharges = perk.value ?? 0;
+      if (currentCharges >= maxCharges) return perk;
+      return { ...perk, value: maxCharges };
+    }));
+  }, []);
 
   const decrementPerkDurations = useCallback((hasRecycler = false, onPerkExpire = null) => {
     setActivePerks(prev => {
@@ -287,10 +384,16 @@ export const usePerkSystem = () => {
       const idx = prev.findIndex(p => p.id === perkId);
       if (idx < 0) return prev;
       const perk = prev[idx];
+      const hasChargePool = perk.consumable && perk.duration === -1 && perk.maxCharges != null;
       // Multi-charge: decrement value; remove only when exhausted
       if (perk.value > 1) {
         const updated = [...prev];
         updated[idx] = { ...perk, value: perk.value - 1 };
+        return updated;
+      }
+      if (hasChargePool) {
+        const updated = [...prev];
+        updated[idx] = { ...perk, value: 0 };
         return updated;
       }
       fullyConsumed = true;
@@ -309,11 +412,17 @@ export const usePerkSystem = () => {
 
   const hasPerk = useCallback((perkId) => {
     // Also check for extended versions
-    return activePerks.some(p => 
-      p.id === perkId || 
-      p.id === perkId + '_extended' ||
-      getBasePerkId(p.id) === perkId
-    );
+    return activePerks.some(p => {
+      const matches =
+        p.id === perkId ||
+        p.id === perkId + '_extended' ||
+        getBasePerkId(p.id) === perkId;
+      if (!matches) return false;
+      if (p.consumable && p.duration === -1 && p.maxCharges != null) {
+        return (p.value ?? 0) > 0;
+      }
+      return true;
+    });
   }, [activePerks]);
 
   const getPerkValue = useCallback((effect) => {
@@ -372,6 +481,8 @@ export const usePerkSystem = () => {
     setAvailablePerks([]);
     setSelectedPermanentPerks([]);
     setCorrectAnswersForRegen(0);
+    setMaxPassiveSlots(PERK_CONFIG.STARTING_PASSIVE_SLOTS);
+    setMaxUtilitySlots(PERK_CONFIG.STARTING_UTILITY_SLOTS);
     // Balatro-Perk-Refs zurücksetzen
     chainLightningCounterRef.current = 0;
     timeBombCounterRef.current = 0;
@@ -386,10 +497,26 @@ export const usePerkSystem = () => {
     roundsPlayed,
     showPerkSelection,
     availablePerks,
+    maxPassiveSlots,
+    maxUtilitySlots,
+    passiveSlotInfo: {
+      used: getUsedPassiveSlots(),
+      max: maxPassiveSlots,
+    },
+    utilitySlotInfo: {
+      used: getUsedUtilitySlots(),
+      max: maxUtilitySlots,
+    },
     triggerPerkSelection,
     rerollPerks,
     skipPerkSelection,
     selectPerk,
+    replacePerk,
+    hasCapacityForPerk,
+    getReplaceablePerks,
+    buyPassiveSlot,
+    buyUtilitySlot,
+    rechargeStageStartUtilities,
     decrementPerkDurations,
     consumePerk,
     hasPerk,

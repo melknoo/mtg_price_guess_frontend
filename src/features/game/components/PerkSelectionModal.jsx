@@ -5,7 +5,7 @@ import GameIcon from '../../../shared/components/GameIcon';
 import TagIcons from '../../../shared/components/TagIcons';
 import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
-export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip = false, onSkip, onReroll, lives = 3 }) {
+export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip = false, onSkip, onReroll, lives = 3, passiveSlotInfo = null, utilitySlotInfo = null }) {
     const [isMinimized, setIsMinimized] = useState(false);
 
     useEffect(() => {
@@ -110,6 +110,27 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                 >
                                     You've mastered {PERK_CONFIG.ROUNDS_BETWEEN_PERKS} rounds! Time for an upgrade.
                                 </motion.p>
+                                {(passiveSlotInfo || utilitySlotInfo) && (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.25 }}
+                                        className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm"
+                                    >
+                                        {passiveSlotInfo && (
+                                            <span className="inline-flex items-center gap-1 rounded-sm border border-amber-500/50 bg-amber-900/20 px-2 py-1 text-amber-200">
+                                                <GameIcon name="grid" color="amber" size={12} />
+                                                Passive Slots {passiveSlotInfo.used}/{passiveSlotInfo.max}
+                                            </span>
+                                        )}
+                                        {utilitySlotInfo && (
+                                            <span className="inline-flex items-center gap-1 rounded-sm border border-teal-500/50 bg-teal-900/20 px-2 py-1 text-teal-200">
+                                                <GameIcon name="bag" color="teal" size={12} />
+                                                Utility Slots {utilitySlotInfo.used}/{utilitySlotInfo.max}
+                                            </span>
+                                        )}
+                                    </motion.div>
+                                )}
                                 {hasDoubleDip && (
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0.8 }}

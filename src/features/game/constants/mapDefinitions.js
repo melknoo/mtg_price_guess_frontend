@@ -66,6 +66,8 @@ export const SHOP_PRICES = {
   heal: 30,
   perk_upgrade: 25,
   synergy_slot: 80,
+  perk_slot: 90,
+  utility_slot: 110,
   relic_upgrade: 60,
 };
 

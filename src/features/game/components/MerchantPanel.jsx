@@ -28,8 +28,8 @@ function pickRelics(count, ownedIds) {
   return picked;
 }
 
-function pickPerks(count, activePerkIds) {
-  const pool = Object.values(PERKS).filter(p => !activePerkIds.has(p.id) && p.duration !== -1);
+function pickPerks(count, activePerkIds, canOfferPerk = () => true) {
+  const pool = Object.values(PERKS).filter(p => !activePerkIds.has(p.id) && canOfferPerk(p));
   const picked = [];
   const used = new Set();
   for (let i = 0; i < count && pool.length > used.size; i++) {
@@ -78,7 +78,7 @@ function ItemCard({ item, price, gold, canAfford, onBuy }) {
   );
 }
 
-export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicIds = new Set(), activePerkIds = new Set(), onBuyRelic, onBuyPerk, onHeal, onUpgradePerk, onBuySynergySlot }) {
+export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicIds = new Set(), activePerkIds = new Set(), canOfferPerk, canBuyPerkSlot = false, canBuyUtilitySlot = false, onBuyRelic, onBuyPerk, onHeal, onUpgradePerk, onBuySynergySlot, onBuyPerkSlot, onBuyUtilitySlot }) {
   if (type === MERCHANT_TYPES.ARMORER) {
     const relics = pickRelics(3, ownedRelicIds);
     return (
@@ -140,7 +140,7 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
   }
 
   if (type === MERCHANT_TYPES.PERK_VENDOR) {
-    const perks = pickPerks(3, activePerkIds);
+    const perks = pickPerks(3, activePerkIds, canOfferPerk);
     return (
       <div>
         <div className="flex items-center gap-2 mb-3">
@@ -169,6 +169,8 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
 
   if (type === MERCHANT_TYPES.WANDERING_MAGE) {
     const synergySlotCost = SHOP_PRICES.synergy_slot;
+    const perkSlotCost = SHOP_PRICES.perk_slot;
+    const utilitySlotCost = SHOP_PRICES.utility_slot;
     const legendaryRelics = Object.values(RELICS).filter(r => r.rarity === 'legendary' && !ownedRelicIds.has(r.id));
     const legendaryRelic = legendaryRelics[Math.floor(Math.random() * legendaryRelics.length)];
     return (
@@ -181,6 +183,20 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
           </div>
         </div>
         <div className="flex flex-col gap-2">
+          <ItemCard
+            item={{ id: '_perk_slot', name: 'Perk Slot', description: 'Unlock one extra passive perk slot (+1 max)', _gameIcon: { icon: 'grid', color: 'amber' }, rarity: 'epic' }}
+            price={perkSlotCost}
+            gold={gold}
+            canAfford={canBuyPerkSlot && gold >= perkSlotCost}
+            onBuy={onBuyPerkSlot}
+          />
+          <ItemCard
+            item={{ id: '_utility_slot', name: 'Utility Slot', description: 'Unlock one extra utility perk slot (+1 max)', _gameIcon: { icon: 'bag', color: 'teal' }, rarity: 'epic' }}
+            price={utilitySlotCost}
+            gold={gold}
+            canAfford={canBuyUtilitySlot && gold >= utilitySlotCost}
+            onBuy={onBuyUtilitySlot}
+          />
           <ItemCard
             item={{ id: '_synergy_slot', name: 'Synergy Slot', description: 'Unlock an extra synergy slot (+1 max)', _gameIcon: { icon: 'path_follow', color: 'teal' }, rarity: 'epic' }}
             price={synergySlotCost}
