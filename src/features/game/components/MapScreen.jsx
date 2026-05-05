@@ -19,11 +19,11 @@ const NODE_LABEL = {
 };
 
 const NODE_COLOR = {
-  [NODE_TYPES.NORMAL]: 'border-blue-400/60 bg-blue-900/30 hover:bg-blue-800/50',
-  [NODE_TYPES.ELITE]: 'border-red-400/60 bg-red-900/30 hover:bg-red-800/50',
-  [NODE_TYPES.SHOP]: 'border-yellow-400/60 bg-yellow-900/30 hover:bg-yellow-800/50',
-  [NODE_TYPES.REST]: 'border-green-400/60 bg-green-900/30 hover:bg-green-800/50',
-  [NODE_TYPES.BOSS]: 'border-purple-400/60 bg-purple-900/30',
+  [NODE_TYPES.NORMAL]: 'border-blue-400 bg-blue-900/30 hover:bg-blue-800/50',
+  [NODE_TYPES.ELITE]: 'border-red-400 bg-red-900/30 hover:bg-red-800/50',
+  [NODE_TYPES.SHOP]: 'border-yellow-400 bg-yellow-900/30 hover:bg-yellow-800/50',
+  [NODE_TYPES.REST]: 'border-green-400 bg-green-900/30 hover:bg-green-800/50',
+  [NODE_TYPES.BOSS]: 'border-purple-400 bg-purple-900/30',
 };
 
 export default function MapScreen({ map, currentStage, gold, onChooseNode }) {
@@ -41,7 +41,7 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode }) {
       exit={{ opacity: 0 }}
     >
       <motion.div
-        className="relative w-full max-w-sm mx-4 rounded-sm border-2 border-purple-500/60 bg-[#0d1117] shadow-pixel p-5"
+        className="relative w-full max-w-sm mx-4 rounded-none border-4 border-purple-500 bg-[#0d1117] shadow-pixel p-5"
         initial={{ scale: 0.9, y: 30 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 30 }}
@@ -84,7 +84,7 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode }) {
                         key={optIdx}
                         disabled={!isActive}
                         onClick={() => isActive && onChooseNode(optIdx)}
-                        className={`flex-1 max-w-[120px] rounded-sm border-2 px-3 py-2 text-center transition-all
+                        className={`flex-1 max-w-[120px] rounded-none border-4 px-3 py-2 text-center transition-all
                           ${isActive ? `cursor-pointer ${NODE_COLOR[node.type]}` : ''}
                           ${isPast ? 'border-white/20 bg-white/5 opacity-60 cursor-default' : ''}
                           ${isFuture ? 'border-white/10 bg-white/5 opacity-30 cursor-default' : ''}

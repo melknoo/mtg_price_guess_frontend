@@ -7,9 +7,9 @@ module.exports = {
         sans: ['Clarity', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        'pixel':       '3px 3px 0px 0px rgba(0,0,0,0.8)',
-        'pixel-sm':    '2px 2px 0px 0px rgba(0,0,0,0.8)',
-        'pixel-lg':    '4px 4px 0px 0px rgba(0,0,0,0.6)',
+        'pixel':       '4px 4px 0px 0px rgba(0,0,0,1)',
+        'pixel-sm':    '3px 3px 0px 0px rgba(0,0,0,1)',
+        'pixel-lg':    '6px 6px 0px 0px rgba(0,0,0,1)',
         'pixel-inset': 'inset 2px 2px 0px 0px rgba(0,0,0,0.3)',
       },
       colors: {

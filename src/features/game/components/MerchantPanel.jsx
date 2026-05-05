@@ -52,9 +52,9 @@ function ItemCard({ item, price, gold, canAfford, onBuy }) {
     <motion.button
       onClick={canAfford ? onBuy : undefined}
       disabled={!canAfford}
-      className={`w-full text-left px-3 py-2.5 rounded-sm border-2 transition-all
+      className={`w-full text-left px-3 py-2.5 rounded-none border-2 transition-all
         ${canAfford
-          ? 'border-amber-400/50 bg-amber-900/20 hover:bg-amber-800/30 cursor-pointer shadow-pixel-sm active:scale-95'
+          ? 'border-amber-400 bg-amber-900/20 hover:bg-amber-800/30 cursor-pointer shadow-pixel-sm active:scale-95'
           : 'border-white/10 bg-white/5 opacity-50 cursor-not-allowed'}`}
       whileHover={canAfford ? { scale: 1.02 } : {}}
       whileTap={canAfford ? { scale: 0.98 } : {}}

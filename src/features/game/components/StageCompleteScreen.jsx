@@ -22,7 +22,7 @@ export default function StageCompleteScreen({ stage, totalStages = TOTAL_STAGES,
       exit={{ opacity: 0 }}
     >
       <motion.div
-        className="relative w-full max-w-sm mx-4 rounded-sm border-2 border-amber-500/60 bg-[#0d1117] shadow-pixel p-6 text-center"
+        className="relative w-full max-w-sm mx-4 rounded-none border-4 border-amber-500 bg-[#0d1117] shadow-pixel p-6 text-center"
         initial={{ scale: 0.85, y: 40 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.85, y: 40 }}
@@ -49,7 +49,7 @@ export default function StageCompleteScreen({ stage, totalStages = TOTAL_STAGES,
           {Array.from({ length: totalStages }).map((_, i) => (
             <div
               key={i}
-              className={`h-2 w-8 rounded-sm transition-colors ${
+              className={`h-2 w-8 rounded-none transition-colors ${
                 i < stage ? 'bg-amber-400' : 'bg-white/20'
               }`}
             />
@@ -58,15 +58,15 @@ export default function StageCompleteScreen({ stage, totalStages = TOTAL_STAGES,
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-5">
-          <div className="bg-white/5 border border-white/10 rounded-sm p-3">
+          <div className="bg-white/5 border-2 border-white/20 rounded-none p-3">
             <div className="text-amber-300 font-black text-lg">{stageScore ?? 0}</div>
             <div className="text-indigo-300 text-xs uppercase tracking-wide">Score</div>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-sm p-3">
+          <div className="bg-white/5 border-2 border-white/20 rounded-none p-3">
             <div className="text-green-300 font-black text-lg">{stageCorrect ?? 0}</div>
             <div className="text-indigo-300 text-xs uppercase tracking-wide">Correct</div>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-sm p-3">
+          <div className="bg-white/5 border-2 border-white/20 rounded-none p-3">
             <div className="text-yellow-300 font-black text-lg">Lv {level ?? 1}</div>
             <div className="text-indigo-300 text-xs uppercase tracking-wide">Level</div>
           </div>
@@ -74,7 +74,7 @@ export default function StageCompleteScreen({ stage, totalStages = TOTAL_STAGES,
 
         <button
           onClick={onContinue}
-          className="w-full py-3 rounded-sm font-bold text-base bg-amber-500 hover:bg-amber-400 text-black transition-colors shadow-pixel-sm border-2 border-amber-600 uppercase tracking-wide"
+          className="w-full py-3 rounded-none font-bold text-base bg-amber-500 hover:bg-amber-400 text-black transition-colors shadow-pixel border-4 border-amber-600 uppercase tracking-wide"
         >
           {isBossStage ? 'Finish Run' : 'Continue →'}
         </button>

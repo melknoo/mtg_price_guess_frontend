@@ -46,7 +46,7 @@ export default function ShopScreen({
       exit={{ opacity: 0 }}
     >
       <motion.div
-        className="relative w-full max-w-md mx-4 rounded-sm border-2 border-amber-500/60 bg-[#0d1117] shadow-pixel p-5 max-h-[90vh] flex flex-col"
+        className="relative w-full max-w-md mx-4 rounded-none border-4 border-amber-500 bg-[#0d1117] shadow-pixel p-5 max-h-[90vh] flex flex-col"
         initial={{ scale: 0.9, y: 30 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 30 }}
@@ -66,7 +66,7 @@ export default function ShopScreen({
           {merchants.map((type, i) => (
             <motion.div
               key={type}
-              className="bg-white/5 rounded-sm p-4 border-2 border-white/10 shadow-pixel-sm"
+              className="bg-white/5 rounded-none p-4 border-2 border-white/20 shadow-pixel-sm"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.1 }}
@@ -97,7 +97,7 @@ export default function ShopScreen({
         <div className="shrink-0 mt-4">
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-sm font-bold text-base border-2 border-white/20 bg-white/5 hover:bg-white/10 text-white transition-colors shadow-pixel-sm active:scale-95"
+            className="w-full py-3 rounded-none font-bold text-base border-4 border-white/30 bg-white/5 hover:bg-white/10 text-white transition-colors shadow-pixel active:scale-95"
           >
             Leave Shop
           </button>

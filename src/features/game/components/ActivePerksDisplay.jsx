@@ -36,8 +36,8 @@ function getItemRarityStyle(item, isRelic = false) {
       legendary: 'bg-[#221c00]',
     };
     const borders = {
-      common:    'border-amber-600/60',
-      rare:      'border-amber-400/80',
+      common:    'border-amber-600',
+      rare:      'border-amber-400',
       epic:      'border-amber-400',
       legendary: 'border-yellow-300',
     };
@@ -54,7 +54,7 @@ function getItemRarityStyle(item, isRelic = false) {
     legendary: 'bg-[#1a1500]',
   };
   const borders = {
-    common:    'border-indigo-500/50',
+    common:    'border-indigo-500',
     rare:      'border-blue-500',
     epic:      'border-purple-500',
     legendary: 'border-yellow-500',
@@ -181,19 +181,16 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
     <>
       {/* Desktop: Fixed Sidebar — only shown when there are active bonuses */}
       <div className={`hidden ${totalCount > 0 ? 'md:flex' : ''} fixed left-0 top-0 bottom-0 z-[55] flex-col`}>
-        <div className="bg-[#0d1b3e] p-2 shadow-pixel border-r-2 border-amber-500/60 flex flex-col h-full">
-          <h3 className="text-[10px] font-bold text-amber-300/70 mb-2 text-center whitespace-nowrap shrink-0 uppercase tracking-widest">
-            Boni
-          </h3>
+        <div className="bg-[#0d1b3e] p-2 shadow-pixel border-r-4 border-amber-500 flex flex-col h-full">
           {(passiveSlotInfo || utilitySlotInfo) && (
             <div className="mb-2 flex flex-col gap-1 shrink-0">
               {passiveSlotInfo && (
-                <div className="inline-flex items-center justify-center gap-1 rounded-sm border border-amber-500/40 bg-amber-900/20 px-1 py-0.5 text-[9px] font-bold text-amber-200">
+                <div className="inline-flex items-center justify-center gap-1 rounded-none border border-amber-500/40 bg-amber-900/20 px-1 py-0.5 text-[9px] font-bold text-amber-200">
                   <GameIcon name="grid" size={10} color="amber" /> {passiveSlotInfo.used}/{passiveSlotInfo.max}
                 </div>
               )}
               {utilitySlotInfo && (
-                <div className="inline-flex items-center justify-center gap-1 rounded-sm border border-teal-500/40 bg-teal-900/20 px-1 py-0.5 text-[9px] font-bold text-teal-200">
+                <div className="inline-flex items-center justify-center gap-1 rounded-none border border-teal-500/40 bg-teal-900/20 px-1 py-0.5 text-[9px] font-bold text-teal-200">
                   <GameIcon name="bag" size={10} color="teal" /> {utilitySlotInfo.used}/{utilitySlotInfo.max}
                 </div>
               )}
@@ -201,7 +198,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
           )}
           <div className="flex flex-col gap-2 overflow-y-auto pr-0.5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
             <AnimatePresence>
-              {perks.length > 0 && (relics.length > 0 || synergies.length > 0) && (
+              {perks.length > 0 && (
                 <div className="text-[8px] font-bold text-indigo-400/50 uppercase tracking-widest border-b border-indigo-500/20 pb-0.5">
                   Perks
                 </div>
@@ -213,7 +210,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
               })}
               {/* Leere Passive-Slots als Placeholder */}
               {passiveSlotInfo && Array.from({ length: passiveSlotInfo.max - passiveSlotInfo.used }).map((_, i) => (
-                <div key={`empty-passive-${i}`} className="min-w-[80px] rounded-sm p-2 border-2 border-dashed border-white/15 bg-white/3 flex items-center justify-center" style={{ minHeight: 68 }}>
+                <div key={`empty-passive-${i}`} className="min-w-[80px] rounded-none p-2 border-2 border-dashed border-white/25 bg-white/3 flex items-center justify-center" style={{ minHeight: 68 }}>
                   <span className="text-white/20 text-[9px] font-bold uppercase tracking-wide text-center">Empty<br />Slot</span>
                 </div>
               ))}
@@ -236,7 +233,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                   key={syn.id}
                   item={syn}
                   type="synergy"
-                  borderColor="border-teal-400/60"
+                  borderColor="border-teal-400"
                   gradientColor="from-teal-900/80 to-cyan-900/80"
                   contributors={getContributors(syn, relics, perks)}
                   ticking={tickingRelics.has(syn.id)}
@@ -254,7 +251,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setIsOpen(!isOpen)}
-          className="fixed bottom-6 left-3 z-[65] bg-[#0d1b3e] text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg border border-amber-400/50"
+          className="fixed bottom-6 left-3 z-[65] bg-[#0d1b3e] text-white rounded-none w-10 h-10 flex items-center justify-center shadow-lg border-2 border-amber-400"
         >
           <GameIcon name="human_controller" size={24} color="white" />
           {totalCount > 0 && (
@@ -281,7 +278,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="fixed bottom-0 left-0 right-0 z-[67] bg-[#0d1b3e] border-t-2 border-amber-500/60 rounded-t-sm shadow-pixel flex flex-col max-h-[70vh]"
+                className="fixed bottom-0 left-0 right-0 z-[67] bg-[#0d1b3e] border-t-4 border-amber-500 rounded-none shadow-pixel flex flex-col max-h-[70vh]"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
@@ -318,7 +315,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                         <MobilePerkCard
                           item={syn}
                           type="synergy"
-                          borderColor="border-teal-400/60"
+                          borderColor="border-teal-400"
                           gradientColor="from-teal-900/80 to-cyan-900/80"
                           onTap={contributors.length > 0 ? () => setExpandedSynergyId(isExpanded ? null : syn.id) : undefined}
                           tapHint={contributors.length > 0}
@@ -422,19 +419,19 @@ function DesktopPerkCard({ item, type = "perk", borderColor = "border-blue-400/6
       <motion.div
         animate={triggered ? { scale: [1, 1.18, 0.96, 1] } : ticking ? { scale: [1, 1.06, 1] } : {}}
         transition={{ duration: triggered ? 0.4 : 0.25, ease: 'easeInOut' }}
-        className={`relative ${gradientColor} rounded-sm p-2 border-2 ${borderColor} shadow-pixel-sm min-w-[80px] overflow-hidden`}
+        className={`relative ${gradientColor} rounded-none p-2 border-2 ${borderColor} shadow-pixel min-w-[80px] overflow-hidden`}
       >
         {/* Typ-Overlay: Relic = diagonale Amber-Streifen */}
         {type === 'relic' && (
           <div
-            className="absolute inset-0 pointer-events-none rounded-sm"
+            className="absolute inset-0 pointer-events-none rounded-none"
             style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(251,191,36,0.08) 0px, rgba(251,191,36,0.08) 1px, transparent 1px, transparent 10px)' }}
           />
         )}
         {/* Typ-Overlay: Synergy = dezentes Teal Dot-Grid */}
         {type === 'synergy' && (
           <div
-            className="absolute inset-0 pointer-events-none rounded-sm"
+            className="absolute inset-0 pointer-events-none rounded-none"
             style={{ backgroundImage: 'radial-gradient(circle, rgba(20,184,166,0.15) 1px, transparent 1px)', backgroundSize: '8px 8px' }}
           />
         )}
@@ -481,7 +478,7 @@ function DesktopPerkCard({ item, type = "perk", borderColor = "border-blue-400/6
       {/* Tooltip via Portal — nicht vom overflow-y:auto der Sidebar abgeschnitten */}
       {tooltipStyle && createPortal(
         <div style={tooltipStyle} className="pointer-events-none">
-          <div className={`bg-[#0a0e1a] text-white text-sm rounded-sm px-4 py-3 shadow-pixel border-2 ${borderColor} w-52 relative`}>
+          <div className={`bg-[#0a0e1a] text-white text-sm rounded-none px-4 py-3 shadow-pixel border-2 ${borderColor} w-52 relative`}>
             <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-8 border-transparent border-r-gray-900" />
             {badge && <div className="text-xs font-bold mb-1 opacity-70">{badge}</div>}
             <div className="font-bold mb-1">{item.name}</div>
@@ -561,20 +558,20 @@ function MobilePerkCard({ item, type = "perk", borderColor = "border-blue-400/60
       <motion.div
         animate={triggered ? { scale: [1, 1.12, 0.97, 1] } : ticking ? { scale: [1, 1.04, 1] } : {}}
         transition={{ duration: triggered ? 0.35 : 0.2, ease: 'easeInOut' }}
-        className={`relative ${gradientColor} rounded-sm p-2 border-2 ${borderColor} shadow-pixel-sm overflow-hidden ${onTap ? 'cursor-pointer active:opacity-80' : ''}`}
+        className={`relative ${gradientColor} rounded-none p-2 border-2 ${borderColor} shadow-pixel overflow-hidden ${onTap ? 'cursor-pointer active:opacity-80' : ''}`}
         onClick={onTap}
       >
         {/* Typ-Overlay: Relic = diagonale Amber-Streifen */}
         {type === 'relic' && (
           <div
-            className="absolute inset-0 pointer-events-none rounded-sm"
+            className="absolute inset-0 pointer-events-none rounded-none"
             style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(251,191,36,0.08) 0px, rgba(251,191,36,0.08) 1px, transparent 1px, transparent 10px)' }}
           />
         )}
         {/* Typ-Overlay: Synergy = dezentes Teal Dot-Grid */}
         {type === 'synergy' && (
           <div
-            className="absolute inset-0 pointer-events-none rounded-sm"
+            className="absolute inset-0 pointer-events-none rounded-none"
             style={{ backgroundImage: 'radial-gradient(circle, rgba(20,184,166,0.15) 1px, transparent 1px)', backgroundSize: '8px 8px' }}
           />
         )}
