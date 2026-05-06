@@ -2,6 +2,24 @@ import { motion } from 'framer-motion';
 import { NODE_TYPES, TOTAL_STAGES } from '../constants/mapDefinitions';
 import GameIcon from '../../../shared/components/GameIcon';
 
+const NODE_INFO = {
+  [NODE_TYPES.ELITE]: [
+    { icon: 'skull', color: 'red',   text: 'Timer −2s' },
+    { icon: 'coin',  color: 'amber', text: '+50G bonus' },
+    { icon: 'star',  color: 'purple', text: 'Relic drop' },
+  ],
+  [NODE_TYPES.BOSS]: [
+    { icon: 'trophy', color: 'amber', text: 'Legendary relic' },
+  ],
+  [NODE_TYPES.REST]: [
+    { icon: 'heart', color: 'red',   text: 'Heal 2 lives' },
+    { icon: 'star',  color: 'blue',  text: 'Or upgrade perk' },
+  ],
+  [NODE_TYPES.SHOP]: [
+    { icon: 'chest', color: 'amber', text: 'Relics & Perks' },
+  ],
+};
+
 const NODE_ICON = {
   [NODE_TYPES.NORMAL]: <GameIcon name="sword"  size={20} color="white"  />,
   [NODE_TYPES.ELITE]:  <GameIcon name="skull"  size={20} color="red"    />,
@@ -96,11 +114,15 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode }) {
                         <div className={`text-xs font-bold mt-0.5 ${isActive ? 'text-white' : 'text-white/50'}`}>
                           {isFuture ? '???' : NODE_LABEL[node.type]}
                         </div>
-                        {node.type === NODE_TYPES.ELITE && isActive && (
-                          <div className="text-red-300 text-[10px] mt-0.5">+Rewards</div>
-                        )}
-                        {node.type === NODE_TYPES.BOSS && isActive && (
-                          <div className="text-purple-300 text-[10px] mt-0.5">Final Stage</div>
+                        {isActive && NODE_INFO[node.type] && (
+                          <div className="flex flex-col gap-0.5 mt-1">
+                            {NODE_INFO[node.type].map((row, i) => (
+                              <div key={i} className="flex items-center justify-center gap-1">
+                                <GameIcon name={row.icon} size={10} color={row.color} />
+                                <span className="text-white/70 text-[9px] leading-none">{row.text}</span>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </motion.button>
                     );
