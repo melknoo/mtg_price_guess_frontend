@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { NODE_TYPES, TOTAL_STAGES } from '../constants/mapDefinitions';
+import { NODE_TYPES, TOTAL_STAGES, EXCHANGE_RATES } from '../constants/mapDefinitions';
 import GameIcon from '../../../shared/components/GameIcon';
 
 const NODE_INFO = {
@@ -18,14 +18,27 @@ const NODE_INFO = {
   [NODE_TYPES.SHOP]: [
     { icon: 'chest', color: 'amber', text: 'Relics & Perks' },
   ],
+  [NODE_TYPES.MYSTERY]: [
+    { icon: 'interrogation', color: 'purple', text: 'Unknown reward' },
+  ],
+  [NODE_TYPES.EXCHANGE]: [
+    { icon: 'coin', color: 'teal', text: 'Gold → XP' },
+  ],
+  [NODE_TYPES.MINI_BOSS]: [
+    { icon: 'skull', color: 'orange', text: 'Timer −2s' },
+    { icon: 'star', color: 'purple', text: 'Relic drop' },
+  ],
 };
 
 const NODE_ICON = {
-  [NODE_TYPES.NORMAL]: <GameIcon name="sword"  size={20} color="white"  />,
-  [NODE_TYPES.ELITE]:  <GameIcon name="skull"  size={20} color="red"    />,
-  [NODE_TYPES.SHOP]:   <GameIcon name="chest"  size={20} color="amber"  />,
-  [NODE_TYPES.REST]:   <GameIcon name="glow"   size={20} color="orange" />,
-  [NODE_TYPES.BOSS]:   <GameIcon name="trophy" size={20} color="amber"  />,
+  [NODE_TYPES.NORMAL]:   <GameIcon name="sword"    size={20} color="white"  />,
+  [NODE_TYPES.ELITE]:    <GameIcon name="skull"    size={20} color="red"    />,
+  [NODE_TYPES.SHOP]:     <GameIcon name="chest"    size={20} color="amber"  />,
+  [NODE_TYPES.REST]:     <GameIcon name="glow"     size={20} color="orange" />,
+  [NODE_TYPES.BOSS]:     <GameIcon name="trophy"   size={20} color="amber"  />,
+  [NODE_TYPES.MYSTERY]:  <GameIcon name="interrogation" size={20} color="purple" />,
+  [NODE_TYPES.EXCHANGE]: <GameIcon name="coin"     size={20} color="teal"   />,
+  [NODE_TYPES.MINI_BOSS]:<GameIcon name="bullet"   size={20} color="orange" />,
 };
 
 const NODE_LABEL = {
@@ -34,17 +47,23 @@ const NODE_LABEL = {
   [NODE_TYPES.SHOP]: 'Shop',
   [NODE_TYPES.REST]: 'Rest',
   [NODE_TYPES.BOSS]: 'Boss',
+  [NODE_TYPES.MYSTERY]: 'Mystery',
+  [NODE_TYPES.EXCHANGE]: 'Exchange',
+  [NODE_TYPES.MINI_BOSS]: 'Mini Boss',
 };
 
 const NODE_COLOR = {
-  [NODE_TYPES.NORMAL]: 'border-blue-400 bg-blue-900/30 hover:bg-blue-800/50',
-  [NODE_TYPES.ELITE]: 'border-red-400 bg-red-900/30 hover:bg-red-800/50',
-  [NODE_TYPES.SHOP]: 'border-yellow-400 bg-yellow-900/30 hover:bg-yellow-800/50',
-  [NODE_TYPES.REST]: 'border-green-400 bg-green-900/30 hover:bg-green-800/50',
-  [NODE_TYPES.BOSS]: 'border-purple-400 bg-purple-900/30',
+  [NODE_TYPES.NORMAL]:   'border-blue-400 bg-blue-900/30 hover:bg-blue-800/50',
+  [NODE_TYPES.ELITE]:    'border-red-400 bg-red-900/30 hover:bg-red-800/50',
+  [NODE_TYPES.SHOP]:     'border-yellow-400 bg-yellow-900/30 hover:bg-yellow-800/50',
+  [NODE_TYPES.REST]:     'border-green-400 bg-green-900/30 hover:bg-green-800/50',
+  [NODE_TYPES.BOSS]:     'border-purple-400 bg-purple-900/30',
+  [NODE_TYPES.MYSTERY]:  'border-purple-400 bg-purple-900/30 hover:bg-purple-800/50',
+  [NODE_TYPES.EXCHANGE]: 'border-teal-400 bg-teal-900/30 hover:bg-teal-800/50',
+  [NODE_TYPES.MINI_BOSS]:'border-orange-400 bg-orange-900/30 hover:bg-orange-800/50',
 };
 
-export default function MapScreen({ map, currentStage, gold, onChooseNode }) {
+export default function MapScreen({ map, currentStage, gold, onChooseNode, onExchange }) {
   if (!map) return null;
 
   // currentStage ist 1-indexed; Stage 1 wird immer auto-gespielt (kein Map-Choice).
@@ -102,7 +121,7 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode }) {
                         key={optIdx}
                         disabled={!isActive}
                         onClick={() => isActive && onChooseNode(optIdx)}
-                        className={`flex-1 max-w-[120px] rounded-none border-4 px-3 py-2 text-center transition-all
+                        className={`flex-1 max-w-[100px] rounded-none border-4 px-2 py-2 text-center transition-all
                           ${isActive ? `cursor-pointer ${NODE_COLOR[node.type]}` : ''}
                           ${isPast ? 'border-white/20 bg-white/5 opacity-60 cursor-default' : ''}
                           ${isFuture ? 'border-white/10 bg-white/5 opacity-30 cursor-default' : ''}
@@ -136,6 +155,37 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode }) {
         <p className="text-center text-indigo-300/60 text-xs mt-4 uppercase tracking-widest">
           Stage {currentStage} / {TOTAL_STAGES} complete
         </p>
+
+        {/* Gold → XP Exchange */}
+        <div className="mt-4 border-t border-white/10 pt-3">
+          <div className="text-xs text-teal-400/70 uppercase tracking-widest text-center mb-2">Convert Gold → XP</div>
+          <div className="flex gap-2">
+            {EXCHANGE_RATES.map((rate) => {
+              const canAfford = gold >= rate.gold;
+              return (
+                <motion.button
+                  key={rate.gold}
+                  onClick={() => canAfford && onExchange(rate.gold, rate.xp)}
+                  disabled={!canAfford}
+                  className={`flex-1 py-1.5 px-1 border rounded-none text-center transition-all
+                    ${canAfford
+                      ? 'border-teal-400/60 bg-teal-900/30 hover:bg-teal-800/50 cursor-pointer'
+                      : 'border-white/10 bg-white/5 opacity-40 cursor-not-allowed'}`}
+                  whileHover={canAfford ? { scale: 1.04 } : {}}
+                  whileTap={canAfford ? { scale: 0.96 } : {}}
+                >
+                  <div className={`text-xs font-bold inline-flex items-center gap-0.5 ${canAfford ? 'text-amber-300' : 'text-white/40'}`}>
+                    <GameIcon name="coin" size={11} color={canAfford ? 'amber' : 'gray'} />{rate.gold}G
+                  </div>
+                  <div className="text-white/30 text-[9px] leading-none my-0.5">→</div>
+                  <div className={`text-xs font-bold inline-flex items-center gap-0.5 ${canAfford ? 'text-purple-300' : 'text-white/40'}`}>
+                    <GameIcon name="star" size={11} color={canAfford ? 'purple' : 'gray'} />+{rate.xp}XP
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );

@@ -484,6 +484,13 @@ export const usePerkSystem = () => {
     momentumFlatStackRef.current = 0;
   }, []);
 
+  const restorePerks = useCallback((perks, passiveSlotMax, utilitySlotMax) => {
+    setActivePerks(perks ?? []);
+    setSelectedPermanentPerks((perks ?? []).filter(p => p.duration === -1).map(p => p.id));
+    if (passiveSlotMax != null) setMaxPassiveSlots(passiveSlotMax);
+    if (utilitySlotMax != null) setMaxUtilitySlots(utilitySlotMax);
+  }, []);
+
   return {
     activePerks,
     roundsPlayed,
@@ -520,6 +527,7 @@ export const usePerkSystem = () => {
     correctAnswersForRegen,
     clearPerks,
     reset,
+    restorePerks,
     // Balatro-Perk-Refs (für Game.jsx Score-Berechnung)
     chainLightningCounterRef,
     timeBombCounterRef,

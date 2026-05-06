@@ -151,21 +151,20 @@ function PerkVendorPanel({ gold, activePerkIds, canOfferPerk, onBuyPerk }) {
   );
 }
 
-export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicIds = new Set(), activePerkIds = new Set(), canOfferPerk, canBuyPerkSlot = false, canBuyUtilitySlot = false, onBuyRelic, onBuyPerk, onHeal, onUpgradePerk, onBuySynergySlot, onBuyPerkSlot, onBuyUtilitySlot }) {
+export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicIds = new Set(), activePerkIds = new Set(), canOfferPerk, canBuyPerkSlot = false, canBuyUtilitySlot = false, canBuyRelicSlot = false, relicSlotsMax = 4, onBuyRelic, onBuyPerk, onHeal, onUpgradePerk, onBuySynergySlot, onBuyPerkSlot, onBuyUtilitySlot, onBuyRelicSlot }) {
   if (type === MERCHANT_TYPES.ARMORER) {
     return <ArmorerPanel gold={gold} ownedRelicIds={ownedRelicIds} onBuyRelic={onBuyRelic} />;
   }
 
   if (type === MERCHANT_TYPES.HEALER) {
     const healCost = SHOP_PRICES.heal;
-    const upgradeCost = SHOP_PRICES.perk_upgrade;
     return (
       <div>
         <div className="flex items-center gap-2 mb-3">
           <GameIcon name="heart" size={24} color="pink" />
           <div>
             <div className="font-black text-white">Healer</div>
-            <div className="text-indigo-300/60 text-xs">Restoration and perk upgrades</div>
+            <div className="text-indigo-300/60 text-xs">Restoration</div>
           </div>
         </div>
         <div className="flex flex-col gap-2">
@@ -175,13 +174,6 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
             gold={gold}
             canAfford={gold >= healCost && lives < maxLives}
             onBuy={onHeal}
-          />
-          <ItemCard
-            item={{ id: '_perk_upgrade', name: 'Perk Upgrade', description: 'Extend a perk\'s duration by 3 rounds', _gameIcon: { icon: 'hammer', color: 'amber' }, rarity: 'rare' }}
-            price={upgradeCost}
-            gold={gold}
-            canAfford={gold >= upgradeCost}
-            onBuy={onUpgradePerk}
           />
         </div>
       </div>
@@ -228,6 +220,13 @@ export default function MerchantPanel({ type, gold, lives, maxLives, ownedRelicI
             gold={gold}
             canAfford={gold >= synergySlotCost}
             onBuy={onBuySynergySlot}
+          />
+          <ItemCard
+            item={{ id: '_relic_slot', name: 'Relic Vault', description: `Unlock an additional Relic slot. (${relicSlotsMax}/7)`, _gameIcon: { icon: 'chest', color: 'amber' }, rarity: 'epic' }}
+            price={30}
+            gold={gold}
+            canAfford={canBuyRelicSlot && gold >= 30}
+            onBuy={onBuyRelicSlot}
           />
           {legendaryRelic && (
             <ItemCard

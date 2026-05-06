@@ -115,5 +115,13 @@ export const useSynergyEngine = (activeRelics, activePerks, onNewSynergy, onSyne
     setPermanentSynergies([]);
   }, []);
 
-  return { activeSynergies, permanentSynergies, maxSynergySlots, hasSynergy, getSynergyValue, resolveConflict, reset };
+  const restoreSynergies = useCallback((savedSynergies) => {
+    const s = savedSynergies ?? [];
+    permanentSynergiesRef.current = s;
+    setPermanentSynergies(s);
+    // Mark all restored synergies as already notified to prevent re-firing
+    s.forEach(syn => notifiedRef.current.add(syn.id));
+  }, []);
+
+  return { activeSynergies, permanentSynergies, maxSynergySlots, hasSynergy, getSynergyValue, resolveConflict, reset, restoreSynergies };
 };

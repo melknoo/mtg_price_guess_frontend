@@ -150,7 +150,7 @@ function getCounterInfo(item, currentRound, heartRegenProgress, fortressRegenCou
   return null;
 }
 
-export default function ActivePerksDisplay({ perks, relics = [], synergies = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1, showPerkSelection = false, passiveSlotInfo = null, utilitySlotInfo = null, compoundAccRef = null }) {
+export default function ActivePerksDisplay({ perks, relics = [], synergies = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1, showPerkSelection = false, passiveSlotInfo = null, utilitySlotInfo = null, compoundAccRef = null, relicSlotsMax = 4 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSynergyId, setExpandedSynergyId] = useState(null);
 
@@ -199,7 +199,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
           <div className="flex flex-col gap-2 overflow-y-auto pr-0.5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
             <AnimatePresence>
               {perks.length > 0 && (
-                <div className="text-[8px] font-bold text-indigo-400/50 uppercase tracking-widest border-b border-indigo-500/20 pb-0.5">
+                <div key="header-perks" className="text-[8px] font-bold text-indigo-400/50 uppercase tracking-widest border-b border-indigo-500/20 pb-0.5">
                   Perks
                 </div>
               )}
@@ -215,7 +215,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                 </div>
               ))}
               {relics.length > 0 && (
-                <div className="text-[8px] font-bold text-amber-400/50 uppercase tracking-widest border-t border-amber-500/20 pt-1 mt-0.5">
+                <div key="header-relics" className="text-[8px] font-bold text-amber-400/50 uppercase tracking-widest border-t border-amber-500/20 pt-1 mt-0.5">
                   Relics
                 </div>
               )}
@@ -223,8 +223,12 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                 const s = getItemRarityStyle(relic, true);
                 return <DesktopPerkCard key={relic.id} item={relic} type="relic" borderColor={s.borderColor} gradientColor={s.gradient} triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />;
               })}
+              {/* Leere Relic-Slots als Placeholder */}
+              {Array.from({ length: Math.max(0, relicSlotsMax - (relics?.length ?? 0)) }).map((_, i) => (
+                <div key={`empty-relic-${i}`} className="border border-dashed border-slate-600 rounded-sm opacity-40 h-8 w-8" />
+              ))}
               {synergies.length > 0 && (
-                <div className="text-[8px] font-bold text-teal-400/50 uppercase tracking-widest border-t border-teal-500/20 pt-1 mt-0.5">
+                <div key="header-synergies" className="text-[8px] font-bold text-teal-400/50 uppercase tracking-widest border-t border-teal-500/20 pt-1 mt-0.5">
                   Synergies
                 </div>
               )}

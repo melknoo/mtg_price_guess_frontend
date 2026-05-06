@@ -180,11 +180,9 @@ const CATEGORY_STYLES = {
 };
 
 
-// RELIC_FREE_CAP: ab dieser Anzahl aktiver Relics kostet jedes weitere 25 Gold
-const RELIC_FREE_CAP = 6;
 const RELIC_EXTRA_COST = 25;
 
-export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], maxSynergySlots = 3, onSelect, forceRelicMode = false, onSkip, onReroll, gold = 0, rerollKey = 0 }) {
+export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], maxSynergySlots = 3, onSelect, forceRelicMode = false, onSkip, onReroll, gold = 0, rerollKey = 0, relicSlotsMax = 4 }) {
   const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
@@ -275,7 +273,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                 const rStyle = RARITY_STYLES[option.rarity] ?? RARITY_STYLES.common;
                 const cStyle = CATEGORY_STYLES[option.category] ?? CATEGORY_STYLES.item;
                 const newSynergies = getNewSynergiesForOption(option, activeRelics ?? [], activePerks ?? [], activeSynergies, maxSynergySlots);
-                const isRelicOverCap = option.category === 'relic' && (activeRelics ?? []).length >= RELIC_FREE_CAP;
+                const isRelicOverCap = option.category === 'relic' && (activeRelics ?? []).length >= relicSlotsMax;
                 const cantAfford = isRelicOverCap && gold < RELIC_EXTRA_COST;
                 return (
                   <motion.div
@@ -355,7 +353,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                           {option.category === 'relic' && (
                             <span className="inline-flex items-center gap-1 text-amber-300 text-xs"><GameIcon name="ring" color="amber" size={11} /> Ganzer Run</span>
                           )}
-                          {option.category === 'relic' && (activeRelics ?? []).length >= RELIC_FREE_CAP && (
+                          {option.category === 'relic' && (activeRelics ?? []).length >= relicSlotsMax && (
                             <span className={`inline-flex items-center gap-0.5 text-xs font-bold px-1 rounded-sm border ${gold >= RELIC_EXTRA_COST ? 'text-yellow-300 border-yellow-600 bg-yellow-900/30' : 'text-red-400 border-red-700 bg-red-900/30'}`}>
                               <GameIcon name="coin" color={gold >= RELIC_EXTRA_COST ? 'amber' : 'red'} size={10} /> {RELIC_EXTRA_COST}
                             </span>
@@ -420,7 +418,7 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                       {option.category === 'relic' && (
                         <div className="bg-black/30 rounded-sm p-2 text-center border border-white/10 flex flex-col gap-1">
                           <span className="inline-flex items-center justify-center gap-1 text-amber-300 text-xs font-semibold"><GameIcon name="ring" color="amber" size={11} /> Permanent (ganzer Run)</span>
-                          {(activeRelics ?? []).length >= RELIC_FREE_CAP && (
+                          {(activeRelics ?? []).length >= relicSlotsMax && (
                             <span className={`inline-flex items-center justify-center gap-1 text-xs font-bold ${gold >= RELIC_EXTRA_COST ? 'text-yellow-300' : 'text-red-400'}`}>
                               <GameIcon name="coin" color={gold >= RELIC_EXTRA_COST ? 'amber' : 'red'} size={11} />
                               {gold >= RELIC_EXTRA_COST ? `Costs ${RELIC_EXTRA_COST} Gold` : `Need ${RELIC_EXTRA_COST} Gold (have ${gold})`}

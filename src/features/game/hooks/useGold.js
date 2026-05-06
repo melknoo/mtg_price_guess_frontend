@@ -46,5 +46,12 @@ export const useGold = (initialGold = 0) => {
     totalEarnedGoldRef.current = 0;
   }, []);
 
-  return { gold, totalEarnedGold, totalEarnedGoldRef, addGold, spendGold, canAfford, reset };
+  const restore = useCallback(({ gold: g = 0, totalEarnedGold: t = 0 }) => {
+    setGold(g);
+    goldRef.current = g;
+    setTotalEarnedGold(t);
+    totalEarnedGoldRef.current = t;
+  }, []);
+
+  return { gold, totalEarnedGold, totalEarnedGoldRef, addGold, spendGold, canAfford, reset, restore };
 };

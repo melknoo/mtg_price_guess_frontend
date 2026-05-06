@@ -6,6 +6,9 @@ export const NODE_TYPES = {
   SHOP: 'shop',
   REST: 'rest',
   BOSS: 'boss',
+  MYSTERY: 'mystery',
+  EXCHANGE: 'exchange',
+  MINI_BOSS: 'mini_boss',
 };
 
 export const NODE_WEIGHTS = {
@@ -15,12 +18,18 @@ export const NODE_WEIGHTS = {
   rest: 8,
 };
 
+// Weights for guaranteed diversity: used when all nodes in a stage are NORMAL
+export const NON_NORMAL_WEIGHTS = { elite: 25, shop: 12, rest: 8, mystery: 15, exchange: 10 };
+
 export const NODE_ICONS = {
   normal: 'sword',
   elite: 'skull',
   shop: 'chest',
   rest: 'glow',
   boss: 'trophy',
+  mystery: 'interrogation',
+  exchange: 'coin',
+  mini_boss: 'bullet',
 };
 
 export const NODE_LABELS = {
@@ -29,6 +38,9 @@ export const NODE_LABELS = {
   shop: 'Shop',
   rest: 'Rest',
   boss: 'Boss',
+  mystery: 'Mystery',
+  exchange: 'Exchange',
+  mini_boss: 'Mini Boss',
 };
 
 export const NODE_DESCRIPTIONS = {
@@ -37,6 +49,9 @@ export const NODE_DESCRIPTIONS = {
   shop: 'Spend your gold on relics, perks and more',
   rest: 'Heal 2 lives or upgrade a perk',
   boss: '10 rounds, Final Boss — Legendary relic reward',
+  mystery: 'Unknown — could be anything',
+  exchange: 'Convert Gold into XP at favorable rates',
+  mini_boss: '10 rounds, tough fight — Relic drop reward',
 };
 
 export const MERCHANT_TYPES = {
@@ -71,9 +86,9 @@ export const SHOP_PRICES = {
   relic_upgrade: 60,
 };
 
-export const TOTAL_STAGES = 5;
+export const TOTAL_STAGES = 9;
 export const ROUNDS_PER_STAGE = 10;
-export const MAP_OPTIONS_PER_STAGE = 2; // stages 1-4; stage 5 = 1 node (boss)
+export const MAP_OPTIONS_PER_STAGE = 3;
 
 export const ELITE_REWARDS = {
   gold_bonus: 50,
@@ -82,4 +97,25 @@ export const ELITE_REWARDS = {
 
 export const BOSS_REWARDS = {
   legendary_relic_choice: true,
+};
+
+export const EXCHANGE_RATES = [
+  { gold: 10, xp: 25 },
+  { gold: 25, xp: 70 },
+  { gold: 50, xp: 150 },
+];
+
+export const STAGE_COMPLETE_QUICK_RATE = 2.5;
+
+// Act structure for the 9-stage run
+export const ACT_STRUCTURE = {
+  1: { forced: 'normal' },
+  2: { options: 3 },
+  3: { options: 3 },
+  4: { forced: 'mini_boss' },
+  5: { options: 3 },
+  6: { options: 3 },
+  7: { options: 3 },
+  8: { forced: 'shop_or_exchange' },
+  9: { forced: 'boss' },
 };

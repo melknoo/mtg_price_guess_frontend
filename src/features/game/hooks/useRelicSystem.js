@@ -36,6 +36,10 @@ export const useRelicSystem = () => {
     setActiveRelics([]);
   }, []);
 
+  const restoreRelics = useCallback((relics) => {
+    setActiveRelics(relics ?? []);
+  }, []);
+
   return {
     activeRelics,
     addRelic,
@@ -44,5 +48,6 @@ export const useRelicSystem = () => {
     getRelicsByTag,
     consumeRelic,
     reset,
+    restoreRelics,
   };
 };

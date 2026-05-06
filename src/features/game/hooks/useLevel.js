@@ -63,6 +63,14 @@ export const useLevel = () => {
     setPendingLevelUps(0);
   }, []);
 
+  const restoreLevel = useCallback((savedLevel, savedXp) => {
+    const lvl = Math.max(1, Math.floor(savedLevel ?? 1));
+    setLevel(lvl);
+    setXp(savedXp ?? 0);
+    setXpToNextLevel(getXpToNextLevel(lvl));
+    setPendingLevelUps(0);
+  }, []);
+
   return {
     xp,
     level,
@@ -73,5 +81,6 @@ export const useLevel = () => {
     dismissLevelUp,
     setLevelDirect,
     reset,
+    restoreLevel,
   };
 };

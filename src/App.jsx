@@ -17,6 +17,9 @@ import AchievementsDisplay from "./features/game/components/AchievementsDisplay"
 import StatsDisplay from "./features/game/components/StatsDisplay";
 import CodexPage from "./features/game/components/CodexPage";
 import HowToPlayModal from "./features/game/components/HowToPlayModal";
+import MetaProgressionScreen from "./features/game/components/MetaProgressionScreen";
+import { useSavedRun } from "./features/game/hooks/useSavedRun";
+import { useMetaProgression } from "./features/game/hooks/useMetaProgression";
 import GameIcon from "./shared/components/GameIcon";
 
 function AppContent() {
@@ -34,6 +37,9 @@ function AppContent() {
     document.addEventListener("click", requestFullscreen, { once: true });
     return () => document.removeEventListener("click", requestFullscreen);
   }, []);
+  const savedRun = useSavedRun();
+  const metaProgression = useMetaProgression();
+  const [continueMode, setContinueMode] = useState(false);
   const [screen, setScreen] = useState("menu");
   const [showRegister, setShowRegister] = useState(false);
   const [gameKey, setGameKey] = useState(0);
@@ -73,6 +79,14 @@ function AppContent() {
       setScreen("menu");
     }
   }, [user, screen]);
+
+  // Beim Login: Server-Run mit lokalem Run synchronisieren (neuerer gewinnt)
+  useEffect(() => {
+    if (user && !user.guest) {
+      savedRun.syncFromServer();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const handleLogout = () => {
     logout();
@@ -247,7 +261,7 @@ function AppContent() {
               {/* Primary Actions */}
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <button
-                  onClick={() => { setShowRegister(false); setGameKey((k) => k + 1); setScreen("game"); }}
+                  onClick={() => { setShowRegister(false); setContinueMode(false); setGameKey((k) => k + 1); setScreen("game"); }}
                   className="bg-emerald-700 hover:bg-emerald-600 border-2 border-emerald-400 rounded-sm py-4 text-white font-semibold text-lg transition-all shadow-pixel active:scale-95"
                 >
                   <span className="inline-flex items-center justify-center gap-2">
@@ -264,6 +278,18 @@ function AppContent() {
                   </span>
                 </button>
               </div>
+              {/* Continue Run button */}
+              {savedRun.hasSavedRun && (
+                <button
+                  onClick={() => { setShowRegister(false); setContinueMode(true); setGameKey((k) => k + 1); setScreen("game"); }}
+                  className="w-full mb-3 bg-teal-800 hover:bg-teal-700 border-2 border-teal-500 rounded-sm py-3 text-white font-semibold text-base transition-all shadow-pixel active:scale-95"
+                >
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <GameIcon name="save" size={18} color="teal" />
+                    <span>Continue Run</span>
+                  </span>
+                </button>
+              )}
 
               {/* Secondary Actions */}
               {!user?.guest && (
@@ -284,6 +310,19 @@ function AppContent() {
                     <span className="inline-flex items-center justify-center gap-1.5">
                       <GameIcon name="trophy" size={18} color="amber" />
                       <span>Achievements</span>
+                    </span>
+                  </button>
+                </div>
+              )}
+              {!user?.guest && (
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <button
+                    onClick={() => setScreen("meta")}
+                    className="bg-purple-800 hover:bg-purple-700 border-2 border-purple-500 rounded-sm py-3 text-white text-sm font-medium transition-all shadow-pixel-sm active:scale-95"
+                  >
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <GameIcon name="gem" size={18} color="purple" />
+                      <span>Meta</span>
                     </span>
                   </button>
                 </div>
@@ -355,6 +394,15 @@ function AppContent() {
 
         {screen === "leaderboard" && <Leaderboard onBack={() => setScreen("menu")} />}
         {screen === "settings" && <AccountSettings onBack={() => setScreen("menu")} />}
+        {screen === "meta" && (
+          <MetaProgressionScreen
+            crystals={metaProgression.crystals}
+            upgrades={metaProgression.upgrades}
+            upgradeDefs={metaProgression.upgradeDefs}
+            onBuy={(id) => metaProgression.buyUpgrade(id)}
+            onBack={() => setScreen("menu")}
+          />
+        )}
 
         {screen === "achievements" && (
           <AchievementsDisplay
@@ -376,9 +424,11 @@ function AppContent() {
         {screen === "game" && (
           <Game
             key={gameKey}
-            onBack={() => setScreen("menu")}
+            onBack={() => { setScreen("menu"); setContinueMode(false); }}
             showRegister={showRegister}
             setShowRegister={setShowRegister}
+            continueMode={continueMode}
+            metaProgression={metaProgression}
           />
         )}
 
@@ -387,7 +437,7 @@ function AppContent() {
         )}
       </div>
 
-      {screen !== "game" && screen !== "daily-challenge" && screen !== "stats" && screen !== "codex" && <Footer onNavigate={handleFooterNavigation} />}
+      {screen !== "game" && screen !== "daily-challenge" && screen !== "stats" && screen !== "codex" && screen !== "meta" && <Footer onNavigate={handleFooterNavigation} />}
       <CookieConsent />
       {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
       <SuggestionModal

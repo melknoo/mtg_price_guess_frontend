@@ -2,12 +2,13 @@ import { useState, useCallback, useRef } from 'react';
 import {
   NODE_TYPES,
   NODE_WEIGHTS,
+  NON_NORMAL_WEIGHTS,
   TOTAL_STAGES,
   ROUNDS_PER_STAGE,
-  MAP_OPTIONS_PER_STAGE,
+  ACT_STRUCTURE,
 } from '../constants/mapDefinitions';
 
-// Gewichteter Zufallswürfel für Node-Typen
+// Gewichteter Zufallswürfel fuer Node-Typen
 function weightedRandom(weights) {
   const entries = Object.entries(weights);
   const total = entries.reduce((sum, [, w]) => sum + w, 0);
@@ -19,42 +20,71 @@ function weightedRandom(weights) {
   return entries[0][0];
 }
 
-// Generiert eine vollständige Map mit 5 Stages
+// Waehlt einen gewichteten Non-Normal Typ fuer Diversity Guarantee
+function pickWeightedNonNormal(weights) {
+  return weightedRandom(weights);
+}
+
+// Generiert eine vollstaendige Map gemaess ACT_STRUCTURE
 function generateMapData() {
   const stages = [];
 
-  // Stage 1-4: je 2 Optionen (Normal, Elite, Shop oder Rest)
-  for (let stageIdx = 0; stageIdx < TOTAL_STAGES - 1; stageIdx++) {
-    const stageNodes = [];
-    for (let optIdx = 0; optIdx < MAP_OPTIONS_PER_STAGE; optIdx++) {
-      stageNodes.push({
-        type: weightedRandom(NODE_WEIGHTS),
-        stageIndex: stageIdx,
-        optionIndex: optIdx,
-      });
+  for (let stageNum = 1; stageNum <= TOTAL_STAGES; stageNum++) {
+    const stageIdx = stageNum - 1;
+    const act = ACT_STRUCTURE[stageNum];
+
+    if (act.forced) {
+      let forcedType;
+      if (act.forced === 'boss') {
+        forcedType = NODE_TYPES.BOSS;
+      } else if (act.forced === 'mini_boss') {
+        forcedType = NODE_TYPES.MINI_BOSS;
+      } else if (act.forced === 'normal') {
+        forcedType = NODE_TYPES.NORMAL;
+      } else if (act.forced === 'shop_or_exchange') {
+        forcedType = Math.random() < 0.5 ? NODE_TYPES.SHOP : NODE_TYPES.EXCHANGE;
+      } else {
+        forcedType = act.forced;
+      }
+      stages.push([{ type: forcedType, stageIndex: stageIdx, optionIndex: 0 }]);
+    } else {
+      const count = act.options ?? 3;
+      const stageNodes = [];
+      for (let optIdx = 0; optIdx < count; optIdx++) {
+        stageNodes.push({
+          type: weightedRandom(NODE_WEIGHTS),
+          stageIndex: stageIdx,
+          optionIndex: optIdx,
+        });
+      }
+
+      // Phase 1: Diversity Guarantee — wenn alle Nodes NORMAL sind, einen ersetzen
+      const allNormal = stageNodes.every(n => n.type === NODE_TYPES.NORMAL);
+      if (allNormal) {
+        const replaceIdx = Math.floor(Math.random() * stageNodes.length);
+        stageNodes[replaceIdx].type = pickWeightedNonNormal(NON_NORMAL_WEIGHTS);
+      }
+
+      stages.push(stageNodes);
     }
-    stages.push(stageNodes);
   }
 
-  // Stage 5: immer Boss (eine Option)
-  stages.push([{ type: NODE_TYPES.BOSS, stageIndex: TOTAL_STAGES - 1, optionIndex: 0 }]);
+  // Shop/Rest-Guarantees fuer options-Stages (2-3 und 5-7)
+  const optionStageIndices = [1, 2, 4, 5, 6]; // 0-indexed: stages 2,3,5,6,7
+  const optionNodes = optionStageIndices.flatMap(idx => stages[idx] ?? []);
 
-  // Garantie: mind. 1 Shop + 1 Rest im Run (Stages 0-3)
-  const allNodes = stages.slice(0, TOTAL_STAGES - 1).flat();
-  const hasShop = allNodes.some(n => n.type === NODE_TYPES.SHOP);
-  const hasRest = allNodes.some(n => n.type === NODE_TYPES.REST);
+  const hasShop = optionNodes.some(n => n.type === NODE_TYPES.SHOP);
+  const hasRest = optionNodes.some(n => n.type === NODE_TYPES.REST);
 
   if (!hasShop) {
-    // Ersetze einen Random-Normal-Node durch Shop
-    const normalNodes = allNodes.filter(n => n.type === NODE_TYPES.NORMAL);
+    const normalNodes = optionNodes.filter(n => n.type === NODE_TYPES.NORMAL);
     if (normalNodes.length > 0) {
       const target = normalNodes[Math.floor(Math.random() * normalNodes.length)];
       stages[target.stageIndex][target.optionIndex].type = NODE_TYPES.SHOP;
     }
   }
   if (!hasRest) {
-    // Ersetze einen anderen Random-Normal-Node durch Rest
-    const normalNodes = allNodes.filter(n => n.type === NODE_TYPES.NORMAL);
+    const normalNodes = optionNodes.filter(n => n.type === NODE_TYPES.NORMAL);
     if (normalNodes.length > 0) {
       const target = normalNodes[Math.floor(Math.random() * normalNodes.length)];
       stages[target.stageIndex][target.optionIndex].type = NODE_TYPES.REST;
@@ -62,10 +92,10 @@ function generateMapData() {
   }
 
   return {
-    stages,           // stages[stageIdx][optionIdx] = Node
-    currentStage: 1,  // 1-indexed, 1 = erste Stage
+    stages,
+    currentStage: 1,
     currentNodeType: NODE_TYPES.NORMAL,
-    chosenPath: [],   // chosenPath[stageIdx] = gewählter optionIndex
+    chosenPath: [],
   };
 }
 
@@ -76,10 +106,11 @@ export function useMapSystem() {
   const [showMap, setShowMap] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showRest, setShowRest] = useState(false);
+  const [showExchange, setShowExchange] = useState(false);
   const [showEliteReward, setShowEliteReward] = useState(false);
   const [showBossReward, setShowBossReward] = useState(false);
 
-  // Ref für synchronen Zugriff innerhalb von Callbacks
+  // Ref fuer synchronen Zugriff innerhalb von Callbacks
   const mapRef = useRef(null);
 
   const generateMap = useCallback(() => {
@@ -91,6 +122,7 @@ export function useMapSystem() {
     setShowMap(false);
     setShowShop(false);
     setShowRest(false);
+    setShowExchange(false);
     setShowEliteReward(false);
     setShowBossReward(false);
   }, []);
@@ -100,9 +132,8 @@ export function useMapSystem() {
     setStageRound(prev => {
       const next = prev + 1;
       if (next > ROUNDS_PER_STAGE) {
-        // Stage komplett
         setShowStageComplete(true);
-        return prev; // bleibt auf 10 bis nächste Stage startet
+        return prev;
       }
       return next;
     });
@@ -111,25 +142,30 @@ export function useMapSystem() {
   // Wenn der Spieler "Continue" im StageCompleteScreen klickt
   const dismissStageComplete = useCallback(() => {
     setShowStageComplete(false);
-    // Bei letzter Stage (Boss) gibt es keine weitere Map-Auswahl
     const currentMap = mapRef.current;
     if (currentMap && currentMap.currentStage >= TOTAL_STAGES) {
-      // Run beendet — Game.jsx handled Game Over
       return;
     }
+    // Immer Map zeigen — auch bei forced Stages (Stage 4 Mini Boss, Stage 8, Stage 9 Boss)
+    // Der Spieler sieht den erzwungenen Node und klickt ihn an um fortzufahren
     setShowMap(true);
   }, []);
 
-  // Spieler wählt einen Node-Pfad auf der Map
+  // Spieler waehlt einen Node-Pfad auf der Map
   const chooseNode = useCallback((optionIndex) => {
-    // Node-Typ SYNCHRON aus mapRef lesen BEVOR setMap aufgerufen wird
-    // (mapRef.current inside setMap updater wird async geupdated in React 18)
     const currentMap = mapRef.current;
     if (!currentMap) return;
-    const stageIdx = currentMap.currentStage; // Stage 1 auto-gespielt → nächste wählbare = currentStage
+    const stageIdx = currentMap.currentStage;
     const chosenNode = currentMap.stages[stageIdx]?.[optionIndex];
     if (!chosenNode) return;
-    const selectedNodeType = chosenNode.type;
+
+    let selectedNodeType = chosenNode.type;
+
+    // MYSTERY-Resolution: aufloesen zu einem konkreten Typ (nicht BOSS/SHOP — wird separat gehandled)
+    if (selectedNodeType === NODE_TYPES.MYSTERY) {
+      const mysteryPool = [NODE_TYPES.NORMAL, NODE_TYPES.ELITE, NODE_TYPES.REST, NODE_TYPES.EXCHANGE];
+      selectedNodeType = mysteryPool[Math.floor(Math.random() * mysteryPool.length)];
+    }
 
     setMap(prev => {
       if (!prev) return prev;
@@ -146,14 +182,16 @@ export function useMapSystem() {
     });
 
     setShowMap(false);
-    setStageRound(1); // Stage-Runden-Counter für nächste Stage zurücksetzen
+    setStageRound(1);
 
     if (selectedNodeType === NODE_TYPES.SHOP) {
       setShowShop(true);
     } else if (selectedNodeType === NODE_TYPES.REST) {
       setShowRest(true);
+    } else if (selectedNodeType === NODE_TYPES.EXCHANGE) {
+      setShowExchange(true);
     }
-    // Normal/Elite/Boss: Game.jsx startet die Stage via useEffect
+    // Normal/Elite/MiniBoss/Boss: Game.jsx startet die Stage via useEffect
   }, []);
 
   const completeShop = useCallback(() => {
@@ -163,6 +201,11 @@ export function useMapSystem() {
 
   const completeRest = useCallback(() => {
     setShowRest(false);
+    setStageRound(1);
+  }, []);
+
+  const completeExchange = useCallback(() => {
+    setShowExchange(false);
     setStageRound(1);
   }, []);
 
@@ -182,22 +225,19 @@ export function useMapSystem() {
     setShowBossReward(true);
   }, []);
 
-  // Gibt Backend-freundliches Array zurück: [{stage:2, nodeType:'elite'}, ...]
-  // chosenPath[i] = Wahl für den (i+1)-ten Map-Choice = stageIdx i+1 (Stage 2, 3, 4, 5)
   const getChosenPathSoFar = useCallback(() => {
     const currentMap = mapRef.current;
     if (!currentMap) return [];
     return currentMap.chosenPath.map((optIdx, i) => ({
-      stage: i + 2,                                          // Stage 2, 3, 4, 5
+      stage: i + 2,
       nodeType: currentMap.stages[i + 1]?.[optIdx]?.type ?? 'unknown',
     }));
   }, []);
 
-  // Gibt Extra-Params für useCardLoader zurück (Elite: teurere Karten)
   const getCardParams = useCallback(() => {
     const currentMap = mapRef.current;
     if (!currentMap) return {};
-    if (currentMap.currentNodeType === NODE_TYPES.ELITE) {
+    if (currentMap.currentNodeType === NODE_TYPES.ELITE || currentMap.currentNodeType === NODE_TYPES.MINI_BOSS) {
       return { min_price: 5 };
     }
     return {};
@@ -211,6 +251,21 @@ export function useMapSystem() {
     setShowMap(false);
     setShowShop(false);
     setShowRest(false);
+    setShowExchange(false);
+    setShowEliteReward(false);
+    setShowBossReward(false);
+  }, []);
+
+  // Restore-Methode fuer Save/Load
+  const restoreMap = useCallback((mapData, savedStageRound) => {
+    mapRef.current = mapData;
+    setMap(mapData);
+    setStageRound(savedStageRound ?? 1);
+    setShowStageComplete(false);
+    setShowMap(false);
+    setShowShop(false);
+    setShowRest(false);
+    setShowExchange(false);
     setShowEliteReward(false);
     setShowBossReward(false);
   }, []);
@@ -227,13 +282,16 @@ export function useMapSystem() {
     showMap,
     showShop,
     showRest,
+    showExchange,
     showEliteReward,
     showBossReward,
+    openMap: () => { if (mapRef.current) setShowMap(true); },
     generateMap,
     advanceStageRound,
     chooseNode,
     completeShop,
     completeRest,
+    completeExchange,
     completeEliteReward,
     completeBossReward,
     triggerEliteReward,
@@ -242,5 +300,6 @@ export function useMapSystem() {
     getChosenPathSoFar,
     getCardParams,
     reset,
+    restoreMap,
   };
 }

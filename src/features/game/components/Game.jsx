@@ -11,7 +11,8 @@ import { useRelicSystem } from "../hooks/useRelicSystem";
 import { useSynergyEngine } from "../hooks/useSynergyEngine";
 import { useGold } from "../hooks/useGold";
 import { useMapSystem } from "../hooks/useMapSystem";
-import { ROUNDS_PER_STAGE, TOTAL_STAGES, NODE_TYPES } from "../constants/mapDefinitions";
+import { useSavedRun } from "../hooks/useSavedRun";
+import { ROUNDS_PER_STAGE, TOTAL_STAGES, NODE_TYPES, STAGE_COMPLETE_QUICK_RATE } from "../constants/mapDefinitions";
 import { RELICS } from "../constants/relicDefinitions";
 import { updateHighscore } from "../api/gameApi";
 import { saveGameSession, saveRunLog, saveStageCheckpoint } from "../api/statsApi";
@@ -52,6 +53,7 @@ import StageCompleteScreen from "./StageCompleteScreen";
 import MapScreen from "./MapScreen";
 import ShopScreen from "./ShopScreen";
 import RestScreen from "./RestScreen";
+import ExchangeScreen from "./ExchangeScreen";
 import ReplacePerkModal from "./ReplacePerkModal";
 import RunCompleteModal from "./RunCompleteModal";
 
@@ -66,6 +68,8 @@ export default function Game({
   setShowRegister,
   initialCards = null,
   onGameOver = null,
+  continueMode = false,
+  metaProgression = null,
 }) {
   const { user, refreshUser, setUser } = useAuth();
   const achievements = useAchievementContext();
@@ -111,6 +115,8 @@ export default function Game({
   const [runComplete, setRunComplete] = useState(false); // Boss besiegt — End/Continue Wahl
   const [endlessDifficulty, setEndlessDifficulty] = useState(0); // +1 pro Endless-Runde
   const [perkReplacementState, setPerkReplacementState] = useState(null);
+  const [relicSlotsMax, setRelicSlotsMax] = useState(4);
+  const [bossDefeated, setBossDefeated] = useState(false);
   const xpBlingLevelRef = useRef(1); // Track letztes Level für Bling-Trigger
 
   // Combo-Animation: blockiert Level-Up/Relic-Modals bis die Combo-Sequenz fertig ist
@@ -129,6 +135,7 @@ export default function Game({
   const relicSystem = useRelicSystem();
   const runLogger = useRunLogger();
   const gold = useGold();
+  const savedRun = useSavedRun();
 
   const queuePerkReplacement = useCallback((perk, onConfirm) => {
     setPerkReplacementState({
@@ -987,6 +994,7 @@ export default function Game({
           if (remainingLives <= 0) {
             setGameOver(true);
             level.dismissLevelUp();
+            savedRun.clearRun(); // Tod = kein Continue mehr möglich
             if (!user?.guest) {
               saveGameSession({
                 score: gold.totalEarnedGoldRef.current,
@@ -1028,6 +1036,38 @@ export default function Game({
     achievements.resetGameStats();
     correctCountRef.current = 0;
     wrongCountRef.current = 0;
+
+    // Continue Mode: restore from saved run
+    if (continueMode) {
+      const saved = savedRun.loadRun();
+      if (saved) {
+        gold.restore({ gold: saved.gold ?? 0, totalEarnedGold: saved.totalEarnedGold ?? 0 });
+        level.restoreLevel(saved.level, saved.xp);
+        if (saved.lives != null) setLives(saved.lives);
+        relicSystem.restoreRelics(saved.relics);
+        perkSystem.restorePerks(saved.perks, saved.passiveSlotMax, saved.utilitySlotMax);
+        synergyEngine.restoreSynergies(saved.synergies);
+        if (saved.map) mapSystem.restoreMap(saved.map, saved.stageRound);
+        if (saved.relicSlotsMax) setRelicSlotsMax(saved.relicSlotsMax);
+        if (saved.currentRound) setCurrentRound(saved.currentRound);
+        if (initialCards && initialCards.length >= 2) {
+          cardLoader.initWithCards(initialCards);
+        } else {
+          await cardLoader.preloadCards();
+          await cardLoader.setNextPair(false, null, null, mapSystem.getCardParams());
+        }
+        return;
+      }
+    }
+
+    // Normal init with optional meta progression bonuses
+    if (metaProgression && !continueMode) {
+      const bonuses = metaProgression.getStartingBonuses();
+      if (bonuses.extraGold > 0) gold.addGold(bonuses.extraGold);
+      if (bonuses.extraRelicSlot > 0) setRelicSlotsMax(4 + bonuses.extraRelicSlot);
+      // Lives and slots are handled via GAME_CONFIG overrides in actual game logic
+    }
+
     if (initialCards && initialCards.length >= 2) {
       cardLoader.initWithCards(initialCards);
     } else {
@@ -1037,7 +1077,7 @@ export default function Game({
       }
     }
     mapSystem.generateMap();
-  }, [achievements, cardLoader, initialCards, mapSystem]);
+  }, [achievements, cardLoader, initialCards, mapSystem, continueMode, savedRun, gold, level, relicSystem, perkSystem, synergyEngine, metaProgression]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initial Load
   useEffect(() => {
@@ -1068,6 +1108,7 @@ export default function Game({
       !mapSystem.showMap &&
       !mapSystem.showShop &&
       !mapSystem.showRest &&
+      !mapSystem.showExchange &&
       !mapSystem.showStageComplete &&
       mapSystem.map &&
       mapSystem.currentStage > 1 &&
@@ -1076,7 +1117,7 @@ export default function Game({
       cardLoader.setNextPair(false, null, null, mapSystem.getCardParams());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapSystem.showMap, mapSystem.showShop, mapSystem.showRest, mapSystem.showStageComplete]);
+  }, [mapSystem.showMap, mapSystem.showShop, mapSystem.showRest, mapSystem.showExchange, mapSystem.showStageComplete]);
 
   const previousStageRef = useRef(mapSystem.currentStage);
   useEffect(() => {
@@ -1089,7 +1130,7 @@ export default function Game({
   // Start Timer when images loaded
   useEffect(() => {
     const anyModalOpen = mapSystem.showStageComplete || mapSystem.showMap ||
-      mapSystem.showShop || mapSystem.showRest || Boolean(perkReplacementState) ||
+      mapSystem.showShop || mapSystem.showRest || mapSystem.showExchange || Boolean(perkReplacementState) ||
       level.showLevelUp || eliteRelicPending;
     if (imagesLoaded.every(Boolean) && !showPrices && !anyModalOpen) {
       timer.start();
@@ -1214,9 +1255,8 @@ export default function Game({
     const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
     const hasUpgradeMaster = relicSystem.hasRelic('upgrade_master');
     if (pick.category === 'relic') {
-      // Soft-Cap: ab 6 Relics kostet jedes weitere Gold (Hoarder: 10 statt 25)
-      const RELIC_FREE_CAP = 6;
-      if (relicSystem.activeRelics.length >= RELIC_FREE_CAP) {
+      // Soft-Cap: ab relicSlotsMax Relics kostet jedes weitere Gold (Hoarder: 10 statt 25)
+      if (relicSystem.activeRelics.length >= relicSlotsMax) {
         const relicCost = relicSystem.hasRelic('hoarder') ? 10 : 25;
         if (!gold.spendGold(relicCost)) return; // nicht genug Gold → abbrechen
       }
@@ -1267,7 +1307,7 @@ export default function Game({
     }
     level.dismissLevelUp();
     setRelicMilestoneQueue(prev => prev.slice(1));
-  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold, queuePerkReplacement]);
+  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold, queuePerkReplacement, relicSlotsMax]);
 
 
   const handlePerkSkip = useCallback(() => {
@@ -1294,8 +1334,7 @@ export default function Game({
   // ── Shop callbacks ──────────────────────────────────────────
   const handleShopBuyRelic = useCallback((relic, price) => {
     if (!gold.spendGold(price)) return;
-    const RELIC_FREE_CAP = 6;
-    if (relicSystem.activeRelics.length >= RELIC_FREE_CAP) {
+    if (relicSystem.activeRelics.length >= relicSlotsMax) {
       const discount = relicSystem.hasRelic('hoarder') ? 10 : 25;
       if (!gold.spendGold(discount)) return;
     }
@@ -1312,7 +1351,7 @@ export default function Game({
     }
     if (relic.effect === 'glass_cannon') setLives(1);
     achievements.trackRelicCollected();
-  }, [gold, relicSystem, achievements, setLives]);
+  }, [gold, relicSystem, achievements, setLives, relicSlotsMax]);
 
   const handleShopBuyPerk = useCallback((perk, price) => {
     const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
@@ -1380,6 +1419,39 @@ export default function Game({
       gold.addGold(cost);
     }
   }, [gold, perkSystem]);
+
+  const handleBuyRelicSlot = useCallback(() => {
+    if (relicSlotsMax >= 7) return;
+    if (!gold.spendGold(30)) return;
+    setRelicSlotsMax(prev => prev + 1);
+  }, [gold, relicSlotsMax]);
+
+  const handleExchangeComplete = useCallback((goldSpent, xpGained) => {
+    if (goldSpent && xpGained) {
+      gold.spendGold(goldSpent);
+      const scholarMult = synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1;
+      level.addXP(xpGained, scholarMult);
+    }
+  }, [gold, level, synergyEngine]);
+
+  const buildSavePayload = useCallback(() => ({
+    gold: gold.gold,
+    totalEarnedGold: gold.totalEarnedGoldRef.current,
+    level: level.level,
+    xp: level.xp,
+    lives,
+    relics: relicSystem.activeRelics,
+    perks: perkSystem.activePerks,
+    passiveSlotMax: perkSystem.passiveSlotInfo.max,
+    utilitySlotMax: perkSystem.utilitySlotInfo.max,
+    synergies: synergyEngine.permanentSynergies,
+    map: mapSystem.map,
+    stageRound: 1, // Save passiert immer an Stage-Grenzen — neue Stage beginnt bei Runde 1
+    relicSlotsMax,
+    currentRound,
+    streak: streak.streak,
+    bestStreak: streak.bestStreak,
+  }), [gold, level, lives, relicSystem, perkSystem, synergyEngine, mapSystem, relicSlotsMax, currentRound, streak]);
 
   const handleShopComplete = useCallback(() => {
     mapSystem.completeShop();
@@ -1487,6 +1559,9 @@ export default function Game({
     setRunComplete(false);
     setEndlessDifficulty(0);
     setEliteRelicPending(false);
+    setRelicSlotsMax(4);
+    setBossDefeated(false);
+    savedRun.clearRun();
     setComboMultiplier(1);
     setIronWillActive(false);
     setNextRoundDouble(false);
@@ -1502,7 +1577,7 @@ export default function Game({
     await cardLoader.preloadCards();
     await cardLoader.setNextPair();
     mapSystem.generateMap();
-  }, [streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, gold, achievements, runLogger, saveCurrentRun, mapSystem]);
+  }, [streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, gold, achievements, runLogger, saveCurrentRun, mapSystem, savedRun]);
 
   const handleImageLoad = useCallback((index) => {
     setImagesLoaded((prev) => {
@@ -1625,13 +1700,14 @@ export default function Game({
             </motion.div>
           </AnimatePresence>
 
-          {/* Run-Seed Badge */}
-          <div
-            className="shrink-0 text-[9px] font-bold text-white/30 tracking-widest"
-            title="Run ID"
+          {/* Run-Seed Badge — opens map */}
+          <button
+            className="shrink-0 text-[9px] font-bold text-white/30 tracking-widest hover:text-white/60 transition-colors"
+            title="View Map"
+            onClick={() => mapSystem.openMap()}
           >
             #{runSeed}
-          </div>
+          </button>
         </div>
       </div>
 
@@ -1649,6 +1725,7 @@ export default function Game({
         passiveSlotInfo={perkSystem.passiveSlotInfo}
         utilitySlotInfo={perkSystem.utilitySlotInfo}
         compoundAccRef={perkSystem.compoundInterestAccRef}
+        relicSlotsMax={relicSlotsMax}
       />
 
       <StreakDisplay
@@ -1864,6 +1941,7 @@ export default function Game({
         gold={gold.gold}
         rerollKey={levelUpRerollKey}
         forceRelicMode={relicMilestoneQueue[0] === true}
+        relicSlotsMax={relicSlotsMax}
       />
 
       {/* Elite Stage Relic Drop — zeigt nach Elite-Stage-Completion */}
@@ -1877,8 +1955,7 @@ export default function Game({
         onSelect={(pick) => {
           // Nur Relic-Auswahl — kein dismissLevelUp (kein pending level-up)
           if (pick.category === 'relic') {
-            const RELIC_FREE_CAP = 6;
-            if (relicSystem.activeRelics.length >= RELIC_FREE_CAP) {
+            if (relicSystem.activeRelics.length >= relicSlotsMax) {
               const relicCost = relicSystem.hasRelic('hoarder') ? 10 : 25;
               if (!gold.spendGold(relicCost)) return;
             }
@@ -1891,6 +1968,7 @@ export default function Game({
         gold={gold.gold}
         rerollKey={0}
         forceRelicMode={true}
+        relicSlotsMax={relicSlotsMax}
       />
 
 
@@ -1914,6 +1992,10 @@ export default function Game({
               setRunComplete(false);
               setGameOver(true);
               setMessage('Run Complete! You defeated the Boss!');
+              savedRun.clearRun();
+              if (bossDefeated && metaProgression) {
+                metaProgression.addCrystals(5);
+              }
             }}
             onContinue={() => {
               setRunComplete(false);
@@ -1961,8 +2043,16 @@ export default function Game({
             level={level.level}
             gold={gold.gold}
             nodeType={mapSystem.map?.currentNodeType}
+            onQuickInvest={(goldSpent) => {
+              if (gold.spendGold(goldSpent)) {
+                const scholarMult = synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1;
+                level.addXP(Math.floor(goldSpent * STAGE_COMPLETE_QUICK_RATE), scholarMult);
+              }
+            }}
             onContinue={() => {
               stageCorrectRef.current = 0;
+              // Auto-save before dismissing
+              savedRun.saveRun(buildSavePayload());
               // Checkpoint speichern
               if (!user?.guest) {
                 const runSummary = runLogger.getRunSummary(synergyEngine.activeSynergies);
@@ -1978,9 +2068,14 @@ export default function Game({
                   synergies:         runSummary.synergies,
                 });
               }
-              // Elite-Stage Relic-Drop: vor dismissStageComplete setzen
-              if (mapSystem.map?.currentNodeType === NODE_TYPES.ELITE) {
+              // Elite/MiniBoss Stage Relic-Drop: vor dismissStageComplete setzen
+              if (mapSystem.map?.currentNodeType === NODE_TYPES.ELITE ||
+                  mapSystem.map?.currentNodeType === NODE_TYPES.MINI_BOSS) {
                 setEliteRelicPending(true);
+              }
+              // Boss defeated
+              if (mapSystem.currentStage >= TOTAL_STAGES) {
+                setBossDefeated(true);
               }
               mapSystem.dismissStageComplete();
               // Nach Boss-Stage: Run-Complete-Modal anzeigen statt Map
@@ -1999,6 +2094,7 @@ export default function Game({
             currentStage={mapSystem.currentStage}
             gold={gold.gold}
             onChooseNode={(optIdx) => mapSystem.chooseNode(optIdx)}
+            onExchange={handleExchangeComplete}
           />
         )}
       </AnimatePresence>
@@ -2014,6 +2110,8 @@ export default function Game({
             perkSlotInfo={perkSystem.passiveSlotInfo}
             utilitySlotInfo={perkSystem.utilitySlotInfo}
             canOfferPerk={() => true}
+            relicSlotsMax={relicSlotsMax}
+            canBuyRelicSlot={relicSlotsMax < 7}
             onClose={handleShopComplete}
             onBuyRelic={handleShopBuyRelic}
             onBuyPerk={handleShopBuyPerk}
@@ -2022,6 +2120,7 @@ export default function Game({
             onBuySynergySlot={handleShopBuySynergySlot}
             onBuyPerkSlot={handleShopBuyPerkSlot}
             onBuyUtilitySlot={handleShopBuyUtilitySlot}
+            onBuyRelicSlot={handleBuyRelicSlot}
           />
         )}
       </AnimatePresence>
@@ -2035,6 +2134,19 @@ export default function Game({
             onRest={handleRest}
             onUpgradePerk={handleRestUpgradePerk}
             onSkip={mapSystem.completeRest}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {mapSystem.showExchange && !gameOver && (
+          <ExchangeScreen
+            gold={gold.gold}
+            level={level.level}
+            xp={level.xp}
+            xpToNextLevel={level.xpToNextLevel}
+            onExchange={handleExchangeComplete}
+            onComplete={mapSystem.completeExchange}
           />
         )}
       </AnimatePresence>
