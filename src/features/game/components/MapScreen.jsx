@@ -63,7 +63,7 @@ const NODE_COLOR = {
   [NODE_TYPES.MINI_BOSS]:'border-orange-400 bg-orange-900/30 hover:bg-orange-800/50',
 };
 
-export default function MapScreen({ map, currentStage, gold, onChooseNode, onExchange }) {
+export default function MapScreen({ map, currentStage, gold, onChooseNode, onExchange, onClose }) {
   if (!map) return null;
 
   // currentStage ist 1-indexed; Stage 1 wird immer auto-gespielt (kein Map-Choice).
@@ -85,8 +85,21 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode, onExc
         transition={{ type: 'spring', stiffness: 240, damping: 22 }}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-black text-amber-300 tracking-wide">CHOOSE YOUR PATH</h2>
-          <span className="text-amber-300 font-bold text-sm border border-amber-500/40 rounded-sm px-2 py-0.5 inline-flex items-center gap-1"><GameIcon name="coin" size={14} color="amber" /> {gold}g</span>
+          <h2 className="text-xl font-black text-amber-300 tracking-wide">
+            {onClose ? 'YOUR RUN' : 'CHOOSE YOUR PATH'}
+          </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-amber-300 font-bold text-sm border border-amber-500/40 rounded-sm px-2 py-0.5 inline-flex items-center gap-1"><GameIcon name="coin" size={14} color="amber" /> {gold}g</span>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="text-white/40 hover:text-white/80 text-lg font-black leading-none transition-colors px-1"
+                title="Close"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Render stages bottom-to-top (boss at top, stage 1 at bottom) */}
@@ -119,8 +132,8 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode, onExc
                     return (
                       <motion.button
                         key={optIdx}
-                        disabled={!isActive}
-                        onClick={() => isActive && onChooseNode(optIdx)}
+                        disabled={!isActive || !!onClose}
+                        onClick={() => isActive && !onClose && onChooseNode(optIdx)}
                         className={`flex-1 max-w-[100px] rounded-none border-4 px-2 py-2 text-center transition-all
                           ${isActive ? `cursor-pointer ${NODE_COLOR[node.type]}` : ''}
                           ${isPast ? 'border-white/20 bg-white/5 opacity-60 cursor-default' : ''}

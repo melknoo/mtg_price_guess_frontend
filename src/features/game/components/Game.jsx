@@ -2095,6 +2095,7 @@ export default function Game({
             gold={gold.gold}
             onChooseNode={(optIdx) => mapSystem.chooseNode(optIdx)}
             onExchange={handleExchangeComplete}
+            onClose={mapSystem.mapViewOnly ? mapSystem.closeMap : undefined}
           />
         )}
       </AnimatePresence>

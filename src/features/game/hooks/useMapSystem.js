@@ -109,6 +109,7 @@ export function useMapSystem() {
   const [showExchange, setShowExchange] = useState(false);
   const [showEliteReward, setShowEliteReward] = useState(false);
   const [showBossReward, setShowBossReward] = useState(false);
+  const [mapViewOnly, setMapViewOnly] = useState(false);
 
   // Ref fuer synchronen Zugriff innerhalb von Callbacks
   const mapRef = useRef(null);
@@ -148,6 +149,7 @@ export function useMapSystem() {
     }
     // Immer Map zeigen — auch bei forced Stages (Stage 4 Mini Boss, Stage 8, Stage 9 Boss)
     // Der Spieler sieht den erzwungenen Node und klickt ihn an um fortzufahren
+    setMapViewOnly(false);
     setShowMap(true);
   }, []);
 
@@ -285,7 +287,9 @@ export function useMapSystem() {
     showExchange,
     showEliteReward,
     showBossReward,
-    openMap: () => { if (mapRef.current) setShowMap(true); },
+    mapViewOnly,
+    openMap: () => { if (mapRef.current) { setMapViewOnly(true); setShowMap(true); } },
+    closeMap: () => { setMapViewOnly(false); setShowMap(false); },
     generateMap,
     advanceStageRound,
     chooseNode,
