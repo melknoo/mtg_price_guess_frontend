@@ -6,13 +6,15 @@ import { useGameTimer } from "../hooks/useGameTimer";
 import { useStreak } from "../hooks/useStreak";
 import { useCardLoader } from "../hooks/useCardLoader";
 import { usePerkSystem } from "../hooks/usePerkSystem";
+import { usePerkCombos } from "../hooks/usePerkCombos";
+import { useAscension } from "../hooks/useAscension";
 import { useLevel } from "../hooks/useLevel";
 import { useRelicSystem } from "../hooks/useRelicSystem";
 import { useSynergyEngine } from "../hooks/useSynergyEngine";
 import { useGold } from "../hooks/useGold";
 import { useMapSystem } from "../hooks/useMapSystem";
 import { useSavedRun } from "../hooks/useSavedRun";
-import { ROUNDS_PER_STAGE, TOTAL_STAGES, NODE_TYPES, STAGE_COMPLETE_QUICK_RATE } from "../constants/mapDefinitions";
+import { ROUNDS_PER_STAGE, TOTAL_STAGES, NODE_TYPES, BOUNTY_GOALS } from "../constants/mapDefinitions";
 import { RELICS } from "../constants/relicDefinitions";
 import { updateHighscore } from "../api/gameApi";
 import { saveGameSession, saveRunLog, saveStageCheckpoint } from "../api/statsApi";
@@ -56,11 +58,27 @@ import RestScreen from "./RestScreen";
 import ExchangeScreen from "./ExchangeScreen";
 import ReplacePerkModal from "./ReplacePerkModal";
 import RunCompleteModal from "./RunCompleteModal";
+import CurseScreen from "./CurseScreen";
+import BountyIndicator from "./BountyIndicator";
 
 
 // Helper: liefert <GameIcon>-Element für snap()/extraBreakdown icon-Parameter
 const gi = (id) => { const m = ITEM_ICONS[id]; return m ? <GameIcon name={m.icon} color={m.color} size={12} /> : null; };
 const giPerk = (perk) => { const m = ITEM_ICONS[perk?.id]; return m ? <GameIcon name={m.icon} color={m.color} size={12} /> : null; };
+
+// Prüft ob ein Bounty-Ziel erfüllt wurde
+function checkBountyGoalWin(goal, progress) {
+  if (!goal) return false;
+  switch (goal.id) {
+    case 'answer_8_of_10':  return progress.correct >= 8;
+    case 'streak_5':        return progress.maxStreak >= 5;
+    case 'no_wrong':        return progress.wrong === 0;
+    case 'earn_200g':       return progress.stageGold >= 200;
+    case 'reach_streak_10': return progress.maxStreak >= 10;
+    case 'first_5_perfect': return progress.perfectFirst5 >= 5;
+    default: return false;
+  }
+}
 
 export default function Game({
   onBack,
@@ -131,6 +149,8 @@ export default function Game({
   const cardLoader = useCardLoader();
   const streak = useStreak();
   const perkSystem = usePerkSystem();
+  const perkCombos = usePerkCombos(perkSystem.activePerks);
+  const ascension = useAscension();
   const level = useLevel();
   const relicSystem = useRelicSystem();
   const runLogger = useRunLogger();
@@ -219,8 +239,13 @@ export default function Game({
     if (mapSystem.currentNodeType === NODE_TYPES.BOSS) duration -= 3;
     // Endless Mode: jede Difficulty-Stufe -1s extra
     if (endlessDifficulty > 0) duration -= endlessDifficulty;
+    // Ascension: Timer-Reduktion je nach Stufe
+    const ascensionMods = ascension.getModifiers();
+    if (ascensionMods.timerReduction) duration -= ascensionMods.timerReduction;
+    // Speedrunner Kit: +2s Timer-Bonus
+    if (activeKitRef.current === 'kit_speedrunner') duration += 2;
     return Math.max(3, duration); // nie unter 3s
-  }, [perkSystem, relicSystem, synergyEngine, mapSystem, endlessDifficulty]);
+  }, [perkSystem, relicSystem, synergyEngine, mapSystem, endlessDifficulty, ascension]);
 
   const getTimerSpeed = useCallback(() => {
     // Overclock Perk: Timer läuft 2× schnell
@@ -252,6 +277,20 @@ export default function Game({
   // Refs für Session-Statistiken (kein Re-render nötig)
   const correctCountRef = useRef(0);
   const wrongCountRef = useRef(0);
+  // Starting Kit Nachteile (Refs für sync-Zugriff in applyGoldEffects)
+  const kitGoldPenaltyRef = useRef(0);   // Flat-Gold-Nachteil pro korrekter Antwort (Arcanist: -1G)
+  const kitGoldMultRef = useRef(1.0);    // Gold-Multiplikator (z.B. ×1.25 für Berserker)
+  const activeKitRef = useRef(null);     // Aktives Kit-ID für handleChoice-Logik
+
+  // Bounty Node State + Tracking-Refs
+  const [activeBounty, setActiveBounty] = useState(null);
+  const [bountyProgress, setBountyProgress] = useState({ correct: 0, wrong: 0, maxStreak: 0, stageGold: 0, perfectFirst5: 0 });
+  const activeBountyRef = useRef(null);          // sync-Zugriff in Callbacks
+  const bountyCorrectRef = useRef(0);
+  const bountyWrongRef = useRef(0);
+  const bountyMaxStreakRef = useRef(0);
+  const bountyStageGoldRef = useRef(0);
+  const bountyPerfectFirst5Ref = useRef(0);
 
   const timer = useGameTimer({
     onTimeUp: () => handleChoiceRef.current?.(-1),
@@ -267,6 +306,16 @@ export default function Game({
     let finalGold = baseGold;
     const breakdown = [];
     let fakeBonus = 0; // Tracking für Cheater
+
+    // Cascade-Kontext: zählt was in dieser Antwort gefeuert hat (für Cascade-Perks)
+    const cascadeContext = {
+      flatsFired: 0,           // Anzahl Phase-A Effekte die > 0 Gold gaben
+      multsFired: 0,           // Anzahl Phase-B Multiplikatoren die feuerten
+      effectsFired: new Set(), // distinct Perk-Effekt-IDs
+      bestFlatDelta: 0,        // größtes Einzel-Flat-Gold in Phase A
+      firstMultApplied: false, // für First Spark
+      chainBonus: 0,           // akkumulierter Bonus von Chain Reaction Perk
+    };
 
     const snap = (label, icon, before, isMult = false) => {
       const delta = Math.round(finalGold - before);
@@ -284,6 +333,14 @@ export default function Game({
     // ═══════════════════════════════════════════════════════
     let flatGoldBonus = 0; // Summe der rohen Perk-Flats — für Alchemist & Treasure Hunter
 
+    // Starting Kit Nachteil: Flat-Gold-Abzug pro Antwort
+    if (kitGoldPenaltyRef.current !== 0) {
+      const penalty = kitGoldPenaltyRef.current;
+      const b = finalGold;
+      finalGold = Math.max(0, finalGold + penalty);
+      if (finalGold !== b) snap(penalty < 0 ? `Kit Penalty (${penalty}G)` : `Kit Bonus (+${penalty}G)`, null, b);
+    }
+
     // Color Mastery Perks: +N Gold wenn die korrekte Karte die passende Farbe hat
     if (winnerCard) {
       const cardColor = winnerCard.color || '';
@@ -291,16 +348,28 @@ export default function Game({
         const matches = cbp.colorValue === 'colorless'
           ? (!cardColor || cardColor === 'colorless')
           : cardColor.includes(cbp.colorValue);
-        if (matches) { const b = finalGold; finalGold += cbp.value; flatGoldBonus += cbp.value; snap(cbp.name, giPerk(cbp), b); }
+        if (matches) {
+          const b = finalGold; finalGold += cbp.value; flatGoldBonus += cbp.value;
+          cascadeContext.flatsFired++; cascadeContext.effectsFired.add('color_bonus');
+          cascadeContext.bestFlatDelta = Math.max(cascadeContext.bestFlatDelta, cbp.value);
+          snap(cbp.name, giPerk(cbp), b);
+        }
       });
     }
 
-    // Momentum: stacking +5G flat per correct (reset on wrong)
+    // Momentum: stacking +N Gold flat per correct (reset on wrong)
+    // LIGHTNING MOMENTUM Combo: Momentum-Stack × Chain Lightning counter statt additiv
     if (perkSystem.activePerks.some(p => p.effect === 'momentum_flat')) {
       const momentumPerk = perkSystem.activePerks.find(p => p.effect === 'momentum_flat');
       perkSystem.momentumFlatStackRef.current += momentumPerk?.value ?? 5;
-      const bonus = perkSystem.momentumFlatStackRef.current;
-      const b = finalGold; finalGold += bonus; flatGoldBonus += bonus; snap('Momentum', giPerk(momentumPerk), b);
+      let bonus = perkSystem.momentumFlatStackRef.current;
+      if (perkCombos.hasCombo('lightning_momentum') && perkSystem.chainLightningCounterRef.current > 1) {
+        bonus = Math.floor(bonus * perkSystem.chainLightningCounterRef.current);
+      }
+      const b = finalGold; finalGold += bonus; flatGoldBonus += bonus;
+      cascadeContext.flatsFired++; cascadeContext.effectsFired.add('momentum_flat');
+      cascadeContext.bestFlatDelta = Math.max(cascadeContext.bestFlatDelta, bonus);
+      snap('Momentum', giPerk(momentumPerk), b);
     }
 
     // Compound Interest & Time Bomb: nur Counter erhöhen, Payout als XP on expiry
@@ -318,8 +387,12 @@ export default function Game({
       if (chainCount > 1) {
         const chainStep = perkSystem.getPerkValue('chain_lightning_counter') ?? 0.25;
         const bonus = Math.floor(finalGold * (chainCount - 1) * chainStep);
-        const b = finalGold; finalGold += bonus; flatGoldBonus += bonus;
-        snap(`Chain Lightning ×${chainCount}`, gi('chain_lightning'), b);
+        if (bonus > 0) {
+          const b = finalGold; finalGold += bonus; flatGoldBonus += bonus;
+          cascadeContext.flatsFired++; cascadeContext.effectsFired.add('chain_lightning_counter');
+          cascadeContext.bestFlatDelta = Math.max(cascadeContext.bestFlatDelta, bonus);
+          snap(`Chain Lightning ×${chainCount}`, gi('chain_lightning'), b);
+        }
       }
     }
 
@@ -327,68 +400,136 @@ export default function Game({
     if (perkSystem.bloodlustChargesRef.current > 0 && perkSystem.activePerks.some(p => p.effect === 'bloodlust_charges')) {
       const charges = perkSystem.bloodlustChargesRef.current;
       perkSystem.bloodlustChargesRef.current = 0;
-      const b = finalGold; finalGold += charges; flatGoldBonus += charges; snap('Bloodlust', gi('bloodlust'), b);
+      const b = finalGold; finalGold += charges; flatGoldBonus += charges;
+      cascadeContext.flatsFired++; cascadeContext.effectsFired.add('bloodlust_charges');
+      cascadeContext.bestFlatDelta = Math.max(cascadeContext.bestFlatDelta, charges);
+      snap('Bloodlust', gi('bloodlust'), b);
     }
 
     // Echo Chamber: repeat last answer's Gold bonus delta
+    // BLOOD ECHO Combo: Echo-Bonus ×1.5 wenn Bloodlust ebenfalls aktiv
     if (perkSystem.activePerks.some(p => p.effect === 'echo_chamber') && perkSystem.echoLastBonusRef.current > 0) {
-      const echo = perkSystem.echoLastBonusRef.current;
-      const b = finalGold; finalGold += echo; flatGoldBonus += echo; snap('Echo Chamber', gi('echo_chamber'), b);
+      let echo = perkSystem.echoLastBonusRef.current;
+      if (perkCombos.hasCombo('blood_echo')) echo = Math.floor(echo * 1.5);
+      const b = finalGold; finalGold += echo; flatGoldBonus += echo;
+      cascadeContext.flatsFired++; cascadeContext.effectsFired.add('echo_chamber');
+      cascadeContext.bestFlatDelta = Math.max(cascadeContext.bestFlatDelta, echo);
+      snap(perkCombos.hasCombo('blood_echo') ? 'Blood Echo' : 'Echo Chamber', gi('echo_chamber'), b);
     }
 
     // ════════════════════════════════════════════════════════════
     // PHASE B — PERK-MULTIPLIKATOREN (Gold-Mults)
+    // Reihenfolge ist deterministisch (synchron) — Chain Reaction und First Spark
+    // reagieren auf diese Reihenfolge.
     // ════════════════════════════════════════════════════════════
 
-    // Double Gold: ×2
-    if (multiplierPerk?.value) { const b = finalGold; finalGold *= multiplierPerk.value; snap(multiplierPerk.name, giPerk(multiplierPerk), b, true); }
+    const _applyMult = (multValue, label, icon) => {
+      // First Spark: verdoppelt den ersten Multiplikator der feuert
+      if (!cascadeContext.firstMultApplied && perkSystem.activePerks.some(p => p.effect === 'first_spark')) {
+        multValue *= 2;
+        cascadeContext.firstMultApplied = true;
+      }
+      // Chain Reaction Perk: jeder Multiplikator akkumuliert einen Bonus auf folgende
+      multValue += cascadeContext.chainBonus;
+      const chainReactionVal = perkSystem.getPerkValue('chain_reaction_perk');
+      if (chainReactionVal != null) cascadeContext.chainBonus += chainReactionVal;
+      return multValue;
+    };
+
+    // Double Gold: ×1.5/×2
+    if (multiplierPerk?.value) {
+      const mv = _applyMult(multiplierPerk.value, multiplierPerk.name, giPerk(multiplierPerk));
+      const b = finalGold; finalGold *= mv;
+      cascadeContext.multsFired++; cascadeContext.effectsFired.add('point_multiplier');
+      snap(`${multiplierPerk.name}${mv !== multiplierPerk.value ? ' (Spark)' : ''}`, giPerk(multiplierPerk), b, true);
+    }
 
     // Glass Mind: ×3 Gold on all correct answers (risk: -2 lives on wrong)
+    // DEATH SPIRAL Combo: bei 1 Leben wird Glass Mind zu ×7 (statt ×3)
     if (perkSystem.activePerks.some(p => p.effect === 'glass_mind')) {
-      const b = finalGold; finalGold *= 3; snap('Glass Mind', gi('glass_mind'), b, true);
+      const baseGlassMult = (perkCombos.hasCombo('death_spiral') && effectiveLives === 1) ? 7 : 3;
+      const mv = _applyMult(baseGlassMult, 'Glass Mind', gi('glass_mind'));
+      const b = finalGold; finalGold *= mv;
+      cascadeContext.multsFired++; cascadeContext.effectsFired.add('glass_mind');
+      snap(perkCombos.hasCombo('death_spiral') && effectiveLives === 1 ? 'Death Spiral' : 'Glass Mind', gi('glass_mind'), b, true);
     }
 
     // Dead Man's Hand: ×5 Gold at 1 life
     if (effectiveLives === 1 && perkSystem.activePerks.some(p => p.effect === 'dead_mans_hand')) {
-      const b = finalGold; finalGold *= 5; snap("Dead Man's Hand", gi('dead_mans_hand'), b, true);
+      const mv = _applyMult(5, "Dead Man's Hand", gi('dead_mans_hand'));
+      const b = finalGold; finalGold *= mv;
+      cascadeContext.multsFired++; cascadeContext.effectsFired.add('dead_mans_hand');
+      snap("Dead Man's Hand", gi('dead_mans_hand'), b, true);
       if (lives !== 1) fakeBonus += finalGold - b;
     }
 
     // Overclock: ×2 Gold (timer also runs at 2× speed)
+    // OVERCAUTIOUS OVERCLOCKER Combo: nur ×1.5 Gold (Cap wird separat in Phase E erhöht)
     if (perkSystem.activePerks.some(p => p.effect === 'overclock')) {
-      const b = finalGold; finalGold *= 2; snap('Overclock', gi('overclock'), b, true);
+      const overclockMult = perkCombos.hasCombo('overcautious_overclocker') ? 1.5 : 2;
+      const mv = _applyMult(overclockMult, 'Overclock', gi('overclock'));
+      const b = finalGold; finalGold *= mv;
+      cascadeContext.multsFired++; cascadeContext.effectsFired.add('overclock');
+      snap('Overclock', gi('overclock'), b, true);
     }
 
     // Sacrifice Ritual: ×3 Gold wenn manuell aktiviert
     if (sacrificeRitualActive) {
-      const b = finalGold; finalGold *= 3; snap('Sacrifice Ritual', gi('sacrifice_ritual'), b, true);
+      const mv = _applyMult(3, 'Sacrifice Ritual', gi('sacrifice_ritual'));
+      const b = finalGold; finalGold *= mv;
+      cascadeContext.multsFired++; cascadeContext.effectsFired.add('sacrifice_ritual');
+      snap('Sacrifice Ritual', gi('sacrifice_ritual'), b, true);
       setSacrificeRitualActive(false);
     }
 
     // Gambler: 60% ×2 Gold, 40% ×0
+    // GLASS GAMBLER Combo: Win-Rate auf 75%
+    // WILDCARD GAMBLER Combo: bestimmt Wildcard-Outcome
     if (perkSystem.activePerks.some(p => p.effect === 'gambler_roll')) {
+      const gamblerWinRate = perkCombos.hasCombo('glass_gambler') ? 0.75 : 0.6;
       const b = finalGold;
       const roll = Math.random();
-      if (roll < 0.6) { finalGold *= 2; snap('Gambler Win', gi('gambler'), b, true); }
-      else { finalGold = 0; snap('Gambler Loss', gi('gambler'), b, true); }
+      let gamblerWon = false;
+      if (roll < gamblerWinRate) {
+        const mv = _applyMult(2, 'Gambler Win', gi('gambler'));
+        finalGold *= mv; snap('Gambler Win', gi('gambler'), b, true);
+        gamblerWon = true;
+      } else {
+        finalGold = 0; snap('Gambler Loss', gi('gambler'), b, true);
+      }
+      cascadeContext.multsFired++; cascadeContext.effectsFired.add('gambler_roll');
+      // Wildcard Gambler: merke Ergebnis für Wildcard-Block
+      cascadeContext._gamblerWon = gamblerWon;
+      cascadeContext._gamblerRolled = true;
     }
 
     // Roulette: ×(1–8) random Gold
+    // DEAD MAN'S ROULETTE Combo: Minimum ×4 bei 1 Leben
     if (perkSystem.activePerks.some(p => p.effect === 'roulette')) {
       const b = finalGold;
-      const roll = Math.floor(Math.random() * 8) + 1;
-      finalGold *= roll; snap(`Roulette ×${roll}`, gi('roulette'), b, true);
+      let roll = Math.floor(Math.random() * 8) + 1;
+      if (perkCombos.hasCombo('dead_mans_roulette') && effectiveLives === 1) roll = Math.max(roll, 4);
+      const mv = _applyMult(roll, `Roulette ×${roll}`, gi('roulette'));
+      finalGold *= mv;
+      cascadeContext.multsFired++; cascadeContext.effectsFired.add('roulette');
+      snap(`Roulette ×${roll}`, gi('roulette'), b, true);
     }
 
-    // Wildcard: random Gold bonus (scaled down from score values)
+    // Wildcard: random Gold bonus
+    // WILDCARD GAMBLER Combo: bei Gambler-Win immer Topwert, bei Gambler-Loss kein Roll
     if (perkSystem.activePerks.some(p => p.effect === 'wildcard')) {
-      const wildcardRoll = Math.random();
-      const b = finalGold;
-      if (wildcardRoll < 0.25) { finalGold *= 2; snap('Wildcard ×2', gi('wildcard'), b, true); }
-      else if (wildcardRoll < 0.45) { finalGold *= 3; snap('Wildcard ×3', gi('wildcard'), b, true); }
-      else if (wildcardRoll < 0.65) { finalGold += 10; snap('Wildcard +10G', gi('wildcard'), b); }
-      else if (wildcardRoll < 0.85) { finalGold += 25; snap('Wildcard +25G', gi('wildcard'), b); }
-      // else: nothing (~15%)
+      if (cascadeContext._gamblerRolled && !cascadeContext._gamblerWon) {
+        // Wildcard Gambler: Gambler verloren → Wildcard feuert nicht
+      } else {
+        const wildcardRoll = (cascadeContext._gamblerRolled && cascadeContext._gamblerWon) ? 0 : Math.random(); // 0 = immer Top
+        const b = finalGold;
+        if (wildcardRoll < 0.25) { const mv = _applyMult(2, 'Wildcard ×2', gi('wildcard')); finalGold *= mv; snap('Wildcard ×2', gi('wildcard'), b, true); cascadeContext.multsFired++; }
+        else if (wildcardRoll < 0.45) { const mv = _applyMult(3, 'Wildcard ×3', gi('wildcard')); finalGold *= mv; snap('Wildcard ×3', gi('wildcard'), b, true); cascadeContext.multsFired++; }
+        else if (wildcardRoll < 0.65) { finalGold += 10; snap('Wildcard +10G', gi('wildcard'), b); cascadeContext.flatsFired++; }
+        else if (wildcardRoll < 0.85) { finalGold += 25; snap('Wildcard +25G', gi('wildcard'), b); cascadeContext.flatsFired++; }
+        // else: nothing (~15%)
+        cascadeContext.effectsFired.add('wildcard');
+      }
     }
 
     // Referenzpunkt für Hermit/Minimalist: alles ab hier ist Relic-Anteil
@@ -545,12 +686,49 @@ export default function Game({
       const b = finalGold; finalGold += fakeBonus; snap('Cheater', gi('cheater'), b);
     }
 
-    // Overcautious: Gold-Cap 50G per answer
+    // Overcautious: Gold-Cap per answer
+    // OVERCAUTIOUS OVERCLOCKER Combo: Cap erhöht auf 120
     if (perkSystem.activePerks.some(p => p.effect === 'overcautious')) {
-      const cap = perkSystem.activePerks.find(p => p.effect === 'overcautious')?.value ?? 50;
+      const baseCap = perkSystem.activePerks.find(p => p.effect === 'overcautious')?.value ?? 50;
+      const cap = perkCombos.hasCombo('overcautious_overclocker') ? 120 : baseCap;
       if (finalGold > cap) {
         const b = finalGold; finalGold = cap; snap('Overcautious', gi('overcautious'), b);
       }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // PHASE E.5 — CASCADE PERKS (reagieren auf was oben gefeuert hat)
+    // ════════════════════════════════════════════════════════════
+
+    // Echo Prime: besten Flat-Gold-Bonus der Vorrunde zu 50% wiederholen
+    if (perkSystem.activePerks.some(p => p.effect === 'echo_prime')) {
+      const prevBest = perkSystem.echoPrimeBestRef.current;
+      // Ref jetzt für nächste Runde aktualisieren
+      perkSystem.echoPrimeBestRef.current = cascadeContext.bestFlatDelta;
+      if (prevBest > 0) {
+        const echoPrimeBonus = Math.floor(prevBest * (perkSystem.getPerkValue('echo_prime') ?? 0.5));
+        if (echoPrimeBonus >= 1) {
+          const b = finalGold; finalGold += echoPrimeBonus;
+          snap('Echo Prime', gi('echo_prime'), b);
+        }
+      } else {
+        // Erste Runde: nur speichern, kein Bonus
+        perkSystem.echoPrimeBestRef.current = cascadeContext.bestFlatDelta;
+      }
+    }
+
+    // Ripple Effect: +4G pro Phase-A Perk der Gold gab
+    if (perkSystem.activePerks.some(p => p.effect === 'ripple_effect') && cascadeContext.flatsFired > 0) {
+      const rippleBonus = cascadeContext.flatsFired * (perkSystem.getPerkValue('ripple_effect') ?? 4);
+      const b = finalGold; finalGold += rippleBonus;
+      snap(`Ripple (${cascadeContext.flatsFired}×)`, gi('ripple_effect'), b);
+    }
+
+    // Catalyst: wenn 4+ distinct Perk-Effekte gefeuert haben, +30% aufs gesamte Gold
+    if (perkSystem.activePerks.some(p => p.effect === 'catalyst') && cascadeContext.effectsFired.size >= 4) {
+      const catalystMult = 1 + (perkSystem.getPerkValue('catalyst') ?? 0.3);
+      const b = finalGold; finalGold *= catalystMult;
+      snap(`Catalyst (${cascadeContext.effectsFired.size} effects)`, gi('catalyst'), b, true);
     }
 
     // Echo Chamber: speichere aktuellen Gold-Bonus-Delta für nächste Runde
@@ -558,8 +736,21 @@ export default function Game({
       perkSystem.echoLastBonusRef.current = Math.max(0, finalGold - baseGold);
     }
 
-    return { gold: Math.floor(finalGold), goldBreakdown: breakdown };
-  }, [perkSystem, getTimerDuration, relicSystem, ironWillActive, comboMultiplier, sacrificeRitualActive, synergyEngine, lives, masochistMult]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Starting Kit Gold-Multiplikator (z.B. Berserker ×1.25)
+    if (kitGoldMultRef.current !== 1.0) {
+      const b = finalGold; finalGold = Math.floor(finalGold * kitGoldMultRef.current);
+      if (finalGold !== b) snap('Kit Bonus', null, b, true);
+    }
+
+    // Ascension Gold-Reduktion
+    const _ascMods = ascension.getModifiers();
+    if (_ascMods.goldReduction) {
+      const b = finalGold; finalGold = Math.floor(finalGold * (1 - _ascMods.goldReduction));
+      if (finalGold !== b) snap(`Ascension (−${Math.round(_ascMods.goldReduction * 100)}%)`, null, b);
+    }
+
+    return { gold: Math.floor(finalGold), goldBreakdown: breakdown, cascadeContext };
+  }, [perkSystem, perkCombos, getTimerDuration, relicSystem, ironWillActive, comboMultiplier, sacrificeRitualActive, synergyEngine, lives, masochistMult, ascension]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveCurrentRun = useCallback(() => {
     if (user?.guest || currentRound <= 1 || runLoggedRef.current) return;
@@ -629,8 +820,11 @@ export default function Game({
         const baseGold = calculateBaseGold() + wellspringBonus + streakGold;
         const winnerCard = cardLoader.currentPair[correctCardIndex];
         const _currentDuration = getTimerDuration();
-        const isPerfect = timer.timeLeft >= _currentDuration - 1;
-        const { gold: goldEarned, goldBreakdown: perkGoldBreakdown } = applyGoldEffects(baseGold, timer.timeLeft, winnerCard, isPerfect);
+        // SLOW PERFECTIONIST Combo: Perfectionist aktiviert ab 4s Rest (statt voller Timer)
+        const isPerfect = (perkCombos.hasCombo('slow_perfectionist'))
+          ? timer.timeLeft >= 4
+          : timer.timeLeft >= _currentDuration - 1;
+        const { gold: goldEarned, goldBreakdown: perkGoldBreakdown, cascadeContext } = applyGoldEffects(baseGold, timer.timeLeft, winnerCard, isPerfect);
         let totalGold = goldEarned;
         const extraGoldBreakdown = [];
 
@@ -653,14 +847,29 @@ export default function Game({
         // Exponentieller Streak-XP-Bonus ab Streak 5 (pro Antwort)
         const streakXPBonus = calculateStreakXP(effectiveStreakForBonus);
 
-        // Perfectionist Perk: ×3 XP auf perfekte Antwort
+        // Perfectionist Perk: ×2/×3 XP auf perfekte Antwort
         if (isPerfect && perkSystem.activePerks.some(p => p.effect === 'perfect_multiplier')) {
           xpGained = Math.floor(xpGained * (perkSystem.getPerkValue('perfect_multiplier') ?? 2));
         }
 
-        // Adrenaline Perk: +20% XP pro aktivem Perk
+        // Adrenaline Perk: +10% XP pro aktivem Perk
+        // OVERCLOCK ADRENALINE Combo: +15% statt +10% während Overclock aktiv
         if (perkSystem.activePerks.some(p => p.effect === 'adrenaline_mult')) {
-          xpGained = Math.floor(xpGained * (1 + perkSystem.activePerks.length * (perkSystem.getPerkValue('adrenaline_mult') ?? 0.1)));
+          const adrenalineTick = (perkCombos.hasCombo('overclock_adrenaline') && perkSystem.activePerks.some(p => p.effect === 'overclock'))
+            ? 0.15
+            : (perkSystem.getPerkValue('adrenaline_mult') ?? 0.1);
+          xpGained = Math.floor(xpGained * (1 + perkSystem.activePerks.length * adrenalineTick));
+        }
+
+        // SCHOLAR RUSH Combo: XP Boost flat verdoppelt wenn Adrenaline aktiv
+        if (perkCombos.hasCombo('scholar_rush') && perkSystem.activePerks.some(p => p.effect === 'flat_bonus')) {
+          const flatBoostVal = perkSystem.getPerkValue('flat_bonus') ?? 8;
+          xpGained += flatBoostVal; // Verdopplung: normaler flat_bonus läuft schon in calculateBaseXP, hier +1× extra
+        }
+
+        // Resonance Perk: +6 XP pro distinct Perk-Effekt der gefeuert hat
+        if (perkSystem.activePerks.some(p => p.effect === 'resonance_xp') && cascadeContext.effectsFired.size > 0) {
+          xpGained += cascadeContext.effectsFired.size * (perkSystem.getPerkValue('resonance_xp') ?? 6);
         }
 
         // MOMENTUM Relic: +2 XP pro Streak-Stufe
@@ -749,20 +958,30 @@ export default function Game({
           extraGoldBreakdown.push({ label: 'Jackpot!', icon: gi('jackpot'), delta: Math.round(totalGold - _jp) });
         }
 
-        // Mirror Image Perk: XP-Gain adds 50% as Gold
+        // Mirror Image Perk: XP-Gain adds 35% as Gold
+        // MIRROR PERFECTIONIST Combo: 100% Konversion auf perfekte Antwort
+        // MIDAS TOUCH Combo: 60% Konversion immer
         if (perkSystem.activePerks.some(p => p.effect === 'mirror_image')) {
-          const mirrorGold = Math.floor(xpGained * (perkSystem.getPerkValue('mirror_image') ?? 0.35));
+          let mirrorRate = perkSystem.getPerkValue('mirror_image') ?? 0.35;
+          if (perkCombos.hasCombo('mirror_perfectionist') && isPerfect) mirrorRate = 1.0;
+          else if (perkCombos.hasCombo('midas_touch')) mirrorRate = 0.6;
+          const mirrorGold = Math.floor(xpGained * mirrorRate);
           totalGold += mirrorGold;
-          extraGoldBreakdown.push({ label: 'Mirror Image', icon: gi('mirror_image'), delta: mirrorGold });
+          const mirrorLabel = perkCombos.hasCombo('mirror_perfectionist') && isPerfect ? 'Mirror Perfectionist' :
+                              perkCombos.hasCombo('midas_touch') ? 'Midas Touch' : 'Mirror Image';
+          extraGoldBreakdown.push({ label: mirrorLabel, icon: gi('mirror_image'), delta: mirrorGold });
         }
 
         // Treasure Map Perk: flat Gold, but reduced XP this round
+        // MIDAS TOUCH Combo: kein XP-Penalty
         if (perkSystem.activePerks.some(p => p.effect === 'treasure_map_gold')) {
           const treasureMapPerk = perkSystem.activePerks.find(p => p.effect === 'treasure_map_gold');
           const tmBonus = treasureMapPerk?.value ?? 12;
           totalGold += tmBonus;
           extraGoldBreakdown.push({ label: 'Treasure Map', icon: gi('treasure_map_perk'), delta: tmBonus });
-          xpGained = Math.floor(xpGained * (treasureMapPerk?.xpMultiplier ?? 0.5));
+          if (!perkCombos.hasCombo('midas_touch')) {
+            xpGained = Math.floor(xpGained * (treasureMapPerk?.xpMultiplier ?? 0.5));
+          }
         }
 
         // Heart Regeneration Overflow — vor level.addXP damit Ascension korrekt rechnet
@@ -816,6 +1035,8 @@ export default function Game({
 
         // Scholar-Synergy: XP-Schwelle 20% niedriger; XP addieren
         const scholarMult = synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1;
+        // Arcanist Kit: +20% XP
+        if (activeKitRef.current === 'kit_arcanist') xpGained = Math.floor(xpGained * 1.2);
         level.addXP(xpGained, scholarMult);
         achievements.trackLevel(level.level);
 
@@ -826,6 +1047,23 @@ export default function Game({
         stageScoreRef.current[mapSystem.currentStage] =
           (stageScoreRef.current[mapSystem.currentStage] ?? 0) + Math.floor(totalGold);
         stageCorrectRef.current += 1;
+
+        // Bounty-Fortschritt tracken
+        if (activeBountyRef.current) {
+          bountyCorrectRef.current++;
+          bountyMaxStreakRef.current = Math.max(bountyMaxStreakRef.current, newStreakValue);
+          bountyStageGoldRef.current += Math.floor(totalGold);
+          if (activeBountyRef.current.id === 'first_5_perfect' && mapSystem.stageRound <= 5 && isPerfect) {
+            bountyPerfectFirst5Ref.current++;
+          }
+          setBountyProgress({
+            correct: bountyCorrectRef.current,
+            wrong: bountyWrongRef.current,
+            maxStreak: bountyMaxStreakRef.current,
+            stageGold: bountyStageGoldRef.current,
+            perfectFirst5: bountyPerfectFirst5Ref.current,
+          });
+        }
 
         achievements.trackCorrectAnswer(timer.timeLeft, getTimerDuration(), false, totalGold);
         achievements.trackScore(gold.totalEarnedGoldRef.current);
@@ -922,6 +1160,11 @@ export default function Game({
           achievements.trackShieldSave();
         } else {
           wrongCountRef.current++;
+          // Bounty: falsche Antwort tracken
+          if (activeBountyRef.current) {
+            bountyWrongRef.current++;
+            setBountyProgress(prev => ({ ...prev, wrong: bountyWrongRef.current }));
+          }
           // Unstoppable (Synergy) → Streak Shield (Relic) → Normal Reset
           if (synergyEngine.hasSynergy('unstoppable')) {
             // Streak bleibt unberührt
@@ -938,6 +1181,21 @@ export default function Game({
           // Combo Master Reset bei Fehler (außer Unstoppable)
           if (relicSystem.hasRelic('combo_master') && !synergyEngine.hasSynergy('unstoppable')) setComboMultiplier(1);
 
+          // ── Speedrunner Kit: -5G pro falscher Antwort ─────────
+          if (activeKitRef.current === 'kit_speedrunner') {
+            gold.spendGold(5);
+          }
+
+          // ── Curse Effects ─────────────────────────────────────
+          // curse_gold_debt: -15G pro falscher Antwort
+          if (perkSystem.activePerks.some(p => p.effect === 'curse_gold_debt')) {
+            gold.spendGold(perkSystem.getPerkValue('curse_gold_debt') ?? 15);
+          }
+          // curse_fragile_mind: -1 extra Leben
+          if (perkSystem.activePerks.some(p => p.effect === 'curse_fragile_mind')) {
+            setLives(prev => Math.max(0, prev - 1));
+          }
+
           // ── Balatro Wrong-Answer Effects ──────────────────────
           // Chain Lightning: reset consecutive counter
           perkSystem.chainLightningCounterRef.current = 0;
@@ -949,12 +1207,16 @@ export default function Game({
           }
           // Echo Chamber: reset last bonus (wrong = no echo next round)
           perkSystem.echoLastBonusRef.current = 0;
+          // Echo Prime: reset best flat delta on wrong answer
+          perkSystem.echoPrimeBestRef.current = 0;
 
           // Glass Mind: extra -1 life on wrong
+          // GLASS GAMBLER Combo: Glass Mind Penalty nur -1 Leben statt -2
           const hasGlassMind = perkSystem.activePerks.some(p => p.effect === 'glass_mind');
+          const glassMindExtraLives = (hasGlassMind && perkCombos.hasCombo('glass_gambler')) ? 0 : (hasGlassMind ? 1 : 0);
           // Dead Man's Hand: instant death on wrong at 1 life
           const hasDeadMansHand = perkSystem.activePerks.some(p => p.effect === 'dead_mans_hand');
-          const livesLost = 1 + (hasGlassMind ? 1 : 0);
+          const livesLost = 1 + glassMindExtraLives;
           const remainingLives = hasDeadMansHand ? 0 : lives - livesLost;
           setLives(Math.max(0, remainingLives));
 
@@ -992,6 +1254,13 @@ export default function Game({
           level.addXP(wrongXP, scholarMultWrong);
 
           if (remainingLives <= 0) {
+            // Crystals für Game Over: mind. 1 Stage abgeschlossen → Math.ceil(stagesCleared / 2)
+            // (Stage 1 = 1 Crystal, Stage 8 = 4 Crystals; Boss-Kill bleibt bei 5 base)
+            if (metaProgression && mapSystem.currentStage > 1) {
+              const stagesCleared = mapSystem.currentStage - 1;
+              const baseCrystals = Math.ceil(stagesCleared / 2);
+              metaProgression.addCrystals(ascension.getAscensionCrystalBonus(baseCrystals));
+            }
             setGameOver(true);
             level.dismissLevelUp();
             savedRun.clearRun(); // Tod = kein Continue mehr möglich
@@ -1012,19 +1281,32 @@ export default function Game({
         }
       }
 
+      // NUCLEAR OPTION Combo: Time Bomb + Compound Interest — beide Payouts ×1.5 wenn gleichzeitig ablaufen
+      const _nuclearActive = perkCombos.hasCombo('nuclear_option');
+      let _nuclearTimeBombPayout = 0;
+      let _nuclearCompoundPayout = 0;
       perkSystem.decrementPerkDurations(relicSystem.hasRelic('perk_recycler'), (expiredPerk) => {
         // Perk-Payout bei Ablauf (Time Bomb → XP, Compound Interest → XP)
         if (expiredPerk.effect === 'time_bomb_counter') {
-          const payout = perkSystem.timeBombCounterRef.current * 15;
-          if (payout > 0) level.addXP(payout, synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1);
+          _nuclearTimeBombPayout = perkSystem.timeBombCounterRef.current * 15;
+          if (!_nuclearActive && _nuclearTimeBombPayout > 0) {
+            level.addXP(_nuclearTimeBombPayout, synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1);
+          }
         }
         if (expiredPerk.effect === 'compound_interest') {
-          const payout = perkSystem.compoundInterestAccRef.current;
-          if (payout > 0) level.addXP(payout, synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1);
+          _nuclearCompoundPayout = perkSystem.compoundInterestAccRef.current;
+          if (!_nuclearActive && _nuclearCompoundPayout > 0) {
+            level.addXP(_nuclearCompoundPayout, synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1);
+          }
         }
       });
+      // Nuclear Option: kombinierter Payout ×1.5
+      if (_nuclearActive && (_nuclearTimeBombPayout + _nuclearCompoundPayout) > 0) {
+        const combined = Math.floor((_nuclearTimeBombPayout + _nuclearCompoundPayout) * 1.5);
+        level.addXP(combined, synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1);
+      }
     },
-    [cardLoader.currentPair, timer, streak, lives, user, setUser, refreshUser, perkSystem, achievements, applyGoldEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult, runLogger, saveCurrentRun, gold, mapSystem] // eslint-disable-line react-hooks/exhaustive-deps
+    [cardLoader.currentPair, timer, streak, lives, user, setUser, refreshUser, perkSystem, perkCombos, achievements, applyGoldEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult, runLogger, saveCurrentRun, gold, mapSystem, metaProgression, ascension] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // Update handleChoiceRef when handleChoice changes
@@ -1065,7 +1347,31 @@ export default function Game({
       const bonuses = metaProgression.getStartingBonuses();
       if (bonuses.extraGold > 0) gold.addGold(bonuses.extraGold);
       if (bonuses.extraRelicSlot > 0) setRelicSlotsMax(4 + bonuses.extraRelicSlot);
-      // Lives and slots are handled via GAME_CONFIG overrides in actual game logic
+
+      // Starting Kit: Startperk equip + Nachteil-Refs setzen
+      activeKitRef.current = bonuses.activeKit ?? null;
+      if (bonuses.activeKit) {
+        const { PERKS } = await import('../constants/perkDefinitions');
+        if (bonuses.activeKit === 'kit_speedrunner' && PERKS.SLOW_TIME) perkSystem.selectPerk(PERKS.SLOW_TIME, { hasEternalFlame: false });
+        if (bonuses.activeKit === 'kit_arcanist' && PERKS.POINT_BOOST_EXTENDED) perkSystem.selectPerk(PERKS.POINT_BOOST_EXTENDED, { hasEternalFlame: false });
+        if (bonuses.activeKit === 'kit_berserker' && PERKS.DEAD_MANS_HAND) perkSystem.selectPerk(PERKS.DEAD_MANS_HAND, { hasEternalFlame: false });
+        // Arcanist: -1G pro korrekter Antwort (in applyGoldEffects Phase A)
+        kitGoldPenaltyRef.current = bonuses.activeKit === 'kit_arcanist' ? -1 : 0;
+        // Berserker: ×1.25 Gold; max 3 Leben
+        kitGoldMultRef.current = bonuses.activeKit === 'kit_berserker' ? 1.25 : 1.0;
+        if (bonuses.activeKit === 'kit_berserker') setLives(prev => Math.min(prev, 3));
+      } else {
+        kitGoldPenaltyRef.current = 0;
+        kitGoldMultRef.current = 1.0;
+      }
+    }
+
+    // Ascension-Modifier: startingLivesOffset
+    if (!continueMode) {
+      const ascMods = ascension.getModifiers();
+      if (ascMods.startingLivesOffset) {
+        setLives(prev => Math.max(1, prev + ascMods.startingLivesOffset));
+      }
     }
 
     if (initialCards && initialCards.length >= 2) {
@@ -1076,8 +1382,8 @@ export default function Game({
         await cardLoader.setNextPair();
       }
     }
-    mapSystem.generateMap();
-  }, [achievements, cardLoader, initialCards, mapSystem, continueMode, savedRun, gold, level, relicSystem, perkSystem, synergyEngine, metaProgression]); // eslint-disable-line react-hooks/exhaustive-deps
+    mapSystem.generateMap(ascension.getModifiers());
+  }, [achievements, cardLoader, initialCards, mapSystem, continueMode, savedRun, gold, level, relicSystem, perkSystem, synergyEngine, metaProgression, ascension]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initial Load
   useEffect(() => {
@@ -1102,13 +1408,14 @@ export default function Game({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [perkSystem.activePerks]);
 
-  // Map-Transition: Nach Shop/Rest/Map-Screen → neue Karte laden
+  // Map-Transition: Nach Shop/Rest/Curse/Map-Screen → neue Karte laden
   useEffect(() => {
     if (
       !mapSystem.showMap &&
       !mapSystem.showShop &&
       !mapSystem.showRest &&
       !mapSystem.showExchange &&
+      !mapSystem.showCurse &&
       !mapSystem.showStageComplete &&
       mapSystem.map &&
       mapSystem.currentStage > 1 &&
@@ -1117,20 +1424,39 @@ export default function Game({
       cardLoader.setNextPair(false, null, null, mapSystem.getCardParams());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapSystem.showMap, mapSystem.showShop, mapSystem.showRest, mapSystem.showExchange, mapSystem.showStageComplete]);
+  }, [mapSystem.showMap, mapSystem.showShop, mapSystem.showRest, mapSystem.showExchange, mapSystem.showCurse, mapSystem.showStageComplete]);
 
   const previousStageRef = useRef(mapSystem.currentStage);
   useEffect(() => {
     if (mapSystem.currentStage > previousStageRef.current) {
       perkSystem.rechargeStageStartUtilities();
+      // Curse: Slow Bleed — -1 Leben zu Stage-Beginn
+      if (perkSystem.activePerks.some(p => p.effect === 'curse_slow_bleed')) {
+        setLives(prev => Math.max(0, prev - 1));
+      }
+      // Bounty Node: zufälliges Ziel zuweisen
+      if (mapSystem.currentNodeType === NODE_TYPES.BOUNTY) {
+        const goal = BOUNTY_GOALS[Math.floor(Math.random() * BOUNTY_GOALS.length)];
+        activeBountyRef.current = goal;
+        setActiveBounty(goal);
+        bountyCorrectRef.current = 0;
+        bountyWrongRef.current = 0;
+        bountyMaxStreakRef.current = 0;
+        bountyStageGoldRef.current = 0;
+        bountyPerfectFirst5Ref.current = 0;
+        setBountyProgress({ correct: 0, wrong: 0, maxStreak: 0, stageGold: 0, perfectFirst5: 0 });
+      } else {
+        activeBountyRef.current = null;
+        setActiveBounty(null);
+      }
     }
     previousStageRef.current = mapSystem.currentStage;
-  }, [mapSystem.currentStage, perkSystem]);
+  }, [mapSystem.currentStage, perkSystem]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Start Timer when images loaded
   useEffect(() => {
     const anyModalOpen = mapSystem.showStageComplete || mapSystem.showMap ||
-      mapSystem.showShop || mapSystem.showRest || mapSystem.showExchange || Boolean(perkReplacementState) ||
+      mapSystem.showShop || mapSystem.showRest || mapSystem.showExchange || mapSystem.showCurse || Boolean(perkReplacementState) ||
       level.showLevelUp || eliteRelicPending;
     if (imagesLoaded.every(Boolean) && !showPrices && !anyModalOpen) {
       timer.start();
@@ -1156,6 +1482,14 @@ export default function Game({
     const nextRound = currentRound + 1;
     setCurrentRound(nextRound);
     achievements.trackRound(nextRound);
+
+    // Curse: Amnesia — Streak alle 5 Runden resetten
+    if (perkSystem.activePerks.some(p => p.effect === 'curse_amnesia')) {
+      const amnesiaInterval = perkSystem.getPerkValue('curse_amnesia') ?? 5;
+      if (mapSystem.stageRound % amnesiaInterval === 0) {
+        streak.resetStreak();
+      }
+    }
 
     // Card Counter Relic: alle 10 Runden +1 Leben — Overflow → Gold oder XP
     const cardCounterInterval = relicSystem.getRelicValue('round_heal');
@@ -1186,9 +1520,15 @@ export default function Game({
       mapSystem.advanceStageRound();
     } else {
       mapSystem.advanceStageRound();
-      cardLoader.setNextPair(false, null, null, mapSystem.getCardParams());
+      // Perk-Auswahl alle ROUNDS_BETWEEN_PERKS Runden (5) innerhalb einer Stage
+      if (mapSystem.stageRound % 5 === 0) {
+        const ascMods = ascension.getModifiers();
+        perkSystem.triggerPerkSelection(ascMods.perkChoices ?? 3);
+      } else {
+        cardLoader.setNextPair(false, null, null, mapSystem.getCardParams());
+      }
     }
-  }, [currentRound, achievements, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, gold, level, synergyEngine, mapSystem]);
+  }, [currentRound, achievements, cardLoader, relicSystem, setLives, flashRelic, tickRelic, lives, gold, level, synergyEngine, mapSystem, perkSystem, ascension, streak]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePerkSelect = useCallback(async (perk) => {
     const hasEternalFlame = relicSystem.hasRelic('eternal_flame');
@@ -1317,8 +1657,9 @@ export default function Game({
 
   const handlePerkReroll = useCallback(() => {
     if (!gold.spendGold(10)) return;
-    perkSystem.rerollPerks();
-  }, [gold, perkSystem]);
+    const ascMods = ascension.getModifiers();
+    perkSystem.rerollPerks(ascMods.perkChoices ?? 3);
+  }, [gold, perkSystem, ascension]);
 
   const handleLevelUpSkip = useCallback(() => {
     level.dismissLevelUp();
@@ -1433,6 +1774,21 @@ export default function Game({
       level.addXP(xpGained, scholarMult);
     }
   }, [gold, level, synergyEngine]);
+
+  // Curse Node callbacks
+  const handleCurseTake = useCallback((cursePerk) => {
+    if (!cursePerk) return;
+    // Apply curse perk (bypasses slot limits — no slotType)
+    perkSystem.selectPerk({ ...cursePerk, duration: -1 }, { hasEternalFlame: false });
+    // Reward: instant gold + relic pick (elite relic pending)
+    gold.addGold(cursePerk.curseRewardGold ?? 40);
+    setEliteRelicPending(true);
+    mapSystem.completeCurse();
+  }, [perkSystem, gold, mapSystem]);
+
+  const handleCurseSkip = useCallback(() => {
+    mapSystem.completeCurse();
+  }, [mapSystem]);
 
   const buildSavePayload = useCallback(() => ({
     gold: gold.gold,
@@ -1570,14 +1926,25 @@ export default function Game({
     bestComboMultiplierRef.current = 1;
     stageScoreRef.current = {};
     stageCorrectRef.current = 0;
+    kitGoldPenaltyRef.current = 0;
+    kitGoldMultRef.current = 1.0;
+    activeKitRef.current = null;
+    activeBountyRef.current = null;
+    setActiveBounty(null);
+    bountyCorrectRef.current = 0;
+    bountyWrongRef.current = 0;
+    bountyMaxStreakRef.current = 0;
+    bountyStageGoldRef.current = 0;
+    bountyPerfectFirst5Ref.current = 0;
+    setBountyProgress({ correct: 0, wrong: 0, maxStreak: 0, stageGold: 0, perfectFirst5: 0 });
     achievements.resetGameStats();
     runLogger.reset();
     mapSystem.reset();
 
     await cardLoader.preloadCards();
     await cardLoader.setNextPair();
-    mapSystem.generateMap();
-  }, [streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, gold, achievements, runLogger, saveCurrentRun, mapSystem, savedRun]);
+    mapSystem.generateMap(ascension.getModifiers());
+  }, [streak, timer, cardLoader, perkSystem, level, relicSystem, synergyEngine, gold, achievements, runLogger, saveCurrentRun, mapSystem, savedRun, ascension]);
 
   const handleImageLoad = useCallback((index) => {
     setImagesLoaded((prev) => {
@@ -1622,22 +1989,54 @@ export default function Game({
 
       {/* XP / Level-Display */}
       <div className="w-full max-w-2xl mb-1 sm:mb-2">
-        <div className="flex items-center gap-3">
-          {/* Level-Badge mit Glow bei Level-Up */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={level.level}
-              initial={{ scale: 1.4, boxShadow: "0 0 16px #fbbf24" }}
-              animate={{ scale: 1, boxShadow: "0 0 0px transparent" }}
-              transition={{ duration: 0.6 }}
-              className="bg-[#111827] border-2 border-amber-600 rounded-sm px-3 py-1 shrink-0"
-            >
-              <span className="text-amber-300 text-sm font-bold flex items-center gap-1"><GameIcon name='star' size={13} color='amber' /> Level {level.level}</span>
-            </motion.div>
-          </AnimatePresence>
+        {/* Mobile: zwei Zeilen. sm+: eine Zeile */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
 
-          {/* XP-Fortschrittsbalken */}
-          <div className="flex-1">
+          {/* Zeile 1 (mobile): Level + Gold + Seed — sm: inline mit XP-Bar */}
+          <div className="flex items-center gap-2 sm:contents">
+            {/* Level-Badge */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={level.level}
+                initial={{ scale: 1.4, boxShadow: "0 0 16px #fbbf24" }}
+                animate={{ scale: 1, boxShadow: "0 0 0px transparent" }}
+                transition={{ duration: 0.6 }}
+                className="bg-[#111827] border-2 border-amber-600 rounded-sm px-3 py-1 shrink-0"
+              >
+                <span className="text-amber-300 text-sm font-bold flex items-center gap-1"><GameIcon name='star' size={13} color='amber' /> Level {level.level}</span>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Spacer (mobile only) */}
+            <div className="flex-1 sm:hidden" />
+
+            {/* Gold-Anzeige */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={gold.gold}
+                initial={{ scale: 1.25 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 18 }}
+                className="shrink-0 flex items-center gap-1.5 bg-[#111827] border-2 border-yellow-500 rounded-sm px-3 py-1.5 shadow-pixel-sm"
+                title="Gold — earned from correct answers and streaks"
+              >
+                <GameIcon name="coin" color="amber" size={16} />
+                <span className="text-yellow-300 text-sm font-black">{gold.gold}</span>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Run-Seed Badge — opens map */}
+            <button
+              className="shrink-0 text-[9px] font-bold text-white/30 tracking-widest hover:text-white/60 transition-colors"
+              title="View Map"
+              onClick={() => mapSystem.openMap()}
+            >
+              #{runSeed}
+            </button>
+          </div>
+
+          {/* Zeile 2 (mobile) / Mitte (sm+): XP-Bar volle Breite */}
+          <div className="flex-1 sm:order-none">
             <div className="flex justify-between text-xs mb-1">
               <span className="font-semibold tracking-wide text-amber-400/70">XP</span>
               <span className="text-gray-500">{level.xp} / {level.xpToNextLevel}</span>
@@ -1685,29 +2084,6 @@ export default function Game({
             </div>
           </div>
 
-          {/* Gold-Anzeige — prominent */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={gold.gold}
-              initial={{ scale: 1.25 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 18 }}
-              className="shrink-0 flex items-center gap-1.5 bg-[#111827] border-2 border-yellow-500 rounded-sm px-3 py-1.5 shadow-pixel-sm"
-              title="Gold — earned from correct answers and streaks"
-            >
-              <GameIcon name="coin" color="amber" size={18} />
-              <span className="text-yellow-300 text-sm font-black">{gold.gold}</span>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Run-Seed Badge — opens map */}
-          <button
-            className="shrink-0 text-[9px] font-bold text-white/30 tracking-widest hover:text-white/60 transition-colors"
-            title="View Map"
-            onClick={() => mapSystem.openMap()}
-          >
-            #{runSeed}
-          </button>
         </div>
       </div>
 
@@ -1715,6 +2091,7 @@ export default function Game({
         perks={perkSystem.activePerks}
         relics={relicSystem.activeRelics}
         synergies={synergyEngine.activeSynergies}
+        activeCombos={perkCombos.activeCombos}
         flashingRelics={flashingRelics}
         tickingRelics={tickingRelics}
         currentRound={currentRound}
@@ -1734,6 +2111,17 @@ export default function Game({
         color={streak.getStreakColor()}
         streakBonus={streak.calculateStreakBonus()}
       />
+
+      {/* Bounty Node Indicator */}
+      <AnimatePresence>
+        {activeBounty && mapSystem.currentNodeType === NODE_TYPES.BOUNTY && !gameOver && (
+          <BountyIndicator
+            key={activeBounty.id}
+            goal={activeBounty}
+            progress={bountyProgress}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Heart Regen Progress */}
       {perkSystem.getHeartRegenProgress() && (
@@ -1767,6 +2155,7 @@ export default function Game({
           onChoice={handleChoice}
           onImageLoad={handleImageLoad}
           showSet={showSet}
+          hideName={perkSystem.activePerks.some(p => p.effect === 'curse_foggy')}
         />
       )}
 
@@ -1994,14 +2383,17 @@ export default function Game({
               setMessage('Run Complete! You defeated the Boss!');
               savedRun.clearRun();
               if (bossDefeated && metaProgression) {
-                metaProgression.addCrystals(5);
+                const crystalsEarned = ascension.getAscensionCrystalBonus(5);
+                metaProgression.addCrystals(crystalsEarned);
+                // Nächste Ascension-Stufe freischalten
+                ascension.unlockNextLevel();
               }
             }}
             onContinue={() => {
               setRunComplete(false);
               setEndlessDifficulty(prev => prev + 1);
               mapSystem.reset();
-              mapSystem.generateMap();
+              mapSystem.generateMap(ascension.getModifiers());
             }}
           />
         )}
@@ -2041,14 +2433,7 @@ export default function Game({
             stageScore={stageScoreRef.current[mapSystem.currentStage] ?? 0}
             stageCorrect={stageCorrectRef.current}
             level={level.level}
-            gold={gold.gold}
             nodeType={mapSystem.map?.currentNodeType}
-            onQuickInvest={(goldSpent) => {
-              if (gold.spendGold(goldSpent)) {
-                const scholarMult = synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1;
-                level.addXP(Math.floor(goldSpent * STAGE_COMPLETE_QUICK_RATE), scholarMult);
-              }
-            }}
             onContinue={() => {
               stageCorrectRef.current = 0;
               // Auto-save before dismissing
@@ -2073,6 +2458,41 @@ export default function Game({
                   mapSystem.map?.currentNodeType === NODE_TYPES.MINI_BOSS) {
                 setEliteRelicPending(true);
               }
+              // Bounty Node: Ziel prüfen und Belohnung vergeben
+              if (activeBountyRef.current) {
+                const bountyWon = checkBountyGoalWin(activeBountyRef.current, {
+                  correct: bountyCorrectRef.current,
+                  wrong: bountyWrongRef.current,
+                  maxStreak: bountyMaxStreakRef.current,
+                  stageGold: bountyStageGoldRef.current,
+                  perfectFirst5: bountyPerfectFirst5Ref.current,
+                });
+                if (bountyWon) {
+                  gold.addGold(activeBountyRef.current.goldReward);
+                  const scholarMult = synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1;
+                  level.addXP(activeBountyRef.current.xpReward, scholarMult);
+                  // Freier Perk nach dismissStageComplete (perkSystem.showPerkSelection zeigt Modal)
+                  // Handled after dismiss below
+                }
+                const _bountyWonForPerk = bountyWon;
+                activeBountyRef.current = null;
+                setActiveBounty(null);
+                setBountyProgress({ correct: 0, wrong: 0, maxStreak: 0, stageGold: 0, perfectFirst5: 0 });
+                // Boss defeated
+                if (mapSystem.currentStage >= TOTAL_STAGES) {
+                  setBossDefeated(true);
+                }
+                mapSystem.dismissStageComplete();
+                if (_bountyWonForPerk) {
+                  const ascMods = ascension.getModifiers();
+                  perkSystem.triggerPerkSelection(ascMods.perkChoices ?? 3);
+                }
+                // Nach Boss-Stage: Run-Complete-Modal anzeigen statt Map
+                if (mapSystem.currentStage >= TOTAL_STAGES) {
+                  setRunComplete(true);
+                }
+                return;
+              }
               // Boss defeated
               if (mapSystem.currentStage >= TOTAL_STAGES) {
                 setBossDefeated(true);
@@ -2093,6 +2513,9 @@ export default function Game({
             map={mapSystem.map}
             currentStage={mapSystem.currentStage}
             gold={gold.gold}
+            level={level.level}
+            xp={level.xp}
+            xpToNextLevel={level.xpToNextLevel}
             onChooseNode={(optIdx) => mapSystem.chooseNode(optIdx)}
             onExchange={handleExchangeComplete}
             onClose={mapSystem.mapViewOnly ? mapSystem.closeMap : undefined}
@@ -2135,6 +2558,16 @@ export default function Game({
             onRest={handleRest}
             onUpgradePerk={handleRestUpgradePerk}
             onSkip={mapSystem.completeRest}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {mapSystem.showCurse && !gameOver && (
+          <CurseScreen
+            gold={gold.gold}
+            onTake={handleCurseTake}
+            onSkip={handleCurseSkip}
           />
         )}
       </AnimatePresence>

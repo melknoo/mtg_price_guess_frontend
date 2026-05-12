@@ -9,17 +9,21 @@ export const NODE_TYPES = {
   MYSTERY: 'mystery',
   EXCHANGE: 'exchange',
   MINI_BOSS: 'mini_boss',
+  CURSE: 'curse',
+  BOUNTY: 'bounty',
 };
 
 export const NODE_WEIGHTS = {
-  normal: 55,
-  elite: 25,
-  shop: 12,
-  rest: 8,
+  normal: 50,
+  elite: 22,
+  shop: 10,
+  rest: 7,
+  curse: 6,
+  bounty: 10,
 };
 
 // Weights for guaranteed diversity: used when all nodes in a stage are NORMAL
-export const NON_NORMAL_WEIGHTS = { elite: 25, shop: 12, rest: 8, mystery: 15, exchange: 10 };
+export const NON_NORMAL_WEIGHTS = { elite: 22, shop: 10, rest: 7, mystery: 12, exchange: 8, curse: 6, bounty: 10 };
 
 export const NODE_ICONS = {
   normal: 'sword',
@@ -30,6 +34,8 @@ export const NODE_ICONS = {
   mystery: 'interrogation',
   exchange: 'coin',
   mini_boss: 'bullet',
+  curse: 'skull',
+  bounty: 'trophy',
 };
 
 export const NODE_LABELS = {
@@ -41,6 +47,8 @@ export const NODE_LABELS = {
   mystery: 'Mystery',
   exchange: 'Exchange',
   mini_boss: 'Mini Boss',
+  curse: 'Curse',
+  bounty: 'Bounty',
 };
 
 export const NODE_DESCRIPTIONS = {
@@ -52,6 +60,8 @@ export const NODE_DESCRIPTIONS = {
   mystery: 'Unknown — could be anything',
   exchange: 'Convert Gold into XP at favorable rates',
   mini_boss: '10 rounds, tough fight — Relic drop reward',
+  curse: 'Accept a curse for immediate gold and a relic',
+  bounty: '10 rounds with a hidden goal — bonus rewards on completion',
 };
 
 export const MERCHANT_TYPES = {
@@ -106,6 +116,16 @@ export const EXCHANGE_RATES = [
 ];
 
 export const STAGE_COMPLETE_QUICK_RATE = 2.5;
+
+// Bounty Goals — randomly assigned when entering a Bounty node
+export const BOUNTY_GOALS = [
+  { id: 'answer_8_of_10',    label: 'Get 8/10 correct',       description: 'Answer 8 of 10 questions correctly.',     goldReward: 50,  xpReward: 30 },
+  { id: 'streak_5',          label: 'Reach a 5-streak',       description: 'Build a streak of 5 correct answers.',    goldReward: 40,  xpReward: 20 },
+  { id: 'no_wrong',          label: 'No wrong answers',       description: 'Complete the stage without any mistakes.', goldReward: 80,  xpReward: 50 },
+  { id: 'earn_200g',         label: 'Earn 200G this stage',   description: 'Earn at least 200 gold during the stage.', goldReward: 60,  xpReward: 25 },
+  { id: 'reach_streak_10',   label: 'Reach a 10-streak',      description: 'Build a streak of 10 correct answers.',   goldReward: 100, xpReward: 60 },
+  { id: 'first_5_perfect',   label: 'First 5 answers perfect', description: 'Answer the first 5 with full timer remaining.', goldReward: 70, xpReward: 40 },
+];
 
 // Act structure for the 9-stage run
 export const ACT_STRUCTURE = {

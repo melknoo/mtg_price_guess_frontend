@@ -43,6 +43,14 @@ export const ITEM_ICONS = {
   treasure_map_perk:         { icon: 'map',        color: 'amber' },
   overcautious:              { icon: 'shield',     color: 'teal' },
 
+  // ─── CASCADE PERKS ───────────────────────────────────────────────────────
+  ripple_effect:             { icon: 'signal',     color: 'teal' },       // ripple = aufsteigende Wellen
+  resonance_xp:              { icon: 'sound',      color: 'purple' },     // resonance = Schallwelle
+  first_spark:               { icon: 'thunder',    color: 'orange' },     // spark = Blitz
+  echo_prime:                { icon: 'duplicate',  color: 'orange' },     // echo prime = Duplikat vom Besten
+  chain_reaction_perk:       { icon: 'path_follow',color: 'red' },        // chain reaction = Pfad/Kette
+  catalyst:                  { icon: 'particle',   color: 'amber' },      // catalyst = Partikelreaktion
+
   // ─── RELICS ──────────────────────────────────────────────────────────────
 
   combo_master:              { icon: 'ring',       color: 'amber' },      // combo = verkettete Ringe

@@ -150,7 +150,7 @@ function getCounterInfo(item, currentRound, heartRegenProgress, fortressRegenCou
   return null;
 }
 
-export default function ActivePerksDisplay({ perks, relics = [], synergies = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1, showPerkSelection = false, passiveSlotInfo = null, utilitySlotInfo = null, compoundAccRef = null, relicSlotsMax = 4 }) {
+export default function ActivePerksDisplay({ perks, relics = [], synergies = [], activeCombos = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1, showPerkSelection = false, passiveSlotInfo = null, utilitySlotInfo = null, compoundAccRef = null, relicSlotsMax = 4 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSynergyId, setExpandedSynergyId] = useState(null);
 
@@ -243,6 +243,26 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                   ticking={tickingRelics.has(syn.id)}
                   counterInfo={getCounterInfo(syn, currentRound, heartRegenProgress, fortressRegenCount)}
                 />
+              ))}
+              {activeCombos.length > 0 && (
+                <div key="header-combos" className="text-[8px] font-bold text-purple-400/50 uppercase tracking-widest border-t border-purple-500/20 pt-1 mt-0.5">
+                  Combos
+                </div>
+              )}
+              {activeCombos.map((combo) => (
+                <motion.div
+                  key={combo.id}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -8 }}
+                  className="bg-gradient-to-b from-purple-900/60 to-indigo-900/60 border-l-2 border-purple-400 rounded-none p-1.5 min-w-[80px]"
+                >
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <GameIcon name="puzzle" color="purple" size={9} />
+                    <span className="text-[8px] font-black text-purple-300 tracking-widest leading-tight">{combo.name}</span>
+                  </div>
+                  <div className="text-[8px] text-purple-300/70 leading-tight">{combo.description}</div>
+                </motion.div>
               ))}
             </AnimatePresence>
           </div>
@@ -351,6 +371,18 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                       </div>
                     );
                   })}
+                  {activeCombos.length > 0 && (
+                    <div className="text-xs text-purple-400/70 font-bold uppercase tracking-wider mt-1 mb-0.5 border-t border-purple-500/20 pt-1">Combos</div>
+                  )}
+                  {activeCombos.map((combo) => (
+                    <div key={combo.id} className="bg-gradient-to-r from-purple-900/60 to-indigo-900/60 border-l-2 border-purple-400 rounded-none p-2">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <GameIcon name="puzzle" color="purple" size={11} />
+                        <span className="text-xs font-black text-purple-300 tracking-wide">{combo.name}</span>
+                      </div>
+                      <div className="text-xs text-purple-300/70 leading-snug">{combo.description}</div>
+                    </div>
+                  ))}
                 </div>
               </motion.div>
             </>

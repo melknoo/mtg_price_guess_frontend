@@ -26,7 +26,7 @@ function pickWeightedNonNormal(weights) {
 }
 
 // Generiert eine vollstaendige Map gemaess ACT_STRUCTURE
-function generateMapData() {
+function generateMapData({ noRestNodes = false } = {}) {
   const stages = [];
 
   for (let stageNum = 1; stageNum <= TOTAL_STAGES; stageNum++) {
@@ -83,12 +83,21 @@ function generateMapData() {
       stages[target.stageIndex][target.optionIndex].type = NODE_TYPES.SHOP;
     }
   }
-  if (!hasRest) {
+  if (!hasRest && !noRestNodes) {
     const normalNodes = optionNodes.filter(n => n.type === NODE_TYPES.NORMAL);
     if (normalNodes.length > 0) {
       const target = normalNodes[Math.floor(Math.random() * normalNodes.length)];
       stages[target.stageIndex][target.optionIndex].type = NODE_TYPES.REST;
     }
+  }
+
+  // noRestNodes (Ascension): alle REST-Nodes auf NORMAL setzen
+  if (noRestNodes) {
+    stages.forEach(stageNodes => {
+      stageNodes.forEach(node => {
+        if (node.type === NODE_TYPES.REST) node.type = NODE_TYPES.NORMAL;
+      });
+    });
   }
 
   return {
@@ -109,13 +118,14 @@ export function useMapSystem() {
   const [showExchange, setShowExchange] = useState(false);
   const [showEliteReward, setShowEliteReward] = useState(false);
   const [showBossReward, setShowBossReward] = useState(false);
+  const [showCurse, setShowCurse] = useState(false);
   const [mapViewOnly, setMapViewOnly] = useState(false);
 
   // Ref fuer synchronen Zugriff innerhalb von Callbacks
   const mapRef = useRef(null);
 
-  const generateMap = useCallback(() => {
-    const newMap = generateMapData();
+  const generateMap = useCallback((modifiers = {}) => {
+    const newMap = generateMapData(modifiers);
     mapRef.current = newMap;
     setMap(newMap);
     setStageRound(1);
@@ -126,6 +136,7 @@ export function useMapSystem() {
     setShowExchange(false);
     setShowEliteReward(false);
     setShowBossReward(false);
+    setShowCurse(false);
   }, []);
 
   // Wird nach jeder Antwort in handleNextPair aufgerufen
@@ -192,8 +203,10 @@ export function useMapSystem() {
       setShowRest(true);
     } else if (selectedNodeType === NODE_TYPES.EXCHANGE) {
       setShowExchange(true);
+    } else if (selectedNodeType === NODE_TYPES.CURSE) {
+      setShowCurse(true);
     }
-    // Normal/Elite/MiniBoss/Boss: Game.jsx startet die Stage via useEffect
+    // Normal/Elite/MiniBoss/Boss/Bounty: Game.jsx startet die Stage via useEffect
   }, []);
 
   const completeShop = useCallback(() => {
@@ -208,6 +221,11 @@ export function useMapSystem() {
 
   const completeExchange = useCallback(() => {
     setShowExchange(false);
+    setStageRound(1);
+  }, []);
+
+  const completeCurse = useCallback(() => {
+    setShowCurse(false);
     setStageRound(1);
   }, []);
 
@@ -256,6 +274,7 @@ export function useMapSystem() {
     setShowExchange(false);
     setShowEliteReward(false);
     setShowBossReward(false);
+    setShowCurse(false);
   }, []);
 
   // Restore-Methode fuer Save/Load
@@ -270,6 +289,7 @@ export function useMapSystem() {
     setShowExchange(false);
     setShowEliteReward(false);
     setShowBossReward(false);
+    setShowCurse(false);
   }, []);
 
   const currentStage = map?.currentStage ?? 1;
@@ -287,6 +307,7 @@ export function useMapSystem() {
     showExchange,
     showEliteReward,
     showBossReward,
+    showCurse,
     mapViewOnly,
     openMap: () => { if (mapRef.current) { setMapViewOnly(true); setShowMap(true); } },
     closeMap: () => { setMapViewOnly(false); setShowMap(false); },
@@ -296,6 +317,7 @@ export function useMapSystem() {
     completeShop,
     completeRest,
     completeExchange,
+    completeCurse,
     completeEliteReward,
     completeBossReward,
     triggerEliteReward,

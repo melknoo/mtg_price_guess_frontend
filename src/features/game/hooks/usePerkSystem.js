@@ -38,6 +38,18 @@ const applyPerkToList = (list, perk, roundsPlayed, { hasEternalFlame = false, ha
       return Math.max(existing.value ?? 0, perk.value ?? 0);
     };
 
+    if (existing.duration === -1 && perk.duration === -1 && !isSamePerk) {
+      // Permanent perk upgraded by another permanent perk — add values, stay permanent
+      const newValue = (existing.value ?? 0) + (perk.value ?? 0);
+      updated[existingIndex] = {
+        ...existing,
+        value: newValue,
+        upgradeCount: (existing.upgradeCount || 1) + upgradeIncrement,
+        name: existing.name.includes('+') ? existing.name : existing.name + '+',
+      };
+      return updated;
+    }
+
     if (existing.duration > 0 || perk.duration > 0) {
       const newRemaining = Math.max(
         existing.remainingDuration + bonusDuration,
@@ -105,6 +117,7 @@ export const usePerkSystem = () => {
   const echoLastBonusRef = useRef(0);           // last answer's bonus delta
   const bloodlustChargesRef = useRef(0);        // charges from wrong answers
   const momentumFlatStackRef = useRef(0);       // current stacking flat bonus
+  const echoPrimeBestRef = useRef(0);           // best flat Gold delta from last answer (for Echo Prime cascade perk)
 
   const getPerkSlotType = useCallback((perk) => {
     if (!perk) return null;
@@ -186,7 +199,7 @@ export const usePerkSystem = () => {
     return availablePerks[0];
   }, []);
 
-  const generateRandomPerks = useCallback(() => {
+  const generateRandomPerks = useCallback((count = PERK_CONFIG.PERKS_TO_CHOOSE) => {
     const allPerks = Object.values(PERKS);
     const selectedPerks = [];
     const usedIds = new Set();
@@ -215,7 +228,7 @@ export const usePerkSystem = () => {
         .map(p => p.filterType)
     );
 
-    while (selectedPerks.length < PERK_CONFIG.PERKS_TO_CHOOSE && selectedPerks.length < allPerks.length) {
+    while (selectedPerks.length < count && selectedPerks.length < allPerks.length) {
       const perk = getWeightedRandomPerk(
         allPerks,
         usedIds,
@@ -248,15 +261,15 @@ export const usePerkSystem = () => {
     return selectedPerks;
   }, [selectedPermanentPerks, activePerks, getWeightedRandomPerk]);
 
-  const triggerPerkSelection = useCallback(() => {
-    const perks = generateRandomPerks();
+  const triggerPerkSelection = useCallback((count = PERK_CONFIG.PERKS_TO_CHOOSE) => {
+    const perks = generateRandomPerks(count);
     setAvailablePerks(perks);
     setShowPerkSelection(true);
   }, [generateRandomPerks]);
 
   // Re-generate options while keeping the modal open (costs 1 life in Game.jsx)
-  const rerollPerks = useCallback(() => {
-    const perks = generateRandomPerks();
+  const rerollPerks = useCallback((count = PERK_CONFIG.PERKS_TO_CHOOSE) => {
+    const perks = generateRandomPerks(count);
     setAvailablePerks(perks);
   }, [generateRandomPerks]);
 
@@ -482,6 +495,7 @@ export const usePerkSystem = () => {
     echoLastBonusRef.current = 0;
     bloodlustChargesRef.current = 0;
     momentumFlatStackRef.current = 0;
+    echoPrimeBestRef.current = 0;
   }, []);
 
   const restorePerks = useCallback((perks, passiveSlotMax, utilitySlotMax) => {
@@ -535,5 +549,6 @@ export const usePerkSystem = () => {
     echoLastBonusRef,
     bloodlustChargesRef,
     momentumFlatStackRef,
+    echoPrimeBestRef,
   };
 };

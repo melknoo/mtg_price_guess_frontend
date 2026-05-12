@@ -12,12 +12,65 @@ export const UPGRADE_DEFS = [
   { id: 'shop_discount_5pct',    name: '5% Shop Discount',      description: 'All shop prices are reduced by 5%.',          cost: 25, max: 1, category: 'Merchant' },
 ];
 
+// Starting Kits — buy once to unlock, then select to activate.
+// Only one kit active at a time.
+export const KIT_DEFS = [
+  {
+    id: 'kit_speedrunner',
+    name: 'Speedrunner',
+    cost: 30,
+    startingPerkId: 'slow_time',
+    startingPerkName: 'Slow Motion',
+    bonus: 'Timer +2s',
+    penalty: 'Wrong answer: −5G',
+    description: 'Starts with Slow Motion. Timer is 2s longer, but wrong answers cost 5 gold.',
+    goldMult: 1.0,
+    goldPenalty: 0,     // applied per correct answer
+    wrongGoldPenalty: 5, // gold lost on wrong answer
+    timerBonus: 2,
+    xpMult: 1.0,
+    maxLives: null,
+  },
+  {
+    id: 'kit_arcanist',
+    name: 'Arcanist',
+    cost: 30,
+    startingPerkId: 'point_boost_extended',
+    startingPerkName: 'Point Boost+',
+    bonus: 'XP +20%',
+    penalty: '−1G per answer',
+    description: 'Starts with Point Boost+. Gain 20% more XP, but each correct answer costs 1 gold.',
+    goldMult: 1.0,
+    goldPenalty: 1,     // flat gold subtracted per correct answer (in applyGoldEffects Phase A)
+    wrongGoldPenalty: 0,
+    timerBonus: 0,
+    xpMult: 1.2,
+    maxLives: null,
+  },
+  {
+    id: 'kit_berserker',
+    name: 'Berserker',
+    cost: 35,
+    startingPerkId: 'dead_mans_hand',
+    startingPerkName: "Dead Man's Hand",
+    bonus: 'Gold +25%',
+    penalty: 'Max 3 lives',
+    description: "Starts with Dead Man's Hand. Earn 25% more gold, but maximum lives capped at 3.",
+    goldMult: 1.25,
+    goldPenalty: 0,
+    wrongGoldPenalty: 0,
+    timerBonus: 0,
+    xpMult: 1.0,
+    maxLives: 3,
+  },
+];
+
 function loadMeta() {
   try {
     const raw = localStorage.getItem(META_KEY);
-    return raw ? JSON.parse(raw) : { crystals: 0, upgrades: {} };
+    return raw ? JSON.parse(raw) : { crystals: 0, upgrades: {}, ownedKits: {}, selectedKit: null };
   } catch {
-    return { crystals: 0, upgrades: {} };
+    return { crystals: 0, upgrades: {}, ownedKits: {}, selectedKit: null };
   }
 }
 
@@ -32,6 +85,8 @@ export function useMetaProgression() {
 
   const crystals = metaState.crystals ?? 0;
   const upgrades = metaState.upgrades ?? {};
+  const ownedKits = metaState.ownedKits ?? {};
+  const selectedKit = metaState.selectedKit ?? null;
 
   const addCrystals = useCallback((n) => {
     setMetaState(prev => {
@@ -59,6 +114,32 @@ export function useMetaProgression() {
     return true;
   }, []);
 
+  const buyKit = useCallback((kitId) => {
+    const def = KIT_DEFS.find(k => k.id === kitId);
+    if (!def) return false;
+    setMetaState(prev => {
+      if (prev.ownedKits?.[kitId]) return prev; // already owned
+      if ((prev.crystals ?? 0) < def.cost) return prev;
+      const next = {
+        ...prev,
+        crystals: prev.crystals - def.cost,
+        ownedKits: { ...prev.ownedKits, [kitId]: true },
+      };
+      saveMeta(next);
+      return next;
+    });
+    return true;
+  }, []);
+
+  const selectKit = useCallback((kitId) => {
+    setMetaState(prev => {
+      if (kitId !== null && !prev.ownedKits?.[kitId]) return prev;
+      const next = { ...prev, selectedKit: kitId };
+      saveMeta(next);
+      return next;
+    });
+  }, []);
+
   const getStartingBonuses = useCallback(() => {
     const u = metaState.upgrades ?? {};
     return {
@@ -69,8 +150,21 @@ export function useMetaProgression() {
       extraRelicSlot:   u.starting_relic_slot ?? 0,
       extraGold:        (u.starting_gold_15 ?? 0) * 15,
       shopDiscount:     (u.shop_discount_5pct ?? 0) * 0.05,
+      activeKit:        metaState.selectedKit ?? null,
     };
   }, [metaState]);
 
-  return { crystals, upgrades, upgradeDefs: UPGRADE_DEFS, addCrystals, buyUpgrade, getStartingBonuses };
+  return {
+    crystals,
+    upgrades,
+    ownedKits,
+    selectedKit,
+    upgradeDefs: UPGRADE_DEFS,
+    kitDefs: KIT_DEFS,
+    addCrystals,
+    buyUpgrade,
+    buyKit,
+    selectKit,
+    getStartingBonuses,
+  };
 }

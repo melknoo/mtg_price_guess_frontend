@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { NODE_TYPES, TOTAL_STAGES, EXCHANGE_RATES } from '../constants/mapDefinitions';
+import { NODE_TYPES, TOTAL_STAGES } from '../constants/mapDefinitions';
 import GameIcon from '../../../shared/components/GameIcon';
 
 const NODE_INFO = {
@@ -63,7 +63,7 @@ const NODE_COLOR = {
   [NODE_TYPES.MINI_BOSS]:'border-orange-400 bg-orange-900/30 hover:bg-orange-800/50',
 };
 
-export default function MapScreen({ map, currentStage, gold, onChooseNode, onExchange, onClose }) {
+export default function MapScreen({ map, currentStage, gold, level = 1, xp = 0, xpToNextLevel = 50, onChooseNode, onExchange, onClose }) {
   if (!map) return null;
 
   // currentStage ist 1-indexed; Stage 1 wird immer auto-gespielt (kein Map-Choice).
@@ -78,13 +78,14 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode, onExc
       exit={{ opacity: 0 }}
     >
       <motion.div
-        className="relative w-full max-w-sm mx-4 rounded-none border-4 border-purple-500 bg-[#0d1117] shadow-pixel p-5"
+        className="relative w-full max-w-sm mx-4 rounded-none border-4 border-purple-500 bg-[#0d1117] shadow-pixel flex flex-col max-h-[90dvh]"
         initial={{ scale: 0.9, y: 30 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 30 }}
         transition={{ type: 'spring', stiffness: 240, damping: 22 }}
       >
-        <div className="flex items-center justify-between mb-4">
+        {/* Header — immer sichtbar */}
+        <div className="shrink-0 flex items-center justify-between px-5 pt-4 pb-3 border-b-2 border-purple-500/30">
           <h2 className="text-xl font-black text-amber-300 tracking-wide">
             {onClose ? 'YOUR RUN' : 'CHOOSE YOUR PATH'}
           </h2>
@@ -93,14 +94,17 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode, onExc
             {onClose && (
               <button
                 onClick={onClose}
-                className="text-white/40 hover:text-white/80 text-lg font-black leading-none transition-colors px-1"
+                className="w-8 h-8 flex items-center justify-center bg-[#111827] border-2 border-[#2d3a5c] rounded-sm shadow-pixel-sm hover:bg-[#1e293b] transition text-white/60 font-black text-sm"
                 title="Close"
               >
-                ×
+                X
               </button>
             )}
           </div>
         </div>
+
+        {/* Scrollbarer Inhalt */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
 
         {/* Render stages bottom-to-top (boss at top, stage 1 at bottom) */}
         <div className="flex flex-col-reverse gap-3">
@@ -142,7 +146,7 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode, onExc
                         whileHover={isActive ? { scale: 1.04 } : {}}
                         whileTap={isActive ? { scale: 0.96 } : {}}
                       >
-                        <div className="text-xl">{isFuture ? '?' : NODE_ICON[node.type]}</div>
+                        <div className="text-xl">{isFuture ? <GameIcon name="interrogation" size={20} color="gray" /> : NODE_ICON[node.type]}</div>
                         <div className={`text-xs font-bold mt-0.5 ${isActive ? 'text-white' : 'text-white/50'}`}>
                           {isFuture ? '???' : NODE_LABEL[node.type]}
                         </div>
@@ -165,40 +169,50 @@ export default function MapScreen({ map, currentStage, gold, onChooseNode, onExc
           })}
         </div>
 
-        <p className="text-center text-indigo-300/60 text-xs mt-4 uppercase tracking-widest">
+        <p className="text-center text-indigo-300/60 text-xs uppercase tracking-widest">
           Stage {currentStage} / {TOTAL_STAGES} complete
         </p>
 
-        {/* Gold → XP Exchange */}
-        <div className="mt-4 border-t border-white/10 pt-3">
-          <div className="text-xs text-teal-400/70 uppercase tracking-widest text-center mb-2">Convert Gold → XP</div>
-          <div className="flex gap-2">
-            {EXCHANGE_RATES.map((rate) => {
-              const canAfford = gold >= rate.gold;
-              return (
+        {/* Level + XP bar */}
+        <div className="border-t border-white/10 pt-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-amber-300 font-black text-sm">Lv {level}</span>
+            <span className="text-indigo-300 text-xs">{xp} / {xpToNextLevel} XP</span>
+          </div>
+          <div className="w-full h-2 bg-white/10 rounded-none overflow-hidden mb-3">
+            <div
+              className="h-full bg-purple-500 transition-all duration-500"
+              style={{ width: `${Math.min(100, Math.round((xp / xpToNextLevel) * 100))}%` }}
+            />
+          </div>
+
+          {/* XP+ exchange — 10G → 25XP */}
+          {(() => {
+            const canAfford = gold >= 10;
+            return (
+              <div>
                 <motion.button
-                  key={rate.gold}
-                  onClick={() => canAfford && onExchange(rate.gold, rate.xp)}
+                  onClick={() => canAfford && onExchange(10, 25)}
                   disabled={!canAfford}
-                  className={`flex-1 py-1.5 px-1 border rounded-none text-center transition-all
+                  className={`w-full py-2 border rounded-none text-center transition-all flex items-center justify-center gap-1.5
                     ${canAfford
                       ? 'border-teal-400/60 bg-teal-900/30 hover:bg-teal-800/50 cursor-pointer'
                       : 'border-white/10 bg-white/5 opacity-40 cursor-not-allowed'}`}
-                  whileHover={canAfford ? { scale: 1.04 } : {}}
-                  whileTap={canAfford ? { scale: 0.96 } : {}}
+                  whileHover={canAfford ? { scale: 1.02 } : {}}
+                  whileTap={canAfford ? { scale: 0.97 } : {}}
                 >
-                  <div className={`text-xs font-bold inline-flex items-center gap-0.5 ${canAfford ? 'text-amber-300' : 'text-white/40'}`}>
-                    <GameIcon name="coin" size={11} color={canAfford ? 'amber' : 'gray'} />{rate.gold}G
-                  </div>
-                  <div className="text-white/30 text-[9px] leading-none my-0.5">→</div>
-                  <div className={`text-xs font-bold inline-flex items-center gap-0.5 ${canAfford ? 'text-purple-300' : 'text-white/40'}`}>
-                    <GameIcon name="star" size={11} color={canAfford ? 'purple' : 'gray'} />+{rate.xp}XP
-                  </div>
+                  <GameIcon name="star" size={14} color={canAfford ? 'purple' : 'gray'} />
+                  <span className={`font-black text-sm ${canAfford ? 'text-purple-300' : 'text-white/40'}`}>+25 XP</span>
                 </motion.button>
-              );
-            })}
-          </div>
-        </div>
+                <div className={`text-center text-xs mt-1 inline-flex items-center justify-center w-full gap-0.5 ${canAfford ? 'text-amber-400/60' : 'text-white/20'}`}>
+                  <GameIcon name="coin" size={10} color={canAfford ? 'amber' : 'gray'} />
+                  <span>10G</span>
+                </div>
+              </div>
+            );
+          })()}
+        </div>{/* end XP section */}
+        </div>{/* end scrollable wrapper */}
       </motion.div>
     </motion.div>
   );

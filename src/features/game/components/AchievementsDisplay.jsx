@@ -55,7 +55,7 @@ const AchievementCard = React.forwardRef(({ achievement, index }, ref) => {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
       className={`
-        relative overflow-hidden rounded-xl border-2 p-4
+        relative overflow-hidden rounded-sm border-2 p-4
         ${achievement.unlocked
           ? `bg-gradient-to-br ${colorClass}`
           : 'bg-gray-800/50 border-gray-600'
@@ -64,7 +64,7 @@ const AchievementCard = React.forwardRef(({ achievement, index }, ref) => {
       `}
     >
       {isSecret && (
-        <div className="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-gray-900/80 rounded-sm flex items-center justify-center z-10">
           <div className="text-center">
             <GameIcon name="lock" size={28} color="gray" />
             <p className="text-gray-400 text-sm mt-2">Secret Achievement</p>
@@ -90,7 +90,7 @@ const AchievementCard = React.forwardRef(({ achievement, index }, ref) => {
 
           {!isSecret && (
             <span className={`
-              inline-block mt-2 text-xs px-2 py-0.5 rounded-full
+              inline-block mt-2 text-xs px-2 py-0.5 rounded-sm
               ${achievement.unlocked ? 'bg-black/30 text-white' : 'bg-gray-700 text-gray-300'}
             `}>
               {rarityName}
@@ -147,7 +147,7 @@ function MobileFilterDropdown({ selectedCategory, setSelectedCategory, categoryI
     <div className="relative sm:hidden mb-4">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-white/10 rounded-lg text-white font-medium border border-white/20"
+        className="w-full flex items-center justify-between px-4 py-3 bg-[#111827] border-2 border-[#2d3a5c] rounded-sm text-white font-medium"
       >
         <span className="flex items-center gap-2">
           {selectedCategory === 'all'
@@ -170,7 +170,7 @@ function MobileFilterDropdown({ selectedCategory, setSelectedCategory, categoryI
             animate={{ opacity: 1, y: 0, scaleY: 1 }}
             exit={{ opacity: 0, y: -10, scaleY: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 right-0 mt-2 bg-[#0d1b3e] rounded-lg border border-white/20 shadow-xl z-20 overflow-hidden"
+            className="absolute top-full left-0 right-0 mt-2 bg-[#111827] border-2 border-[#2d3a5c] rounded-sm shadow-pixel z-20 overflow-hidden"
           >
             <button
               onClick={() => handleSelect('all')}
@@ -219,7 +219,7 @@ function DesktopFilterButtons({ selectedCategory, setSelectedCategory, categoryI
     <div className="hidden sm:flex flex-wrap gap-2 mb-6">
       <button
         onClick={() => setSelectedCategory('all')}
-        className={`px-4 py-2 rounded-lg transition font-medium ${selectedCategory === 'all'
+        className={`px-4 py-2 rounded-sm transition font-medium ${selectedCategory === 'all'
             ? 'bg-amber-600 text-white'
             : 'bg-white/10 text-gray-300 hover:bg-white/20'
           }`}
@@ -230,7 +230,7 @@ function DesktopFilterButtons({ selectedCategory, setSelectedCategory, categoryI
         <button
           key={key}
           onClick={() => setSelectedCategory(key)}
-          className={`px-4 py-2 rounded-lg transition font-medium ${selectedCategory === key
+          className={`px-4 py-2 rounded-sm transition font-medium ${selectedCategory === key
               ? 'bg-amber-600 text-white'
               : 'bg-white/10 text-gray-300 hover:bg-white/20'
             }`}
@@ -260,12 +260,12 @@ export default function AchievementsDisplay({ achievements, onBack }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl w-full mx-auto bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-2xl relative"
+      className="max-w-4xl w-full mx-auto bg-[#111827] border-2 border-[#2d3a5c] rounded-sm p-4 sm:p-6 shadow-pixel relative"
     >
       {/* Mobile Close Button */}
       <button
         onClick={onBack}
-        className="sm:hidden absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition text-white text-xl"
+        className="sm:hidden absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-[#111827] border-2 border-[#2d3a5c] rounded-sm shadow-pixel-sm hover:bg-[#1e293b] transition text-white/70 text-sm font-bold"
         aria-label="Close"
       >
         ✕
@@ -285,7 +285,7 @@ export default function AchievementsDisplay({ achievements, onBack }) {
 
         {/* Overall Progress Bar */}
         <div className="w-full sm:w-48 mt-3 sm:mt-0">
-          <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
+          <div className="h-3 bg-gray-700 rounded-sm overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-amber-500 to-amber-300"
               initial={{ width: 0 }}
@@ -336,7 +336,7 @@ export default function AchievementsDisplay({ achievements, onBack }) {
       {/* Back Button */}
       <button
         onClick={onBack}
-        className="mt-6 w-full bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-lg transition font-medium text-white"
+        className="mt-6 w-full bg-[#111827] hover:bg-[#1e293b] border-2 border-[#2d3a5c] px-6 py-3 rounded-sm shadow-pixel-sm transition font-medium text-white"
       >
         Back to Menu
       </button>

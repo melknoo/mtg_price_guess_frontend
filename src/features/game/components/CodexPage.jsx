@@ -60,9 +60,9 @@ function RarityBadge({ rarity }) {
 function RelicCard({ relic, locked }) {
   const r = RARITY_CFG[relic.rarity] ?? RARITY_CFG.common;
   return (
-    <div className={`relative bg-gray-800/70 border ${r.border} rounded-xl p-3 flex flex-col gap-1.5 shadow-md ${r.glow} ${locked ? 'opacity-40' : ''}`}>
+    <div className={`relative bg-gray-800/70 border ${r.border} rounded-sm p-3 flex flex-col gap-1.5 shadow-pixel-sm ${r.glow} ${locked ? 'opacity-40' : ''}`}>
       {locked && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-gray-900/60 z-10">
+        <div className="absolute inset-0 flex items-center justify-center rounded-sm bg-gray-900/60 z-10">
           <GameIcon name="lock" size={20} color="gray" />
         </div>
       )}
@@ -97,9 +97,9 @@ function PerkCard({ perk, locked }) {
   const r = RARITY_CFG[rarity];
   const durationLabel = perk.duration === -1 ? 'permanent' : perk.duration > 0 ? `${perk.duration} rounds` : null;
   return (
-    <div className={`relative bg-gray-800/70 border ${r.border} rounded-xl p-3 flex flex-col gap-1.5 shadow-md ${r.glow} ${locked ? 'opacity-40' : ''}`}>
+    <div className={`relative bg-gray-800/70 border ${r.border} rounded-sm p-3 flex flex-col gap-1.5 shadow-pixel-sm ${r.glow} ${locked ? 'opacity-40' : ''}`}>
       {locked && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-gray-900/60 z-10">
+        <div className="absolute inset-0 flex items-center justify-center rounded-sm bg-gray-900/60 z-10">
           <GameIcon name="lock" size={20} color="gray" />
         </div>
       )}
@@ -135,9 +135,9 @@ function SynergyCard({ synergy, locked }) {
   const rarity = synergyRarity(synergy);
   const r = RARITY_CFG[rarity];
   return (
-    <div className={`relative bg-gray-800/70 border ${r.border} rounded-xl p-3 flex flex-col gap-1.5 shadow-md ${r.glow} ${locked ? 'opacity-40' : ''}`}>
+    <div className={`relative bg-gray-800/70 border ${r.border} rounded-sm p-3 flex flex-col gap-1.5 shadow-pixel-sm ${r.glow} ${locked ? 'opacity-40' : ''}`}>
       {locked && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-gray-900/60 z-10">
+        <div className="absolute inset-0 flex items-center justify-center rounded-sm bg-gray-900/60 z-10">
           <GameIcon name="lock" size={20} color="gray" />
         </div>
       )}
@@ -270,7 +270,7 @@ export default function CodexPage({ onBack }) {
       <div className="flex items-center gap-3 mb-4 shrink-0">
         <button
           onClick={onBack}
-          className="bg-white/10 hover:bg-white/20 border border-white/15 px-3 py-1.5 rounded-lg text-sm text-white/80 transition"
+          className="bg-[#111827] hover:bg-[#1e293b] border-2 border-[#2d3a5c] px-3 py-1.5 rounded-sm text-sm text-white/80 transition shadow-pixel-sm"
         >
           ← Back
         </button>
@@ -284,20 +284,20 @@ export default function CodexPage({ onBack }) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-3 shrink-0 bg-gray-900/50 rounded-xl p-1">
+      <div className="flex gap-1 mb-3 shrink-0 bg-[#111827] border-2 border-[#2d3a5c] rounded-sm p-1">
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-sm text-sm font-semibold transition-all
               ${activeTab === tab.id
-                ? 'bg-gray-700 text-white shadow'
+                ? 'bg-gray-700 text-white shadow-pixel-sm'
                 : 'text-gray-400 hover:text-gray-200'}`}
           >
             <GameIcon name={tab.icon} size={16} color={activeTab === tab.id ? tab.color : 'gray'} />
             <span>{tab.label}</span>
             <span className={`text-[10px] rounded-full px-1.5 py-0.5 font-bold
-              ${activeTab === tab.id ? 'bg-amber-500/30 text-amber-300' : 'bg-gray-700 text-gray-500'}`}>
+              ${activeTab === tab.id ? 'bg-amber-500/30 text-amber-300' : 'bg-gray-700 text-gray-500'} rounded-sm`}>
               {counts[tab.id]}
             </span>
           </button>
@@ -312,14 +312,14 @@ export default function CodexPage({ onBack }) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by name or description…"
-          className="w-full bg-gray-800/60 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50"
+          className="w-full bg-[#111827] border-2 border-[#2d3a5c] rounded-sm px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50"
         />
 
         {/* Rarity pills */}
         <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
           <button
             onClick={() => setRarityFilter('all')}
-            className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition
+            className={`shrink-0 px-2.5 py-1 rounded-sm text-xs font-medium transition
               ${rarityFilter === 'all' ? 'bg-gray-500 text-white' : 'bg-gray-800/60 text-gray-400 hover:text-gray-200'}`}
           >
             All
@@ -330,7 +330,7 @@ export default function CodexPage({ onBack }) {
               <button
                 key={r}
                 onClick={() => setRarityFilter(r === rarityFilter ? 'all' : r)}
-                className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition
+                className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-sm text-xs font-medium border transition
                   ${rarityFilter === r
                     ? `${cfg.border} ${cfg.text} bg-gray-700`
                     : 'border-transparent bg-gray-800/60 text-gray-400 hover:text-gray-200'}`}
@@ -346,7 +346,7 @@ export default function CodexPage({ onBack }) {
         <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
           <button
             onClick={() => setTagFilter('all')}
-            className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition
+            className={`shrink-0 px-2.5 py-1 rounded-sm text-xs font-medium transition
               ${tagFilter === 'all' ? 'bg-gray-500 text-white' : 'bg-gray-800/60 text-gray-400 hover:text-gray-200'}`}
           >
             All tags
@@ -357,7 +357,7 @@ export default function CodexPage({ onBack }) {
               <button
                 key={tag}
                 onClick={() => setTagFilter(tag === tagFilter ? 'all' : tag)}
-                className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition
+                className={`shrink-0 px-2.5 py-1 rounded-sm text-xs font-medium transition
                   ${tagFilter === tag
                     ? `${s.bg} ${s.text}`
                     : 'bg-gray-800/60 text-gray-400 hover:text-gray-200'}`}

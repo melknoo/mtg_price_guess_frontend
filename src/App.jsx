@@ -20,6 +20,7 @@ import HowToPlayModal from "./features/game/components/HowToPlayModal";
 import MetaProgressionScreen from "./features/game/components/MetaProgressionScreen";
 import { useSavedRun } from "./features/game/hooks/useSavedRun";
 import { useMetaProgression } from "./features/game/hooks/useMetaProgression";
+import { useAscension } from "./features/game/hooks/useAscension";
 import GameIcon from "./shared/components/GameIcon";
 
 function AppContent() {
@@ -39,6 +40,7 @@ function AppContent() {
   }, []);
   const savedRun = useSavedRun();
   const metaProgression = useMetaProgression();
+  const ascension = useAscension();
   const [continueMode, setContinueMode] = useState(false);
   const [screen, setScreen] = useState("menu");
   const [showRegister, setShowRegister] = useState(false);
@@ -400,7 +402,14 @@ function AppContent() {
             upgrades={metaProgression.upgrades}
             upgradeDefs={metaProgression.upgradeDefs}
             onBuy={(id) => metaProgression.buyUpgrade(id)}
+            kitDefs={metaProgression.kitDefs}
+            ownedKits={metaProgression.ownedKits}
+            selectedKit={metaProgression.selectedKit}
+            onBuyKit={(id) => metaProgression.buyKit(id)}
+            onSelectKit={(id) => metaProgression.selectKit(id)}
             onBack={() => setScreen("menu")}
+            ascensionLevel={ascension.ascensionLevel}
+            maxUnlockedLevel={ascension.maxUnlockedLevel}
           />
         )}
 
@@ -416,8 +425,10 @@ function AppContent() {
         )}
 
         {screen === "codex" && (
-          <div className="w-full flex-1 min-h-0 flex flex-col pt-2 pb-4" style={{ maxHeight: 'calc(100dvh - 72px)' }}>
-            <CodexPage onBack={() => setScreen("menu")} />
+          <div className="fixed inset-0 z-40 bg-[#0a0e1a] overflow-hidden flex flex-col pt-safe">
+            <div className="w-full flex-1 min-h-0 flex flex-col max-w-3xl mx-auto px-4 pt-2 pb-4" style={{paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)'}}>
+              <CodexPage onBack={() => setScreen("menu")} />
+            </div>
           </div>
         )}
 
