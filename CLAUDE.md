@@ -41,7 +41,7 @@ src/
 │   │   │   ├── GameOverScreen.jsx  # End screen: score, restart, register prompt
 │   │   │   ├── StreakDisplay.jsx
 │   │   │   ├── LivesDisplay.jsx
-│   │   │   ├── PerkSelectionModal.jsx   # Modal: pick 1 of 3 perks every 5 rounds
+│   │   │   ├── PerkSelectionModal.jsx   # Modal: pick 1 of 3 perks every 3 rounds
 │   │   │   ├── LevelUpModal.jsx         # Modal: level-up reward (perk/relic/upgrade)
 │   │   │   ├── ActivePerksDisplay.jsx   # Sidebar (desktop) / collapsible (mobile)
 │   │   │   ├── SynergyToast.jsx         # Toast when a new synergy activates
@@ -51,8 +51,18 @@ src/
 │   │   │   ├── StatsDisplay.jsx
 │   │   │   ├── RunCompleteModal.jsx     # NEW: shown after boss defeat (End Run / Continue Endless)
 │   │   │   ├── RewardComboReveal.jsx    # XP-only popup with tiered animations
-│   │   │   ├── ShopScreen.jsx          # Shop with 2 random merchants per visit
-│   │   │   └── MerchantPanel.jsx       # Per-merchant panels (ArmorerPanel, PerkVendorPanel sub-components)
+│   │   │   ├── ShopScreen.jsx           # Shop with 2 random merchants per visit
+│   │   │   ├── MerchantPanel.jsx        # Per-merchant panels (ArmorerPanel, PerkVendorPanel sub-components)
+│   │   │   ├── MapScreen.jsx            # Run map navigation between stages
+│   │   │   ├── StageCompleteScreen.jsx  # Stage end summary (score, correct, node type)
+│   │   │   ├── RestScreen.jsx           # Rest node: heal 1 life or upgrade a perk duration
+│   │   │   ├── ExchangeScreen.jsx       # Exchange node: spend gold for XP
+│   │   │   ├── CurseScreen.jsx          # Curse node: forced negative-perk selection
+│   │   │   ├── BountyIndicator.jsx      # Per-stage bounty goal progress HUD
+│   │   │   ├── MetaProgressionScreen.jsx # Between-run upgrades, kits, ascension selection
+│   │   │   ├── FilterOddsModal.jsx      # Shows card-pool probabilities for active filter perks
+│   │   │   ├── SynergyConflictModal.jsx # Conflict resolution when >maxSynergySlots would activate
+│   │   │   └── ReplacePerkModal.jsx     # Perk slot overflow: choose which perk to replace or skip
 │   │   ├── constants/
 │   │   │   ├── achievementDefinitions.js
 │   │   │   ├── perkDefinitions.js       # Perks, types, rarities, tags, extended variants
@@ -71,6 +81,11 @@ src/
 │   │   │   ├── useLevel.js             # XP/Level system with thresholdMultiplier
 │   │   │   ├── useGold.js              # Gold currency: add/spend/totalEarned
 │   │   │   ├── useMapSystem.js         # Stage map generation, progression, stage completion
+│   │   │   ├── useAscension.js         # Ascension levels 1–10, crystal bonuses, difficulty modifiers
+│   │   │   ├── useMetaProgression.js   # Cross-run upgrades (crystals), starting kits, persistent unlocks
+│   │   │   ├── useSavedRun.js          # Save/load run state — localStorage + server sync (runApi.js)
+│   │   │   ├── usePerkCombos.js        # Perk combo detection: activeCombos from PERK_COMBOS constant
+│   │   │   ├── useRunLogger.js         # Structured per-run event logging (rounds, perks, relics) for stats API
 │   │   │   ├── useAchievements.js
 │   │   │   └── useGameLogic.js         # Legacy — Game.jsx composes hooks directly
 │   │   └── utils/
@@ -96,10 +111,11 @@ Every 3 rounds: `PerkSelectionModal` offers 3 perks.
 On level-up: `LevelUpModal` offers 3–4 options (perk / relic / upgrade to existing perk).
 Every 3rd level (3, 6, 9, …): LevelUpModal shows a **relic selection** instead of a perk — managed via `relicMilestoneQueue` state in Game.jsx.
 
-**Three layers:**
+**Four layers:**
 1. **Perks** — temporary (duration-based) or permanent buffs. Defined in `perkDefinitions.js`.
 2. **Relics** — permanent for the entire run. Defined in `relicDefinitions.js`.
 3. **Synergies** — auto-activate when tag thresholds are met. Defined in `synergyDefinitions.js`.
+4. **Perk Combos** — bonus effects when specific perk combinations are active simultaneously. Defined in `perkCombos.js`, detected by `usePerkCombos`.
 
 ### Tag System
 
@@ -144,9 +160,16 @@ Relics are permanent — no duration decrement. No duplicates by ID.
 ### Hook: `useSynergyEngine`
 
 ```js
-const { activeSynergies, hasSynergy, getSynergyValue, reset } = useSynergyEngine(activeRelics, activePerks, onNewSynergy);
+const {
+  activeSynergies, permanentSynergies,
+  hasSynergy, getSynergyValue,
+  maxSynergySlots,      // default 3; expanded by Synergy Expander relic
+  resolveConflict,      // resolveConflict(dropId, pendingSynergy) — called from SynergyConflictModal
+  reset
+} = useSynergyEngine(activeRelics, activePerks, onNewSynergy);
 ```
 `getSynergyValue(effect)` returns the `value` of the first synergy with that effect, or `null`.
+When a new synergy would exceed `maxSynergySlots`, `SynergyConflictModal` (z-[70]) is shown — player drops an existing or skips the new synergy.
 
 ### LevelUpModal
 
@@ -215,7 +238,7 @@ Tick triggers: `card_counter` (every non-trigger round), `heart_regeneration` + 
 
 ## Perk System Details
 
-- Perks trigger every 5 rounds via `perkSystem.triggerPerkSelection()`
+- Perks trigger every 3 rounds via `perkSystem.triggerPerkSelection()`
 - Weighted random generation: Common 60, Rare 30, Epic 10
 - Extended variants (`basePerkId` + `isExtended: true`) merge into existing perk, extending duration by `bonusDuration` and incrementing `upgradeCount`
 - `upgradeCount` is read by `useSynergyEngine` to count tags multiple times per upgraded perk
@@ -270,7 +293,7 @@ calculateStreakXP(streak)     // same formula — streak 5→+2, 10→+4, 15→+
 2. **Each round:** Player picks → `handleChoice(index)` → timer stops → prices revealed → XP/Gold/streaks updated
 3. **XP gain:** `level.addXP(amount, scholarMult)` — triggers `level.showLevelUp = true`
 4. **Level up:** `LevelUpModal` shown → player picks reward → `handleLevelUpSelect(pick)` — routes to `addRelic`, `selectPerk`, or perk upgrade. Pop `relicMilestoneQueue` head in both select and skip.
-5. **Next pair:** `handleNextPair()` → round++ → if round % 3 === 0 → `PerkSelectionModal` → else next card
+5. **Next pair:** `handleNextPair()` → round++ → if `round % 3 === 0` → `PerkSelectionModal` (3 perks, or 2 if Ascension modifier active) → else next card
 6. **Card Counter:** every 10 rounds → +1 life, `flashRelic('card_counter')`
 7. **Wrong answer:** -1 life → if 0 → game over
 8. **Stage complete:** `StageCompleteScreen` shown → continue → if elite stage → `eliteRelicPending = true` (triggers relic drop); if boss stage → `runComplete = true` (triggers `RunCompleteModal`)
@@ -310,6 +333,15 @@ calculateStreakXP(streak)     // same formula — streak 5→+2, 10→+4, 15→+
 16. **Relic milestone queue** — `relicMilestoneQueue` is a `boolean[]` in Game.jsx. Pop head on BOTH select and skip in LevelUpModal. Never call `level.dismissLevelUp()` twice for the same modal.
 17. **Run seed** — `runSeed` state initialized with `useState(() => Math.random().toString(36).slice(2,6).toUpperCase())`. Cosmetic only, reset on restart. Displayed as `#XXXX` in HUD instead of the old roadmap button.
 18. **Compound Interest accumulated display** — `perkSystem.compoundInterestAccRef` is a ref (not state) for sync access. Passed as `compoundAccRef` prop to `ActivePerksDisplay`, which reads `.current` to show "Acc: +N XP" on the compound interest perk card.
+19. **Slot-based perk system** — `3 passive / 1 utility` start slots. Soft caps: `5 passive / 2 utility`. When a new perk's slot type is full, `ReplacePerkModal` opens to swap or skip. Shop sells `Passive Perk Slot` and `Utility Slot` upgrades (capped at soft cap). `Skip Card` = utility perk, 1 charge, recharges at `stage_start`. `Extra Life` stays in utility slot after use (empty charge, no auto-remove).
+20. **Synergy max slots** — default 3; expandable to 4 via the `Synergy Expander` relic (Legendary). When the 4th+ synergy would fire, `SynergyConflictModal` opens for conflict resolution.
+21. **Relic soft cap** — `RELIC_FREE_CAP = 6`. Relics beyond this cost 25G each (10G with Hoarder relic). Check in `handleLevelUpSelect` + `handleRelicRoundSelect`.
+22. **Filter perk system** — All filter perks have `duration: -1` (permanent run). Filter dispatch uses `perk.effect` in `useCardLoader.updateFilters()`. Available `FILTER_EFFECTS`: COLOR, COLOR_EXCLUDE, CMC, CMC_EXCLUDE, BORDER, RARITY, RARITY_EXCLUDE, TYPE, TYPE_EXCLUDE. Requires DB migration 1.0.14 + re-import for `type_line` perks.
+23. **Meta-progression saves to localStorage** under `mtg_meta_progression`. Cross-run currency: **crystals** (earned via boss wins + ascension bonuses). Spend in `MetaProgressionScreen`. Meta upgrades: `+1 starting life`, `+1 max lives`, `extra passive slot`, `extra utility slot`, `extra relic slot`, `+15G start`, `5% shop discount`. Starting Kits give a starting perk + trade-off; only one kit active per run.
+24. **Ascension system** — 10 difficulty levels unlocked by beating boss at current level. Stored in localStorage (`mtg_ascension_level`). Modifiers: `timerReduction`, `perkChoices` (2 instead of 3), `startingLivesOffset`, `goldReduction`, `noRestNodes`, `bossHarder`. Higher ascension = higher crystal bonus multiplier (up to 5.0×).
+25. **Saved run (cross-device)** — `useSavedRun` saves to localStorage (`mtg_saved_run`) + server (`runApi.js`) on every meaningful state change. Logged-in users get cloud save. Load on app start to resume interrupted run.
+26. **Perk Combos** — `usePerkCombos(activePerks)` returns `activeCombos` array. Combos defined in `perkCombos.js` with `requiredPerkIds[]`. Purely derived state — no side effects. Use `hasCombo(comboId)` in Game.jsx for combo-specific bonus logic.
+27. **Run logger** — `useRunLogger` collects rounds/perks/relics via refs (zero re-renders). `getRunSummary(activeSynergies)` at run end. Posted to `POST /api/stats/run-log` via StatsController.
 
 ## Code Style
 - Functional components only
@@ -464,7 +496,7 @@ Aktuelle Formeln in Magic Price Duel:
 - Relic-Weights: Common 50, Rare 30, Epic 15, Legendary 5
 - Score: base(1) + timeBonus(ceil(timeLeft*1)) + streakBonus(floor(streak/5)*5)
 - Hot Streak: STREAK_BONUS_POINTS * (2^blocks - 1) — exponentiell
-- Perk-Trigger alle 5 Runden
+- Perk-Trigger alle 3 Runden
 - Card Counter heilt alle 10 Runden
 - Heart Regeneration nach 5 korrekten Antworten
 - Fortress-Regen nach 8 korrekten Antworten (unabhängiger Counter)
