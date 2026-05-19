@@ -111,6 +111,11 @@ export const ITEM_ICONS = {
   mirror:                    { icon: 'mirror',     color: 'teal' },
   copycat:                   { icon: 'duplicate',  color: 'teal' },
 
+  // Gold/Slot-System Relics
+  synergy_expander:          { icon: 'unlock',     color: 'purple' },     // unlock = Slot freischalten
+  gold_wellspring:           { icon: 'coin',       color: 'amber' },      // coin = Gold pro Antwort
+  hoarder:                   { icon: 'crate',      color: 'amber' },      // crate = Sammeln/Lagern
+
   // Anti-Synergien
   hermit:                    { icon: 'door',       color: 'gray' },       // door = verschlossen/isoliert
   minimalist:                { icon: 'clear',      color: 'gray' },

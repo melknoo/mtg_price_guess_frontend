@@ -329,6 +329,16 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                           <span className={`${rStyle.badge} px-1.5 py-0.5 rounded-sm text-xs font-bold uppercase`}>
                             {option.rarity}
                           </span>
+                          {option.category === 'item' && option.slotType === 'passive' && (
+                            <span className="inline-flex items-center gap-0.5 bg-blue-500/20 border border-blue-400/40 px-1.5 py-0.5 rounded-sm text-xs font-bold text-blue-300">
+                              <GameIcon name="shield" color="blue" size={10} /> Passive
+                            </span>
+                          )}
+                          {option.category === 'item' && option.slotType === 'utility' && (
+                            <span className="inline-flex items-center gap-0.5 bg-orange-500/20 border border-orange-400/40 px-1.5 py-0.5 rounded-sm text-xs font-bold text-orange-300">
+                              <GameIcon name="thunder" color="orange" size={10} /> Utility
+                            </span>
+                          )}
                         </div>
                         {option.category === 'upgrade' ? (
                           <div>
@@ -379,10 +389,20 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
                       <div className="absolute top-3 left-4 flex gap-1">
                         <TagIcons tags={option.tags ?? []} size={16} />
                       </div>
-                      <div className="absolute top-3 right-4">
+                      <div className="absolute top-3 right-4 flex flex-col items-end gap-1">
                         <span className={`${rStyle.badge} px-2 py-0.5 rounded-sm text-xs font-bold uppercase`}>
                           {option.rarity}
                         </span>
+                        {option.category === 'item' && option.slotType === 'passive' && (
+                          <span className="inline-flex items-center gap-0.5 bg-blue-500/20 border border-blue-400/40 px-2 py-0.5 rounded-sm text-xs font-bold text-blue-300">
+                            <GameIcon name="shield" color="blue" size={11} /> Passive
+                          </span>
+                        )}
+                        {option.category === 'item' && option.slotType === 'utility' && (
+                          <span className="inline-flex items-center gap-0.5 bg-orange-500/20 border border-orange-400/40 px-2 py-0.5 rounded-sm text-xs font-bold text-orange-300">
+                            <GameIcon name="thunder" color="orange" size={11} /> Utility
+                          </span>
+                        )}
                       </div>
                       <div className="flex flex-col items-center mt-6 mb-4">
                         <motion.div whileHover={{ scale: 1.2, rotate: 5 }} transition={{ duration: 0.3 }} className="mb-3 flex items-center justify-center w-16 h-16">

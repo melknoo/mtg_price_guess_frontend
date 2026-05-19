@@ -1,6 +1,8 @@
+import { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { NODE_TYPES, TOTAL_STAGES } from '../constants/mapDefinitions';
 import GameIcon from '../../../shared/components/GameIcon';
+import { GAME_CONFIG } from '../../../shared/utils/constants';
 
 const NODE_INFO = {
   [NODE_TYPES.ELITE]: [
@@ -63,7 +65,19 @@ const NODE_COLOR = {
   [NODE_TYPES.MINI_BOSS]:'border-orange-400 bg-orange-900/30 hover:bg-orange-800/50',
 };
 
-export default function MapScreen({ map, currentStage, gold, level = 1, xp = 0, xpToNextLevel = 50, onChooseNode, onExchange, onClose }) {
+export default function MapScreen({ map, currentStage, gold, level = 1, xp = 0, xpToNextLevel = 50, lives = 0, maxLives = GAME_CONFIG.INITIAL_LIVES, onChooseNode, onExchange, onClose }) {
+  const activeStageRef = useRef(null);
+
+  // Scrollt beim Öffnen automatisch zum aktiven Stage (flex-col-reverse zeigt Boss oben,
+  // aktiver Stage ist unten — ohne Scroll sieht man erst den Boss/Future-Bereich)
+  useEffect(() => {
+    if (!activeStageRef.current) return;
+    const t = setTimeout(() => {
+      activeStageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 180);
+    return () => clearTimeout(t);
+  }, []);
+
   if (!map) return null;
 
   // currentStage ist 1-indexed; Stage 1 wird immer auto-gespielt (kein Map-Choice).
@@ -90,6 +104,11 @@ export default function MapScreen({ map, currentStage, gold, level = 1, xp = 0, 
             {onClose ? 'YOUR RUN' : 'CHOOSE YOUR PATH'}
           </h2>
           <div className="flex items-center gap-2">
+            <span className="text-red-400 font-bold text-sm border border-red-500/40 rounded-sm px-2 py-0.5 inline-flex items-center gap-1">
+              {[...Array(maxLives)].map((_, i) => (
+                <GameIcon key={i} name="heart" size={12} color={i < lives ? 'red' : 'gray'} />
+              ))}
+            </span>
             <span className="text-amber-300 font-bold text-sm border border-amber-500/40 rounded-sm px-2 py-0.5 inline-flex items-center gap-1"><GameIcon name="coin" size={14} color="amber" /> {gold}g</span>
             {onClose && (
               <button
@@ -118,7 +137,7 @@ export default function MapScreen({ map, currentStage, gold, level = 1, xp = 0, 
             const chosenOptionIdx = map.chosenPath[stageIdx - 1];
 
             return (
-              <div key={stageIdx} className="flex items-center gap-2">
+              <div key={stageIdx} ref={isActive ? activeStageRef : null} className="flex items-center gap-2">
                 {/* Stage label */}
                 <div className={`text-xs font-bold w-12 text-right shrink-0 ${isCompleted ? 'text-white/40' : isActive ? 'text-amber-300' : 'text-white/20'}`}>
                   S{stageNum}

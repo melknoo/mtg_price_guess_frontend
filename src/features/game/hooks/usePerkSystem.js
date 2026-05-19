@@ -121,6 +121,7 @@ export const usePerkSystem = () => {
 
   const getPerkSlotType = useCallback((perk) => {
     if (!perk) return null;
+    if (perk._slotless) return null; // Copycat-Copies belegen keinen Slot
     if (perk.slotType) return perk.slotType;
     if (perk.duration === -1 && perk.consumable) return PERK_SLOT_TYPES.UTILITY;
     if (perk.duration === -1 && !perk.consumable) return PERK_SLOT_TYPES.PASSIVE;

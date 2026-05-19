@@ -159,6 +159,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                     ${getRarityColor(perk.rarity)}
                     border-2 sm:border-4 rounded-sm p-3 sm:p-6
                     shadow-pixel transition-all duration-200
+                    md:flex md:flex-col
                   `}
                                     >
                                         {/* Mobile: horizontal layout */}
@@ -189,7 +190,7 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                         </div>
 
                                         {/* Desktop: vertical layout (original) */}
-                                        <div className="hidden md:block">
+                                        <div className="hidden md:flex md:flex-col md:flex-1">
                                             {/* Tag Icons top-left, Rarity Badge top-right */}
                                             <div className="absolute top-4 left-4 flex gap-1">
                                                 <TagIcons tags={perk.tags ?? []} size={16} />
@@ -217,20 +218,20 @@ export default function PerkSelectionModal({ perks, onSelect, show, hasDoubleDip
                                             </div>
 
                                             {/* Description */}
-                                            <p className="text-gray-700 text-center text-sm leading-relaxed mb-4">
+                                            <p className="text-slate-300 text-center text-sm leading-relaxed mb-4">
                                                 {perk.description}
                                             </p>
 
                                             {/* Duration Info */}
                                             {perk.duration > 0 && (
-                                                <div className="bg-black/10 rounded-sm p-2 text-center border border-black/15">
+                                                <div className="mt-auto bg-black/10 rounded-sm p-2 text-center border border-black/15">
                                                     <span className="inline-flex items-center gap-1 text-amber-700 text-xs font-semibold">
                                                         <GameIcon name="time" color="amber" size={11} /> {perk.duration} {perk.duration === 1 ? 'Round' : 'Rounds'}
                                                     </span>
                                                 </div>
                                             )}
                                             {perk.duration === -1 && (
-                                                <div className="bg-black/10 rounded-sm p-2 text-center border border-black/15">
+                                                <div className="mt-auto bg-black/10 rounded-sm p-2 text-center border border-black/15">
                                                     <span className="inline-flex items-center gap-1 text-green-700 text-xs font-semibold">
                                                         <GameIcon name="ring" color="green" size={11} /> Permanent (this game)
                                                     </span>

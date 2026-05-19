@@ -847,6 +847,10 @@ export default function Game({
         // Exponentieller Streak-XP-Bonus ab Streak 5 (pro Antwort)
         const streakXPBonus = calculateStreakXP(effectiveStreakForBonus);
 
+        // XP Boost / XP Boost+: flat XP-Bonus pro korrekter Antwort
+        const flatBonusXP = perkSystem.getPerkValue('flat_bonus') ?? 0;
+        if (flatBonusXP > 0) xpGained += flatBonusXP;
+
         // Perfectionist Perk: ×2/×3 XP auf perfekte Antwort
         if (isPerfect && perkSystem.activePerks.some(p => p.effect === 'perfect_multiplier')) {
           xpGained = Math.floor(xpGained * (perkSystem.getPerkValue('perfect_multiplier') ?? 2));
@@ -854,17 +858,19 @@ export default function Game({
 
         // Adrenaline Perk: +10% XP pro aktivem Perk
         // OVERCLOCK ADRENALINE Combo: +15% statt +10% während Overclock aktiv
+        let adrenalineXPBonus = 0;
         if (perkSystem.activePerks.some(p => p.effect === 'adrenaline_mult')) {
           const adrenalineTick = (perkCombos.hasCombo('overclock_adrenaline') && perkSystem.activePerks.some(p => p.effect === 'overclock'))
             ? 0.15
             : (perkSystem.getPerkValue('adrenaline_mult') ?? 0.1);
+          const xpBeforeAdrenaline = xpGained;
           xpGained = Math.floor(xpGained * (1 + perkSystem.activePerks.length * adrenalineTick));
+          adrenalineXPBonus = xpGained - xpBeforeAdrenaline;
         }
 
         // SCHOLAR RUSH Combo: XP Boost flat verdoppelt wenn Adrenaline aktiv
-        if (perkCombos.hasCombo('scholar_rush') && perkSystem.activePerks.some(p => p.effect === 'flat_bonus')) {
-          const flatBoostVal = perkSystem.getPerkValue('flat_bonus') ?? 8;
-          xpGained += flatBoostVal; // Verdopplung: normaler flat_bonus läuft schon in calculateBaseXP, hier +1× extra
+        if (perkCombos.hasCombo('scholar_rush') && flatBonusXP > 0) {
+          xpGained += flatBonusXP; // Verdopplung: flat_bonus wurde oben einmal addiert, hier nochmal
         }
 
         // Resonance Perk: +6 XP pro distinct Perk-Effekt der gefeuert hat
@@ -1076,6 +1082,13 @@ export default function Game({
         const xpBaseBreakdown = [];
         if (timeBonusXP > 0) xpBaseBreakdown.push({ label: 'Timer Bonus', icon: <GameIcon name='time' size={12} color='blue' />, delta: timeBonusXP });
         if (streakXPBonus > 0) xpBaseBreakdown.push({ label: `Streak ${effectiveStreakForBonus}x`, icon: <GameIcon name='signal' size={12} color='orange' />, delta: streakXPBonus });
+        if (flatBonusXP > 0) {
+          const xpBoostPerk = perkSystem.activePerks.find(p => p.effect === 'flat_bonus');
+          xpBaseBreakdown.push({ label: xpBoostPerk?.name ?? 'XP Boost', icon: <GameIcon name='gem' size={12} color='amber' />, delta: flatBonusXP });
+        }
+        if (adrenalineXPBonus > 0) {
+          xpBaseBreakdown.push({ label: 'Adrenaline', icon: <GameIcon name='boots' size={12} color='orange' />, delta: adrenalineXPBonus });
+        }
         setComboAnimationDone(false);
         setRewardBreakdown({
           goldData: { total: Math.floor(totalGold), items: [...goldBaseBreakdown, ...perkGoldBreakdown, ...extraGoldBreakdown] },
@@ -1554,13 +1567,16 @@ export default function Game({
 
         achievements.trackPerkCollected();
 
-        if (relicSystem.hasRelic('copycat') && perk.duration > 0) {
+        if (relicSystem.hasRelic('copycat')) {
+          const isPermPerk = perk.duration === -1;
           const copyPerk = {
             ...perk,
             id: perk.id + '_copy',
             name: perk.name + ' (Copy)',
             value: typeof perk.value === 'number' ? Math.max(1, Math.floor(perk.value * 0.5)) : perk.value,
-            duration: Math.max(1, Math.ceil(perk.duration * 0.5)),
+            // Permanente Perks bleiben permanent (Hälfte von ∞ = ∞), Timed-Perks bekommen halbe Duration
+            duration: isPermPerk ? -1 : Math.max(1, Math.ceil(perk.duration * 0.5)),
+            _slotless: true, // Copies belegen keinen Perk-Slot
           };
           perkSystem.selectPerk(copyPerk, { hasEternalFlame, hasUpgradeMaster });
           flashRelic('copycat');
@@ -1630,6 +1646,20 @@ export default function Game({
           if (!selected) return false;
         }
         achievements.trackPerkCollected();
+        // Copycat: auch bei Level-Up-Perks eine Kopie erstellen
+        if (relicSystem.hasRelic('copycat')) {
+          const isPermPerk = pick.duration === -1;
+          const copyPerk = {
+            ...pick,
+            id: pick.id + '_copy',
+            name: pick.name + ' (Copy)',
+            value: typeof pick.value === 'number' ? Math.max(1, Math.floor(pick.value * 0.5)) : pick.value,
+            duration: isPermPerk ? -1 : Math.max(1, Math.ceil(pick.duration * 0.5)),
+            _slotless: true,
+          };
+          perkSystem.selectPerk(copyPerk, { hasEternalFlame, hasUpgradeMaster });
+          flashRelic('copycat');
+        }
         runLogger.logPerkSelected({ round: currentRound, perk_id: pick.id, perk_name: pick.name, source: 'level_up', offered_ids: [] });
         level.dismissLevelUp();
         return true;
@@ -1647,7 +1677,7 @@ export default function Game({
     }
     level.dismissLevelUp();
     setRelicMilestoneQueue(prev => prev.slice(1));
-  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold, queuePerkReplacement, relicSlotsMax]);
+  }, [relicSystem, perkSystem, level, achievements, setLives, runLogger, currentRound, gold, queuePerkReplacement, relicSlotsMax, flashRelic]);
 
 
   const handlePerkSkip = useCallback(() => {
@@ -2142,7 +2172,9 @@ export default function Game({
         </div>
       )}
 
-      <GameTimer timeLeft={timer.timeLeft} possiblePoints={calculateTimeBonusXP(timer.timeLeft)} progress={timer.progress} />
+      {!perkSystem.activePerks.some(p => p.effect === 'curse_foggy') && (
+        <GameTimer timeLeft={timer.timeLeft} possiblePoints={calculateTimeBonusXP(timer.timeLeft)} progress={timer.progress} />
+      )}
 
       {cardLoader.loading ? (
         <p>Loading Cards...</p>
@@ -2155,7 +2187,6 @@ export default function Game({
           onChoice={handleChoice}
           onImageLoad={handleImageLoad}
           showSet={showSet}
-          hideName={perkSystem.activePerks.some(p => p.effect === 'curse_foggy')}
         />
       )}
 
@@ -2516,6 +2547,7 @@ export default function Game({
             level={level.level}
             xp={level.xp}
             xpToNextLevel={level.xpToNextLevel}
+            lives={lives}
             onChooseNode={(optIdx) => mapSystem.chooseNode(optIdx)}
             onExchange={handleExchangeComplete}
             onClose={mapSystem.mapViewOnly ? mapSystem.closeMap : undefined}

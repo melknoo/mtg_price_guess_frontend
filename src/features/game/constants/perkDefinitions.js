@@ -199,7 +199,7 @@ export const PERKS = {
     POINT_BOOST_EXTENDED: {
         id: 'point_boost_extended',
         name: 'XP Boost+',
-        description: '+16 extra XP per correct answer',
+        description: '+30 extra XP per correct answer',
         icon: '💎',
         type: PERK_TYPES.OFFENSIVE,
         rarity: PERK_RARITY.RARE,
@@ -635,7 +635,7 @@ export const PERKS = {
     CURSE_FOGGY: {
         id: 'curse_foggy',
         name: 'Foggy Memory',
-        description: 'Card names are hidden during this run. Reward: +30G and a relic.',
+        description: 'The timer bar is hidden for this run. You cannot see how much time remains. Reward: +30G and a relic.',
         icon: '〰️',
         type: PERK_TYPES.DEFENSIVE,
         rarity: PERK_RARITY.RARE,

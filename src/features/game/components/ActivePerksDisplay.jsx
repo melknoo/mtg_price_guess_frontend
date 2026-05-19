@@ -6,6 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import GameIcon from '../../../shared/components/GameIcon';
 import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
+// Icon-Lookup mit Fallback für kopierte Perks (id endet auf '_copy')
+function getIconData(id) {
+  return ITEM_ICONS[id] ?? ITEM_ICONS[id.replace(/_copy$/, '')] ?? null;
+}
+
 // Findet alle Relics + Perks die mindestens einen der required Tags einer Synergy haben
 function getContributors(synergy, relics, perks) {
   const requiredTagSet = new Set(Object.keys(synergy.requiredTags));
@@ -358,8 +363,8 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                                 <div className="text-xs text-teal-300 font-semibold pt-1.5 mb-1">Aktiviert durch:</div>
                                 {contributors.map(c => (
                                   <div key={c.id} className="flex items-center gap-1.5 text-xs text-gray-200 py-0.5">
-                                    {ITEM_ICONS[c.id]
-                                      ? <GameIcon name={ITEM_ICONS[c.id].icon} color={ITEM_ICONS[c.id].color} size={12} />
+                                    {getIconData(c.id)
+                                      ? <GameIcon name={getIconData(c.id).icon} color={getIconData(c.id).color} size={12} />
                                       : <span>{c.icon}</span>}
                                     <span>{c.name}</span>
                                   </div>
@@ -485,13 +490,13 @@ function DesktopPerkCard({ item, type = "perk", borderColor = "border-blue-400/6
         </AnimatePresence>
         <div className="flex flex-col items-center gap-1">
           <span className="w-8 h-8 flex items-center justify-center">
-            {ITEM_ICONS[item.id]
-              ? <GameIcon name={ITEM_ICONS[item.id].icon} color={ITEM_ICONS[item.id].color} size={28} />
+            {getIconData(item.id)
+              ? <GameIcon name={getIconData(item.id).icon} color={getIconData(item.id).color} size={28} />
               : <span className="text-3xl">{item.icon}</span>}
           </span>
           <div className="text-center">
             <div className="text-white font-semibold text-xs leading-tight">{item.name}</div>
-            {item.remainingDuration > 0 && (
+            {item.duration > 0 && item.remainingDuration > 0 && (
               <div className="text-yellow-300 text-xs font-bold mt-1">{item.remainingDuration}x</div>
             )}
             {item.duration === -1 && <div className="text-green-300 text-xs mt-1">♾️</div>}
@@ -522,7 +527,7 @@ function DesktopPerkCard({ item, type = "perk", borderColor = "border-blue-400/6
             {getDynamicSuffix(item, ctx) && (
               <div className="text-amber-300 text-xs font-semibold mt-1">{getDynamicSuffix(item, ctx)}</div>
             )}
-            {item.remainingDuration > 0 && (
+            {item.duration > 0 && item.remainingDuration > 0 && (
               <div className="text-yellow-300 text-xs mt-2">
                 ⏱️ {item.remainingDuration} {item.remainingDuration === 1 ? 'Runde' : 'Runden'}
               </div>
@@ -624,8 +629,8 @@ function MobilePerkCard({ item, type = "perk", borderColor = "border-blue-400/60
         </AnimatePresence>
         <div className="flex items-center gap-2">
           <span className="w-7 h-7 flex items-center justify-center shrink-0">
-            {ITEM_ICONS[item.id]
-              ? <GameIcon name={ITEM_ICONS[item.id].icon} color={ITEM_ICONS[item.id].color} size={24} />
+            {getIconData(item.id)
+              ? <GameIcon name={getIconData(item.id).icon} color={getIconData(item.id).color} size={24} />
               : <span className="text-2xl">{item.icon}</span>}
           </span>
           <div className="flex-1">
@@ -639,7 +644,7 @@ function MobilePerkCard({ item, type = "perk", borderColor = "border-blue-400/60
                 <span className="text-amber-300 font-semibold ml-1">{getDynamicSuffix(item, ctx)}</span>
               )}
             </div>
-            {item.remainingDuration > 0 && (
+            {item.duration > 0 && item.remainingDuration > 0 && (
               <div className="text-yellow-300 text-xs font-bold mt-1">
                 ⏱️ {item.remainingDuration} {item.remainingDuration === 1 ? 'Runde' : 'Runden'}
               </div>
