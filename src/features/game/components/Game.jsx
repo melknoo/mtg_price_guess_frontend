@@ -1020,7 +1020,7 @@ export default function Game({
         if (relicSystem.hasRelic('perk_mastery') && perkSystem.activePerks.length > 0) relicEventQueue.push({ id: 'perk_mastery', type: 'tick' });
         if (relicSystem.hasRelic('tag_master')) relicEventQueue.push({ id: 'tag_master', type: 'tick' });
         if (relicSystem.hasRelic('level_power')) relicEventQueue.push({ id: 'level_power', type: 'tick' });
-        if (relicSystem.hasRelic('overkill') && totalGold > (relicSystem.getRelicValue('overkill_bonus') ?? 20)) relicEventQueue.push({ id: 'overkill', type: 'flash' });
+        if (relicSystem.hasRelic('overkill') && totalGold > (relicSystem.getRelicValue('overkill_bonus') ?? 8)) relicEventQueue.push({ id: 'overkill', type: 'flash' });
         if (relicSystem.hasRelic('last_stand') && getEffectiveLives() === 1) relicEventQueue.push({ id: 'last_stand', type: 'flash' });
         if (relicSystem.hasRelic('chain_reaction') && (ironWillActive || comboMultiplier > 1.15)) relicEventQueue.push({ id: 'chain_reaction', type: 'flash' });
         if (relicSystem.hasRelic('synergy_amp') && synergyEngine.activeSynergies.length > 0) relicEventQueue.push({ id: 'synergy_amp', type: 'tick' });
@@ -1809,7 +1809,7 @@ export default function Game({
   const handleCurseTake = useCallback((cursePerk) => {
     if (!cursePerk) return;
     // Apply curse perk (bypasses slot limits — no slotType)
-    perkSystem.selectPerk({ ...cursePerk, duration: -1 }, { hasEternalFlame: false });
+    perkSystem.selectPerk({ ...cursePerk, duration: -1, _slotless: true }, { hasEternalFlame: false });
     // Reward: instant gold + relic pick (elite relic pending)
     gold.addGold(cursePerk.curseRewardGold ?? 40);
     setEliteRelicPending(true);
@@ -2660,6 +2660,7 @@ export default function Game({
           applyPerkEffects={applyGoldEffects}
           timer={timer}
           cardLoader={cardLoader}
+          onCurseTake={handleCurseTake}
         />
       )}
     </>

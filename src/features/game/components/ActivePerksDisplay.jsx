@@ -90,6 +90,15 @@ const COLOR_VALUE_NAMES = { W: 'white', U: 'blue', B: 'black', R: 'red', G: 'gre
 
 // Für stackable Perks: zeigt den aktuellen gestackten Wert statt dem statischen Definitions-Text
 function getDynamicDescription(item) {
+  // Für aufgewertete permanente Perks: Beschreibung aus aktuellem value generieren
+  if ((item.upgradeCount ?? 1) > 1) {
+    if (item.effect === 'flat_bonus') return `+${item.value} extra XP per correct answer`;
+    if (item.effect === 'time_bonus') {
+      const secs = item.value;
+      return `+${secs} second${secs !== 1 ? 's' : ''} extra time per round`;
+    }
+  }
+
   if (!item.stackable) return item.description;
 
   if (item.effect === 'color_bonus') {

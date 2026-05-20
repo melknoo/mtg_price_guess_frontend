@@ -21,6 +21,7 @@ export default function DebugPanel({
   applyPerkEffects,
   timer,
   cardLoader,
+  onCurseTake,
 }) {
   const [open, setOpen] = useState(false);
   const [selectedRelic, setSelectedRelic] = useState(ALL_RELICS[0]?.id ?? '');
@@ -49,7 +50,12 @@ export default function DebugPanel({
 
   const handleAddPerk = () => {
     const perk = ALL_PERKS.find(p => p.id === selectedPerk);
-    if (perk) perkSystem.selectPerk(perk);
+    if (!perk) return;
+    if (perk.isCurse && onCurseTake) {
+      onCurseTake(perk);
+    } else {
+      perkSystem.selectPerk(perk);
+    }
   };
 
   const handleAddFocus = () => {

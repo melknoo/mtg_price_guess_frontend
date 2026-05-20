@@ -199,12 +199,12 @@ export const RELICS = {
   OVERKILL: {
     id: 'overkill',
     name: 'Overkill',
-    description: 'Gold above 20 per round: excess is doubled',
+    description: 'Gold above 8 per round: excess is doubled',
     icon: '💀',
     rarity: RELIC_RARITY.RARE,
     tags: [RELIC_TAGS.GOLD],
     effect: 'overkill_bonus',
-    value: 20,
+    value: 8,
   },
 
   // === META-RELICS: Meta-Scaling ===
