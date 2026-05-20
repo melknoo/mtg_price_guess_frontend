@@ -2,9 +2,11 @@
 // Key = semantischer Name (Dateiname ohne "icon_" Prefix und ".png" Suffix)
 // Nicht-prefixed Dateien: canon, canon_2, height, robot → direkt als Key
 
+import anchor from '../../assets/icons/icon_anchor.png';
 import animation from '../../assets/icons/icon_animation.png';
 import area_damage from '../../assets/icons/icon_area_damage.png';
 import area_meteo from '../../assets/icons/icon_area_meteo.png';
+import arrow_up from '../../assets/icons/icon_arrow_up.png';
 import audio from '../../assets/icons/icon_audio.png';
 import bag from '../../assets/icons/icon_bag.png';
 import beetle from '../../assets/icons/icon_beetle.png';
@@ -28,6 +30,14 @@ import circle from '../../assets/icons/icon_circle.png';
 import clear from '../../assets/icons/icon_clear.png';
 import coin from '../../assets/icons/icon_coin.png';
 import color_correction from '../../assets/icons/icon_color_correction.png';
+import compass from '../../assets/icons/icon_compass.png';
+import crown from '../../assets/icons/icon_crown.png';
+import crystal from '../../assets/icons/icon_crystal.png';
+import curse_amnesia from '../../assets/icons/icon_curse_amnesia.png';
+import curse_foggy from '../../assets/icons/icon_curse_foggy.png';
+import curse_fragile_mind from '../../assets/icons/icon_curse_fragile_mind.png';
+import curse_gold_debt from '../../assets/icons/icon_curse_gold_debt.png';
+import curse_slow_bleed from '../../assets/icons/icon_curse_slow_bleed.png';
 import crate from '../../assets/icons/icon_crate.png';
 import crate_02 from '../../assets/icons/icon_crate_02.png';
 import dialog from '../../assets/icons/icon_dialog.png';
@@ -40,9 +50,12 @@ import duplicate from '../../assets/icons/icon_duplicate.png';
 import emote from '../../assets/icons/icon_emote.png';
 import event from '../../assets/icons/icon_event.png';
 import expand from '../../assets/icons/icon_expand.png';
+import eye from '../../assets/icons/icon_eye.png';
 import face from '../../assets/icons/icon_face.png';
 import file from '../../assets/icons/icon_file.png';
+import fire from '../../assets/icons/icon_fire.png';
 import flag from '../../assets/icons/icon_flag.png';
+import flask from '../../assets/icons/icon_flask.png';
 import folder from '../../assets/icons/icon_folder.png';
 import follow from '../../assets/icons/icon_follow.png';
 import follower from '../../assets/icons/icon_follower.png';
@@ -58,11 +71,13 @@ import hand from '../../assets/icons/icon_hand.png';
 import hat from '../../assets/icons/icon_hat.png';
 import heart from '../../assets/icons/icon_heart.png';
 import hitbox from '../../assets/icons/icon_hitbox.png';
+import hourglass from '../../assets/icons/icon_hourglass.png';
 import human_controller from '../../assets/icons/icon_human_controller.png';
 import interrogation from '../../assets/icons/icon_interrogation.png';
 import key from '../../assets/icons/icon_key.png';
 import lever from '../../assets/icons/icon_lever.png';
 import light_bulb from '../../assets/icons/icon_light_bulb.png';
+import lightning_chain from '../../assets/icons/icon_lightning_chain.png';
 import liquid from '../../assets/icons/icon_liquid.png';
 import list from '../../assets/icons/icon_list.png';
 import loader from '../../assets/icons/icon_loader.png';
@@ -133,9 +148,11 @@ import height from '../../assets/icons/height.png';
 import robot from '../../assets/icons/robot.png';
 
 export const ICONS = {
+  anchor,
   animation,
   area_damage,
   area_meteo,
+  arrow_up,
   audio,
   bag,
   beetle,
@@ -159,6 +176,14 @@ export const ICONS = {
   clear,
   coin,
   color_correction,
+  compass,
+  crown,
+  crystal,
+  curse_amnesia,
+  curse_foggy,
+  curse_fragile_mind,
+  curse_gold_debt,
+  curse_slow_bleed,
   crate,
   crate_02,
   dialog,
@@ -171,9 +196,12 @@ export const ICONS = {
   emote,
   event,
   expand,
+  eye,
   face,
   file,
+  fire,
   flag,
+  flask,
   folder,
   follow,
   follower,
@@ -189,11 +217,13 @@ export const ICONS = {
   hat,
   heart,
   hitbox,
+  hourglass,
   human_controller,
   interrogation,
   key,
   lever,
   light_bulb,
+  lightning_chain,
   liquid,
   list,
   loader,

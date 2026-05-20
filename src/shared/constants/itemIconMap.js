@@ -26,7 +26,7 @@ export const ITEM_ICONS = {
 
   // ─── Balatro-Style Perks (17 neue) ────────────────────────────────────────
   gambler:                   { icon: 'dice',       color: 'orange' },
-  chain_lightning:           { icon: 'thunder',    color: 'amber' },
+  chain_lightning:           { icon: 'lightning_chain', color: 'amber' },
   time_bomb:                 { icon: 'time',       color: 'red' },
   dead_mans_hand:            { icon: 'skull',      color: 'red' },
   mirror_image:              { icon: 'duplicate',  color: 'teal' },
@@ -40,7 +40,7 @@ export const ITEM_ICONS = {
   roulette:                  { icon: 'ring',       color: 'orange' },
   glass_mind:                { icon: 'magnifier',  color: 'teal' },
   momentum_perk:             { icon: 'signal',     color: 'amber' },
-  treasure_map_perk:         { icon: 'map',        color: 'amber' },
+  treasure_map_perk:         { icon: 'compass',    color: 'amber' },      // compass passt besser zu "Treasure Map"
   overcautious:              { icon: 'shield',     color: 'teal' },
 
   // ─── CASCADE PERKS ───────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ export const ITEM_ICONS = {
   resonance_xp:              { icon: 'sound',      color: 'purple' },     // resonance = Schallwelle
   first_spark:               { icon: 'thunder',    color: 'orange' },     // spark = Blitz
   echo_prime:                { icon: 'duplicate',  color: 'orange' },     // echo prime = Duplikat vom Besten
-  chain_reaction_perk:       { icon: 'path_follow',color: 'red' },        // chain reaction = Pfad/Kette
+  chain_reaction_perk:       { icon: 'lightning_chain', color: 'red' },   // chain reaction = Kettenlightning
   catalyst:                  { icon: 'particle',   color: 'amber' },      // catalyst = Partikelreaktion
 
   // ─── RELICS ──────────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ export const ITEM_ICONS = {
   synergy_amp:               { icon: 'gear_2',     color: 'purple' },
 
   // Converter
-  alchemist:                 { icon: 'potion',     color: 'green' },
+  alchemist:                 { icon: 'flask',      color: 'green' },      // flask passt besser zu Alchemist als potion
   risk_reward:               { icon: 'dice',       color: 'orange' },
   snowball:                  { icon: 'freeze',     color: 'blue' },
   overkill:                  { icon: 'skull',      color: 'red' },
@@ -83,14 +83,14 @@ export const ITEM_ICONS = {
   level_power:               { icon: 'stat',       color: 'amber' },
 
   // Conditional
-  chain_reaction:            { icon: 'thunder',    color: 'orange' },
+  chain_reaction:            { icon: 'lightning_chain', color: 'orange' },
   perfectionist_echo:        { icon: 'target_2',   color: 'amber' },
   streak_shield:             { icon: 'shield',     color: 'orange' },
   last_stand:                { icon: 'sword',      color: 'red' },
   xp_converter:              { icon: 'gear',       color: 'purple' },
 
   // Perk Enhancers
-  eternal_flame:             { icon: 'glow',       color: 'orange' },     // ewige Flamme = Leuchten
+  eternal_flame:             { icon: 'fire',       color: 'orange' },     // ewige Flamme = Feuer
   double_dip:                { icon: 'duplicate',  color: 'amber' },
   upgrade_master:            { icon: 'hammer',     color: 'amber' },
   perk_recycler:             { icon: 'reset',      color: 'green' },
@@ -98,7 +98,7 @@ export const ITEM_ICONS = {
   // Cheat-the-System
   deaths_mask:               { icon: 'skull',      color: 'teal' },       // teal = fake/cheat
   phantom_streak:            { icon: 'visibility_off', color: 'teal' },   // phantom = unsichtbar
-  timeless:                  { icon: 'time',       color: 'gray' },
+  timeless:                  { icon: 'hourglass',  color: 'gray' },       // hourglass = zeitlos
 
   // Regeln-Umdrehen
   reverse_timer:             { icon: 'reset_2',    color: 'blue' },       // reverse = rückwärts reset
@@ -116,6 +116,13 @@ export const ITEM_ICONS = {
   gold_wellspring:           { icon: 'coin',       color: 'amber' },      // coin = Gold pro Antwort
   hoarder:                   { icon: 'crate',      color: 'amber' },      // crate = Sammeln/Lagern
   lucky_streak:              { icon: 'graph',      color: 'amber' },      // graph = wachsender Streak-Bonus
+
+  // ─── CURSE PERKS ─────────────────────────────────────────────────────────
+  curse_fragile_mind:        { icon: 'curse_fragile_mind', color: 'red' },
+  curse_gold_debt:           { icon: 'curse_gold_debt',    color: 'red' },
+  curse_foggy:               { icon: 'curse_foggy',        color: 'gray' },
+  curse_slow_bleed:          { icon: 'curse_slow_bleed',   color: 'red' },
+  curse_amnesia:             { icon: 'curse_amnesia',      color: 'red' },
 
   // Anti-Synergien
   hermit:                    { icon: 'door',       color: 'gray' },       // door = verschlossen/isoliert
