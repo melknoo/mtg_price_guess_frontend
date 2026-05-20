@@ -815,9 +815,13 @@ export default function Game({
           streakGold = calculateHotStreakGoldBonus(effectiveStreakForBonus);
         }
 
-        // Base Gold = 2G + Wellspring-Bonus + Streak-Gold
+        // Base Gold = 2G + Wellspring-Bonus + Streak-Gold + Lucky Streak
         const wellspringBonus = relicSystem.getRelicValue('bonus_gold_per_answer') ?? 0;
-        const baseGold = calculateBaseGold() + wellspringBonus + streakGold;
+        let luckyStreakBonus = 0;
+        if (relicSystem.hasRelic('lucky_streak') && effectiveStreakForBonus >= 5) {
+          luckyStreakBonus = Math.floor(effectiveStreakForBonus / 5) * (relicSystem.getRelicValue('lucky_streak_gold') ?? 1);
+        }
+        const baseGold = calculateBaseGold() + wellspringBonus + streakGold + luckyStreakBonus;
         const winnerCard = cardLoader.currentPair[correctCardIndex];
         const _currentDuration = getTimerDuration();
         // SLOW PERFECTIONIST Combo: Perfectionist aktiviert ab 4s Rest (statt voller Timer)
@@ -1033,6 +1037,7 @@ export default function Game({
         if (synergyEngine.hasSynergy('masochist') && masochistMult > 0) relicEventQueue.push({ id: 'masochist', type: 'tick' });
         if (synergyEngine.hasSynergy('sacrifice_reward')) relicEventQueue.push({ id: 'sacrifice_reward', type: 'tick' });
         if (synergyEngine.hasSynergy('cheater')) relicEventQueue.push({ id: 'cheater', type: 'tick' });
+        if (relicSystem.hasRelic('lucky_streak') && effectiveStreakForBonus >= 5) relicEventQueue.push({ id: 'lucky_streak', type: 'tick' });
 
         // Staggered combo flash — jedes Relic feuert 180ms nach dem vorherigen
         relicEventQueue.forEach(({ id, type }, i) => {

@@ -505,6 +505,16 @@ export const RELICS = {
     effect: 'bonus_gold_per_answer',
     value: 5,
   },
+  LUCKY_STREAK: {
+    id: 'lucky_streak',
+    name: 'Lucky Streak',
+    description: '+1 Gold per 5-streak block on each correct answer (streak 5: +1G, 10: +2G, 15: +3G, ...)',
+    icon: '🍀',
+    rarity: RELIC_RARITY.COMMON,
+    tags: [RELIC_TAGS.STREAK, RELIC_TAGS.GOLD],
+    effect: 'lucky_streak_gold',
+    value: 1,
+  },
   HOARDER: {
     id: 'hoarder',
     name: 'Hoarder',

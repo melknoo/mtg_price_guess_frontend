@@ -115,6 +115,7 @@ export const ITEM_ICONS = {
   synergy_expander:          { icon: 'unlock',     color: 'purple' },     // unlock = Slot freischalten
   gold_wellspring:           { icon: 'coin',       color: 'amber' },      // coin = Gold pro Antwort
   hoarder:                   { icon: 'crate',      color: 'amber' },      // crate = Sammeln/Lagern
+  lucky_streak:              { icon: 'graph',      color: 'amber' },      // graph = wachsender Streak-Bonus
 
   // Anti-Synergien
   hermit:                    { icon: 'door',       color: 'gray' },       // door = verschlossen/isoliert
