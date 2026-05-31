@@ -8,7 +8,7 @@ export default function PasswordInput({ className = "", ...props }) {
       <input
         {...props}
         type={visible ? "text" : "password"}
-        className={`pr-10 ${className}`}
+        className={`pr-10 ${visible ? 'font-mono' : ''} ${className}`}
       />
       <button
         type="button"
