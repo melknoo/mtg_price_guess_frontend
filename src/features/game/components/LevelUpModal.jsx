@@ -182,7 +182,7 @@ const CATEGORY_STYLES = {
 
 const RELIC_EXTRA_COST = 25;
 
-export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], maxSynergySlots = 3, onSelect, forceRelicMode = false, onSkip, onReroll, gold = 0, rerollKey = 0, relicSlotsMax = 4 }) {
+export default function LevelUpModal({ show, newLevel, activeRelics, activePerks, activeSynergies = [], maxSynergySlots = 3, onSelect, forceRelicMode = false, onSkip, onReroll, gold = 0, rerollKey = 0, relicSlotsMax = 4, pendingLevelUps = 0 }) {
   const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
@@ -204,9 +204,11 @@ export default function LevelUpModal({ show, newLevel, activeRelics, activePerks
     } else {
       setOptions([]);
     }
-  // Only re-generate when show turns true or rerollKey changes (explicit reroll)
+  // Neu generieren bei: show-Wechsel, explizitem Reroll, jedem ausstehenden Level-Up
+  // (pendingLevelUps zählt bei jedem Dismiss runter, ohne dass show toggelt → frische Perks
+  // pro Level bei Mehrfach-Level-Up) und Wechsel des Relic-Milestone-Modus.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show, rerollKey]);
+  }, [show, rerollKey, pendingLevelUps, isRelicMilestone]);
 
   if (!show || options.length === 0) return null;
 

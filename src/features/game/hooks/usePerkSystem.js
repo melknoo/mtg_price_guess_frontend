@@ -210,9 +210,13 @@ export const usePerkSystem = () => {
     // including perks made permanent by Parasite (duration changed at pick-time).
     const excludedIds = new Set(selectedPermanentPerks);
 
-    // Exclude base perks when their extended version is already active
+    // Ganze Perk-Familie ausschließen (Base + Extended), sobald irgendeine Variante aktiv ist.
+    // Verhindert z.B. dass "Double Gold+" angeboten wird, wenn "Double Gold" bereits aktiv ist (und umgekehrt).
     activePerks.forEach(p => {
-      if (p.basePerkId) excludedIds.add(p.basePerkId);
+      const baseId = p.basePerkId ?? p.id;
+      excludedIds.add(baseId);
+      const extended = allPerks.find(ep => ep.basePerkId === baseId);
+      if (extended) excludedIds.add(extended.id);
     });
 
     // Exclude active consumable perks
@@ -506,6 +510,12 @@ export const usePerkSystem = () => {
     if (utilitySlotMax != null) setMaxUtilitySlots(utilitySlotMax);
   }, []);
 
+  // Meta-Progression: Start-Slots um Bonus erhöhen (über Soft-Cap hinaus erlaubt)
+  const applyStartingSlots = useCallback((passiveBonus = 0, utilityBonus = 0) => {
+    if (passiveBonus > 0) setMaxPassiveSlots(PERK_CONFIG.STARTING_PASSIVE_SLOTS + passiveBonus);
+    if (utilityBonus > 0) setMaxUtilitySlots(PERK_CONFIG.STARTING_UTILITY_SLOTS + utilityBonus);
+  }, []);
+
   return {
     activePerks,
     roundsPlayed,
@@ -530,6 +540,7 @@ export const usePerkSystem = () => {
     getReplaceablePerks,
     buyPassiveSlot,
     buyUtilitySlot,
+    applyStartingSlots,
     rechargeStageStartUtilities,
     decrementPerkDurations,
     consumePerk,

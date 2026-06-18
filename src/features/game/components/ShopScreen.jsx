@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MERCHANT_TYPES } from '../constants/mapDefinitions';
-import MerchantPanel from './MerchantPanel';
+import { MERCHANT_TYPES, SHOP_PRICES } from '../constants/mapDefinitions';
+import MerchantPanel, { ItemCard } from './MerchantPanel';
 import GameIcon from '../../../shared/components/GameIcon';
 
 const ALL_MERCHANT_TYPES = [
@@ -27,6 +27,7 @@ export default function ShopScreen({
   canOfferPerk = null,
   relicSlotsMax = 4,
   canBuyRelicSlot = false,
+  discount = 0,
   onClose,
   onBuyRelic,
   onBuyPerk,
@@ -40,6 +41,11 @@ export default function ShopScreen({
   const [merchants] = useState(() => pickMerchants());
   const ownedRelicIds = new Set(activeRelics.map(r => r.id));
   const activePerkIds = new Set(activePerks.map(p => p.id));
+  const dp = (p) => Math.ceil(p * (1 - discount));
+  const canBuyPerkSlot = Boolean(perkSlotInfo && perkSlotInfo.max < 5);
+  const canBuyUtilitySlot = Boolean(utilitySlotInfo && utilitySlotInfo.max < 2);
+  const perkSlotPrice = dp(SHOP_PRICES.perk_slot);
+  const utilitySlotPrice = dp(SHOP_PRICES.utility_slot);
 
   return (
     <motion.div
@@ -66,6 +72,38 @@ export default function ShopScreen({
 
         {/* Merchants */}
         <div className="flex flex-col gap-5 overflow-y-auto flex-1 pr-1">
+          {/* Slot-Upgrades: immer verfügbar, unabhängig vom gewürfelten Händler */}
+          {(canBuyPerkSlot || canBuyUtilitySlot) && (
+            <div className="bg-white/5 rounded-none p-4 border-2 border-amber-400/40 shadow-pixel-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <GameIcon name="grid" size={24} color="amber" />
+                <div>
+                  <div className="font-black text-white">Slot Upgrades</div>
+                  <div className="text-indigo-300/60 text-xs">Expand your build capacity</div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                {canBuyPerkSlot && (
+                  <ItemCard
+                    item={{ id: '_perk_slot', name: 'Perk Slot', description: 'Unlock one extra passive perk slot (+1 max)', _gameIcon: { icon: 'grid', color: 'amber' }, rarity: 'epic' }}
+                    price={perkSlotPrice}
+                    gold={gold}
+                    canAfford={gold >= perkSlotPrice}
+                    onBuy={onBuyPerkSlot}
+                  />
+                )}
+                {canBuyUtilitySlot && (
+                  <ItemCard
+                    item={{ id: '_utility_slot', name: 'Utility Slot', description: 'Unlock one extra utility perk slot (+1 max)', _gameIcon: { icon: 'bag', color: 'teal' }, rarity: 'epic' }}
+                    price={utilitySlotPrice}
+                    gold={gold}
+                    canAfford={gold >= utilitySlotPrice}
+                    onBuy={onBuyUtilitySlot}
+                  />
+                )}
+              </div>
+            </div>
+          )}
           {merchants.map((type, i) => (
             <motion.div
               key={type}
@@ -79,11 +117,10 @@ export default function ShopScreen({
                 gold={gold}
                 lives={lives}
                 maxLives={maxLives}
+                discount={discount}
                 ownedRelicIds={ownedRelicIds}
                 activePerkIds={activePerkIds}
                 canOfferPerk={canOfferPerk}
-                canBuyPerkSlot={Boolean(perkSlotInfo && perkSlotInfo.max < 5)}
-                canBuyUtilitySlot={Boolean(utilitySlotInfo && utilitySlotInfo.max < 2)}
                 canBuyRelicSlot={canBuyRelicSlot}
                 relicSlotsMax={relicSlotsMax}
                 onBuyRelic={onBuyRelic}
@@ -91,8 +128,6 @@ export default function ShopScreen({
                 onHeal={onHeal}
                 onUpgradePerk={onUpgradePerk}
                 onBuySynergySlot={onBuySynergySlot}
-                onBuyPerkSlot={onBuyPerkSlot}
-                onBuyUtilitySlot={onBuyUtilitySlot}
                 onBuyRelicSlot={onBuyRelicSlot}
               />
             </motion.div>

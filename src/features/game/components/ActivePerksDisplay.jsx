@@ -148,12 +148,17 @@ function getDynamicSuffix(item, ctx) {
   }
 }
 
-function getCounterInfo(item, currentRound, heartRegenProgress, fortressRegenCount) {
+function getCounterInfo(item, currentRound, heartRegenProgress, fortressRegenCount, stageRound = 0) {
   if (item.consumable && item.duration === -1 && item.maxCharges != null) {
     return { current: item.value ?? 0, max: item.maxCharges };
   }
   if (item.effect === 'round_heal') {
     return { current: currentRound % item.value, max: item.value };
+  }
+  if (item.effect === 'curse_amnesia') {
+    // Runden innerhalb der Stage bis zum nächsten Streak-Reset (Reset bei stageRound % value === 0)
+    const interval = item.value || 5;
+    return { current: stageRound % interval, max: interval };
   }
   if (item.effect === 'heart_regen' && heartRegenProgress) {
     return { current: heartRegenProgress.current, max: heartRegenProgress.threshold };
@@ -164,7 +169,7 @@ function getCounterInfo(item, currentRound, heartRegenProgress, fortressRegenCou
   return null;
 }
 
-export default function ActivePerksDisplay({ perks, relics = [], synergies = [], activeCombos = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1, showPerkSelection = false, passiveSlotInfo = null, utilitySlotInfo = null, compoundAccRef = null, relicSlotsMax = 4 }) {
+export default function ActivePerksDisplay({ perks, relics = [], synergies = [], activeCombos = [], flashingRelics = new Set(), tickingRelics = new Set(), currentRound = 0, stageRound = 0, heartRegenProgress = null, fortressRegenCount = 0, level = 1, showPerkSelection = false, passiveSlotInfo = null, utilitySlotInfo = null, compoundAccRef = null, relicSlotsMax = 4 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSynergyId, setExpandedSynergyId] = useState(null);
 
@@ -220,7 +225,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
               {perks.map((perk) => {
                 const s = getItemRarityStyle(perk, false);
                 const compoundAcc = (compoundAccRef && perk.effect === 'compound_interest') ? (compoundAccRef.current ?? 0) : null;
-                return <DesktopPerkCard key={perk.id} item={perk} type="perk" borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} extraInfo={compoundAcc !== null ? `Acc: +${compoundAcc} XP` : null} />;
+                return <DesktopPerkCard key={perk.id} item={perk} type="perk" borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount, stageRound)} extraInfo={compoundAcc !== null ? `Acc: +${compoundAcc} XP` : null} />;
               })}
               {/* Leere Passive-Slots als Placeholder */}
               {passiveSlotInfo && Array.from({ length: passiveSlotInfo.max - passiveSlotInfo.used }).map((_, i) => (
@@ -235,7 +240,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
               )}
               {relics.map((relic) => {
                 const s = getItemRarityStyle(relic, true);
-                return <DesktopPerkCard key={relic.id} item={relic} type="relic" borderColor={s.borderColor} gradientColor={s.gradient} triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />;
+                return <DesktopPerkCard key={relic.id} item={relic} type="relic" borderColor={s.borderColor} gradientColor={s.gradient} triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount, stageRound)} ctx={ctx} />;
               })}
               {/* Leere Relic-Slots als Placeholder */}
               {Array.from({ length: Math.max(0, relicSlotsMax - (relics?.length ?? 0)) }).map((_, i) => (
@@ -255,7 +260,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                   gradientColor="from-teal-900/80 to-cyan-900/80"
                   contributors={getContributors(syn, relics, perks)}
                   ticking={tickingRelics.has(syn.id)}
-                  counterInfo={getCounterInfo(syn, currentRound, heartRegenProgress, fortressRegenCount)}
+                  counterInfo={getCounterInfo(syn, currentRound, heartRegenProgress, fortressRegenCount, stageRound)}
                 />
               ))}
               {activeCombos.length > 0 && (
@@ -333,14 +338,14 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                   )}
                   {perks.map((perk) => {
                     const s = getItemRarityStyle(perk, false);
-                    return <MobilePerkCard key={perk.id} item={perk} type="perk" borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount)} />;
+                    return <MobilePerkCard key={perk.id} item={perk} type="perk" borderColor={s.borderColor} gradientColor={s.gradient} ticking={tickingRelics.has(perk.id)} counterInfo={getCounterInfo(perk, currentRound, heartRegenProgress, fortressRegenCount, stageRound)} />;
                   })}
                   {relics.length > 0 && (
                     <div className="text-xs text-amber-400/70 font-bold uppercase tracking-wider mt-1 mb-0.5 border-t border-amber-500/20 pt-1">Relics</div>
                   )}
                   {relics.map((relic) => {
                     const s = getItemRarityStyle(relic, true);
-                    return <MobilePerkCard key={relic.id} item={relic} type="relic" borderColor={s.borderColor} gradientColor={s.gradient} triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount)} ctx={ctx} />;
+                    return <MobilePerkCard key={relic.id} item={relic} type="relic" borderColor={s.borderColor} gradientColor={s.gradient} triggered={flashingRelics.has(relic.id)} ticking={tickingRelics.has(relic.id)} counterInfo={getCounterInfo(relic, currentRound, heartRegenProgress, fortressRegenCount, stageRound)} ctx={ctx} />;
                   })}
                   {synergies.length > 0 && (
                     <div className="text-xs text-teal-400/70 font-bold uppercase tracking-wider mt-1 mb-0.5 border-t border-teal-500/20 pt-1">Synergies</div>
@@ -358,7 +363,7 @@ export default function ActivePerksDisplay({ perks, relics = [], synergies = [],
                           onTap={contributors.length > 0 ? () => setExpandedSynergyId(isExpanded ? null : syn.id) : undefined}
                           tapHint={contributors.length > 0}
                           ticking={tickingRelics.has(syn.id)}
-                          counterInfo={getCounterInfo(syn, currentRound, heartRegenProgress, fortressRegenCount)}
+                          counterInfo={getCounterInfo(syn, currentRound, heartRegenProgress, fortressRegenCount, stageRound)}
                         />
                         <AnimatePresence>
                           {isExpanded && contributors.length > 0 && (

@@ -94,6 +94,9 @@ export default function Game({
 
   // Game State
   const [lives, setLives] = useState(GAME_CONFIG.INITIAL_LIVES);
+  const [maxLivesBonus, setMaxLivesBonus] = useState(0); // Meta: +1 Max Lives Upgrade
+  const [shopDiscount, setShopDiscount] = useState(0); // Meta: Shop-Rabatt (0..1)
+  const [crystalsEarnedThisRun, setCrystalsEarnedThisRun] = useState(0); // Für Game-Over-Anzeige
   const [gameOver, setGameOver] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [correctIndex, setCorrectIndex] = useState(null);
@@ -156,6 +159,17 @@ export default function Game({
   const runLogger = useRunLogger();
   const gold = useGold();
   const savedRun = useSavedRun();
+
+  // Effektives Lebens-Maximum: Glass Cannon kappt auf 1, Meta-Upgrade hebt das Basis-Cap an
+  const maxLives = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES + maxLivesBonus;
+  // Meta-Shop-Rabatt auf einen Preis anwenden (aufgerundet)
+  const discountPrice = useCallback((p) => Math.ceil(p * (1 - shopDiscount)), [shopDiscount]);
+
+  // Shop-Perk-Filter: ganze Perk-Familie (Base + Extended) ausschließen, wenn eine Variante aktiv ist
+  const shopCanOfferPerk = useCallback((perk) => {
+    const family = perk.basePerkId ?? perk.id;
+    return !perkSystem.activePerks.some(ap => (ap.basePerkId ?? ap.id) === family);
+  }, [perkSystem.activePerks]);
 
   const queuePerkReplacement = useCallback((perk, onConfirm) => {
     setPerkReplacementState({
@@ -996,7 +1010,7 @@ export default function Game({
 
         // Heart Regeneration Overflow — vor level.addXP damit Ascension korrekt rechnet
         const regenResult = perkSystem.trackCorrectAnswer();
-        const _overflowMaxLives = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
+        const _overflowMaxLives = maxLives;
         if (regenResult.shouldRegenerate && lives >= _overflowMaxLives && relicSystem.hasRelic('overflow')) {
           if (synergyEngine.hasSynergy('ascension')) {
             // Ascension: Overflow-Heilung → ×1.5 XP statt flat Gold
@@ -1083,6 +1097,9 @@ export default function Game({
         // Build and store reward breakdown for combo popup
         xpGained += streakXPBonus;
         const goldBaseBreakdown = [];
+        // Base-Gold (ohne Streak-Anteil) immer anzeigen, damit Gold von Runde 1 an sichtbar ist
+        const flatBaseGold = baseGold - streakGold;
+        if (flatBaseGold > 0) goldBaseBreakdown.push({ label: 'Base', icon: <GameIcon name='coin' size={12} color='amber' />, delta: flatBaseGold });
         if (streakGold > 0) goldBaseBreakdown.push({ label: `Streak ${effectiveStreakForBonus}x`, icon: <GameIcon name='signal' size={12} color='orange' />, delta: streakGold });
         const xpBaseBreakdown = [];
         if (timeBonusXP > 0) xpBaseBreakdown.push({ label: 'Timer Bonus', icon: <GameIcon name='time' size={12} color='blue' />, delta: timeBonusXP });
@@ -1115,7 +1132,6 @@ export default function Game({
         let scoreMessage = `+${Math.floor(totalGold)}G +${xpGained}XP`;
         // Heart Regeneration Perk
         if (regenResult.shouldRegenerate) {
-          const maxLives = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
           if (lives >= maxLives && relicSystem.hasRelic('overflow')) {
             // Ascension bereits oben in xpGained verrechnet; non-ascension bereits in totalGold
             flashRelic('overflow');
@@ -1134,7 +1150,7 @@ export default function Game({
           setFortressRegenCount(prev => {
             const next = prev + 1;
             if (next >= fortressThreshold) {
-              const maxLivesFortress = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
+              const maxLivesFortress = maxLives;
               if (lives >= maxLivesFortress && relicSystem.hasRelic('overflow')) {
                 if (synergyEngine.hasSynergy('ascension')) {
                   // Ascension: bonus XP (separate addXP call)
@@ -1277,7 +1293,9 @@ export default function Game({
             if (metaProgression && mapSystem.currentStage > 1) {
               const stagesCleared = mapSystem.currentStage - 1;
               const baseCrystals = Math.ceil(stagesCleared / 2);
-              metaProgression.addCrystals(ascension.getAscensionCrystalBonus(baseCrystals));
+              const earned = ascension.getAscensionCrystalBonus(baseCrystals);
+              metaProgression.addCrystals(earned);
+              setCrystalsEarnedThisRun(earned);
             }
             setGameOver(true);
             level.dismissLevelUp();
@@ -1365,6 +1383,13 @@ export default function Game({
       const bonuses = metaProgression.getStartingBonuses();
       if (bonuses.extraGold > 0) gold.addGold(bonuses.extraGold);
       if (bonuses.extraRelicSlot > 0) setRelicSlotsMax(4 + bonuses.extraRelicSlot);
+      // Meta: Start-Leben, Max-Leben, Start-Slots, Shop-Rabatt anwenden
+      if (bonuses.extraLives > 0) setLives(prev => prev + bonuses.extraLives);
+      setMaxLivesBonus(bonuses.extraMaxLives ?? 0);
+      if (bonuses.extraPassiveSlot > 0 || bonuses.extraUtilitySlot > 0) {
+        perkSystem.applyStartingSlots(bonuses.extraPassiveSlot ?? 0, bonuses.extraUtilitySlot ?? 0);
+      }
+      setShopDiscount(bonuses.shopDiscount ?? 0);
 
       // Starting Kit: Startperk equip + Nachteil-Refs setzen
       activeKitRef.current = bonuses.activeKit ?? null;
@@ -1513,7 +1538,7 @@ export default function Game({
     const cardCounterInterval = relicSystem.getRelicValue('round_heal');
     if (cardCounterInterval) {
       if (nextRound % cardCounterInterval === 0) {
-        const maxLivesCC = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
+        const maxLivesCC = maxLives;
         if (lives >= maxLivesCC && relicSystem.hasRelic('overflow')) {
           if (synergyEngine.hasSynergy('ascension')) {
             // Ascension: Overflow-Heilung → Bonus-XP
@@ -1756,11 +1781,10 @@ export default function Game({
   }, [gold, perkSystem, relicSystem, achievements, queuePerkReplacement]);
 
   const handleShopHeal = useCallback(() => {
-    const healCost = 30;
+    const healCost = discountPrice(30);
     if (!gold.spendGold(healCost)) return;
-    const maxLives = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
     setLives(prev => Math.min(prev + 1, maxLives));
-  }, [gold, relicSystem, setLives]);
+  }, [gold, maxLives, setLives, discountPrice]);
 
   const handleShopUpgradePerk = useCallback((perkOrOpen) => {
     // Called from Healer: costs gold, extends a perk's duration
@@ -1773,34 +1797,34 @@ export default function Game({
   }, [gold, perkSystem]);
 
   const handleShopBuySynergySlot = useCallback(() => {
-    const cost = 80;
+    const cost = discountPrice(80);
     if (!gold.spendGold(cost)) return;
     relicSystem.addRelic(RELICS.SYNERGY_EXPANDER);
-  }, [gold, relicSystem]);
+  }, [gold, relicSystem, discountPrice]);
 
   const handleShopBuyPerkSlot = useCallback(() => {
-    const cost = 90;
+    const cost = discountPrice(90);
     if (!gold.spendGold(cost)) return;
     const purchased = perkSystem.buyPassiveSlot();
     if (!purchased) {
       gold.addGold(cost);
     }
-  }, [gold, perkSystem]);
+  }, [gold, perkSystem, discountPrice]);
 
   const handleShopBuyUtilitySlot = useCallback(() => {
-    const cost = 110;
+    const cost = discountPrice(110);
     if (!gold.spendGold(cost)) return;
     const purchased = perkSystem.buyUtilitySlot();
     if (!purchased) {
       gold.addGold(cost);
     }
-  }, [gold, perkSystem]);
+  }, [gold, perkSystem, discountPrice]);
 
   const handleBuyRelicSlot = useCallback(() => {
     if (relicSlotsMax >= 7) return;
-    if (!gold.spendGold(30)) return;
+    if (!gold.spendGold(discountPrice(30))) return;
     setRelicSlotsMax(prev => prev + 1);
-  }, [gold, relicSlotsMax]);
+  }, [gold, relicSlotsMax, discountPrice]);
 
   const handleExchangeComplete = useCallback((goldSpent, xpGained) => {
     if (goldSpent && xpGained) {
@@ -1850,10 +1874,9 @@ export default function Game({
 
   // ── Rest callbacks ──────────────────────────────────────────
   const handleRest = useCallback(() => {
-    const maxLives = relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES;
     setLives(prev => Math.min(prev + 2, maxLives));
     mapSystem.completeRest();
-  }, [relicSystem, setLives, mapSystem]);
+  }, [maxLives, setLives, mapSystem]);
 
   const handleRestUpgradePerk = useCallback((perk) => {
     // Extend perk duration for free at rest site
@@ -1934,6 +1957,9 @@ export default function Game({
     setCorrectIndex(null);
     setShowPrices(false);
     setLives(GAME_CONFIG.INITIAL_LIVES);
+    setMaxLivesBonus(0);
+    setShopDiscount(0);
+    setCrystalsEarnedThisRun(0);
     setCurrentRound(1);
 
     streak.reset();
@@ -2012,14 +2038,14 @@ export default function Game({
         <div className="bg-[#111827] rounded-sm px-2 py-1 border-2 border-[#2d3a5c] shrink-0">
           <span className="text-amber-300 text-xs font-semibold flex items-center gap-1"><GameIcon name='target' size={13} color='amber' /> R{currentRound}</span>
         </div>
-        <LivesDisplay lives={lives} />
+        <LivesDisplay lives={lives} maxLives={maxLives} />
       </div>
       {/* Desktop */}
       <div className="hidden sm:flex sm:mb-1 flex-row w-full max-w-2xl justify-between items-center">
         <div className="bg-[#111827] rounded-sm px-4 py-2 border-2 border-[#2d3a5c]">
           <span className="text-amber-300 text-sm font-semibold flex items-center gap-1"><GameIcon name='target' size={14} color='amber' /> Round {currentRound}</span>
         </div>
-        <LivesDisplay lives={lives} />
+        <LivesDisplay lives={lives} maxLives={maxLives} />
       </div>
 
       {/* XP / Level-Display */}
@@ -2130,6 +2156,7 @@ export default function Game({
         flashingRelics={flashingRelics}
         tickingRelics={tickingRelics}
         currentRound={currentRound}
+        stageRound={mapSystem.stageRound}
         heartRegenProgress={perkSystem.getHeartRegenProgress()}
         fortressRegenCount={fortressRegenCount}
         level={level.level}
@@ -2367,6 +2394,7 @@ export default function Game({
         rerollKey={levelUpRerollKey}
         forceRelicMode={relicMilestoneQueue[0] === true}
         relicSlotsMax={relicSlotsMax}
+        pendingLevelUps={level.pendingLevelUps}
       />
 
       {/* Elite Stage Relic Drop — zeigt nach Elite-Stage-Completion */}
@@ -2421,6 +2449,7 @@ export default function Game({
               if (bossDefeated && metaProgression) {
                 const crystalsEarned = ascension.getAscensionCrystalBonus(5);
                 metaProgression.addCrystals(crystalsEarned);
+                setCrystalsEarnedThisRun(prev => prev + crystalsEarned);
                 // Nächste Ascension-Stufe freischalten
                 ascension.unlockNextLevel();
               }
@@ -2553,7 +2582,8 @@ export default function Game({
             xp={level.xp}
             xpToNextLevel={level.xpToNextLevel}
             lives={lives}
-            onChooseNode={(optIdx) => mapSystem.chooseNode(optIdx)}
+            maxLives={maxLives}
+            onChooseNode={mapSystem.chooseNode}
             onExchange={handleExchangeComplete}
             onClose={mapSystem.mapViewOnly ? mapSystem.closeMap : undefined}
           />
@@ -2565,12 +2595,13 @@ export default function Game({
           <ShopScreen
             gold={gold.gold}
             lives={lives}
-            maxLives={relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES}
+            maxLives={maxLives}
+            discount={shopDiscount}
             activeRelics={relicSystem.activeRelics}
             activePerks={perkSystem.activePerks}
             perkSlotInfo={perkSystem.passiveSlotInfo}
             utilitySlotInfo={perkSystem.utilitySlotInfo}
-            canOfferPerk={() => true}
+            canOfferPerk={shopCanOfferPerk}
             relicSlotsMax={relicSlotsMax}
             canBuyRelicSlot={relicSlotsMax < 7}
             onClose={handleShopComplete}
@@ -2590,7 +2621,7 @@ export default function Game({
         {mapSystem.showRest && !gameOver && (
           <RestScreen
             lives={lives}
-            maxLives={relicSystem.hasRelic('glass_cannon') ? 1 : GAME_CONFIG.INITIAL_LIVES}
+            maxLives={maxLives}
             activePerks={perkSystem.activePerks}
             onRest={handleRest}
             onUpgradePerk={handleRestUpgradePerk}
@@ -2636,6 +2667,7 @@ export default function Game({
           relics={relicSystem.activeRelics}
           synergies={synergyEngine.activeSynergies}
           bestComboMultiplier={bestComboMultiplierRef.current}
+          crystalsEarned={crystalsEarnedThisRun}
         >
           {user?.guest && showRegister && (
             <RegisterWithScore

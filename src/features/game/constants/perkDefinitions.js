@@ -368,11 +368,12 @@ export const PERKS = {
         rarity: PERK_RARITY.RARE,
         tags: [PERK_TAGS.SACRIFICE],
         effect: 'sacrifice_ritual',
-        value: 3,
+        value: 1,            // 1 Charge (Gold-x3-Effekt ist in Game.jsx fest verdrahtet)
         duration: -1,
         manual: true,
         consumable: true,
         slotType: PERK_SLOT_TYPES.UTILITY,
+        maxCharges: 1,       // nur einmal nutzbar, kein Recharge
     },
 
     ADRENALINE: {

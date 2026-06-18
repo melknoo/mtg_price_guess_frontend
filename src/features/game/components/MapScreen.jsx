@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, memo } from 'react';
 import { motion } from 'framer-motion';
 import { NODE_TYPES, TOTAL_STAGES } from '../constants/mapDefinitions';
 import GameIcon from '../../../shared/components/GameIcon';
@@ -30,6 +30,13 @@ const NODE_INFO = {
     { icon: 'skull', color: 'orange', text: 'Timer −2s' },
     { icon: 'star', color: 'purple', text: 'Relic drop' },
   ],
+  [NODE_TYPES.CURSE]: [
+    { icon: 'skull', color: 'red',   text: 'Forced curse perk' },
+    { icon: 'coin',  color: 'amber', text: 'Gold + relic reward' },
+  ],
+  [NODE_TYPES.BOUNTY]: [
+    { icon: 'target', color: 'amber', text: 'Hit goal → reward' },
+  ],
 };
 
 const NODE_ICON = {
@@ -41,6 +48,8 @@ const NODE_ICON = {
   [NODE_TYPES.MYSTERY]:  <GameIcon name="interrogation" size={20} color="purple" />,
   [NODE_TYPES.EXCHANGE]: <GameIcon name="coin"     size={20} color="teal"   />,
   [NODE_TYPES.MINI_BOSS]:<GameIcon name="bullet"   size={20} color="orange" />,
+  [NODE_TYPES.CURSE]:    <GameIcon name="skull"    size={20} color="red"    />,
+  [NODE_TYPES.BOUNTY]:   <GameIcon name="target"   size={20} color="amber"  />,
 };
 
 const NODE_LABEL = {
@@ -52,6 +61,8 @@ const NODE_LABEL = {
   [NODE_TYPES.MYSTERY]: 'Mystery',
   [NODE_TYPES.EXCHANGE]: 'Exchange',
   [NODE_TYPES.MINI_BOSS]: 'Mini Boss',
+  [NODE_TYPES.CURSE]: 'Curse',
+  [NODE_TYPES.BOUNTY]: 'Bounty',
 };
 
 const NODE_COLOR = {
@@ -63,17 +74,21 @@ const NODE_COLOR = {
   [NODE_TYPES.MYSTERY]:  'border-purple-400 bg-purple-900/30 hover:bg-purple-800/50',
   [NODE_TYPES.EXCHANGE]: 'border-teal-400 bg-teal-900/30 hover:bg-teal-800/50',
   [NODE_TYPES.MINI_BOSS]:'border-orange-400 bg-orange-900/30 hover:bg-orange-800/50',
+  [NODE_TYPES.CURSE]:    'border-red-700 bg-red-950/40 hover:bg-red-900/50',
+  [NODE_TYPES.BOUNTY]:   'border-amber-500 bg-amber-900/30 hover:bg-amber-800/50',
 };
 
-export default function MapScreen({ map, currentStage, gold, level = 1, xp = 0, xpToNextLevel = 50, lives = 0, maxLives = GAME_CONFIG.INITIAL_LIVES, onChooseNode, onExchange, onClose }) {
+function MapScreen({ map, currentStage, gold, level = 1, xp = 0, xpToNextLevel = 50, lives = 0, maxLives = GAME_CONFIG.INITIAL_LIVES, onChooseNode, onExchange, onClose }) {
   const activeStageRef = useRef(null);
 
-  // Scrollt beim Öffnen automatisch zum aktiven Stage (flex-col-reverse zeigt Boss oben,
-  // aktiver Stage ist unten — ohne Scroll sieht man erst den Boss/Future-Bereich)
+  // Scrollt beim Öffnen direkt zum aktiven Stage (flex-col-reverse zeigt Boss oben,
+  // aktiver Stage ist unten — ohne Scroll sieht man erst den Boss/Future-Bereich).
+  // 'auto' (instant) statt 'smooth', damit der Scroll nicht mit der Modal-Einblend-Animation
+  // konkurriert und ruckelt — der Scroll passiert verdeckt während des Scale-In.
   useEffect(() => {
     if (!activeStageRef.current) return;
     const t = setTimeout(() => {
-      activeStageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      activeStageRef.current?.scrollIntoView({ behavior: 'auto', block: 'nearest' });
     }, 180);
     return () => clearTimeout(t);
   }, []);
@@ -105,7 +120,7 @@ export default function MapScreen({ map, currentStage, gold, level = 1, xp = 0, 
           </h2>
           <div className="flex items-center gap-2">
             <span className="text-red-400 font-bold text-sm border border-red-500/40 rounded-sm px-2 py-0.5 inline-flex items-center gap-1">
-              {[...Array(maxLives)].map((_, i) => (
+              {[...Array(Math.max(maxLives, lives))].map((_, i) => (
                 <GameIcon key={i} name="heart" size={12} color={i < lives ? 'red' : 'gray'} />
               ))}
             </span>
@@ -236,3 +251,6 @@ export default function MapScreen({ map, currentStage, gold, level = 1, xp = 0, 
     </motion.div>
   );
 }
+
+// memo: verhindert Re-Renders durch nicht-relevante Parent-Updates während die Map offen ist
+export default memo(MapScreen);

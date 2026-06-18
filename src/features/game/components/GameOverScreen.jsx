@@ -16,6 +16,7 @@ export default function GameOverScreen({
   relics = [],
   synergies = [],
   bestComboMultiplier = 1,
+  crystalsEarned = 0,
 }) {
   return (
     <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-10 p-4">
@@ -28,6 +29,13 @@ export default function GameOverScreen({
           <div className="text-4xl font-bold text-amber-300">{score.toLocaleString()}</div>
         </div>
         <div className="text-xs text-gray-400 uppercase tracking-wider mb-3">Gold Earned</div>
+
+        {crystalsEarned > 0 && (
+          <div className="mb-3 inline-flex items-center gap-2 bg-purple-500/15 border-2 border-purple-400/40 rounded-sm px-3 py-1.5">
+            <GameIcon name="crystal" size={18} color="purple" />
+            <span className="text-purple-200 font-bold">+{crystalsEarned} Crystals</span>
+          </div>
+        )}
 
         {bestStreak > 0 && (
           <p className="mb-3 text-xl text-orange-400 font-bold inline-flex items-center gap-1">
