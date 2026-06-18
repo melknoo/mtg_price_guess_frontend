@@ -8,7 +8,23 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem("token"));
 
-  // Handle Google redirect callback (access_token in URL hash)
+  // Tauscht einen Google access_token gegen unser JWT (Backend) und loggt ein.
+  // Wird sowohl vom Browser-Redirect-Flow (URL-Hash) als auch von der nativen
+  // Expo-App (via window.__handleGoogleAccessToken) aufgerufen.
+  const exchangeGoogleAccessToken = (googleAccessToken) => {
+    if (!googleAccessToken) return;
+    axios.post(`${API_URL}/auth/social/google`, { token: googleAccessToken })
+      .then((res) => {
+        const newToken = res.data.token;
+        axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+        setToken(newToken);
+        localStorage.setItem("token", newToken);
+        setUser(res.data.user);
+      })
+      .catch((err) => console.error("Google login failed:", err));
+  };
+
+  // Handle Google redirect callback (access_token in URL hash) — Browser/PWA-Flow.
   useEffect(() => {
     const hash = window.location.hash;
     if (hash.includes("access_token=")) {
@@ -16,17 +32,17 @@ export const AuthProvider = ({ children }) => {
       const googleAccessToken = params.get("access_token");
       if (googleAccessToken) {
         window.history.replaceState({}, document.title, window.location.pathname);
-        axios.post(`${API_URL}/auth/social/google`, { token: googleAccessToken })
-          .then((res) => {
-            const newToken = res.data.token;
-            axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-            setToken(newToken);
-            localStorage.setItem("token", newToken);
-            setUser(res.data.user);
-          })
-          .catch((err) => console.error("Google redirect login failed:", err));
+        exchangeGoogleAccessToken(googleAccessToken);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Bridge für die native Expo-App: das Token kommt aus dem Custom Tab zurück
+  // und wird via injectJavaScript an diese global exponierte Funktion übergeben.
+  useEffect(() => {
+    window.__handleGoogleAccessToken = exchangeGoogleAccessToken;
+    return () => { delete window.__handleGoogleAccessToken; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

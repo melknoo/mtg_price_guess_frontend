@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Signing in…</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #1a1a2e;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <p>Signing in…</p>
+  <script>
+    // Native OAuth bounce page.
+    // Google (Web-Client) darf nur auf https zurückleiten, nicht auf ein Custom-Scheme.
+    // Diese Seite läuft im Chrome Custom Tab, liest den access_token aus dem URL-Fragment
+    // und springt zurück in die Expo-App über das App-Scheme mtgpriceguess://.
+    (function () {
+      var hash = window.location.hash || "";
+      // Token sowohl bei Erfolg (#access_token=...) als auch Fehler (#error=...) zurückgeben.
+      window.location.replace("mtgpriceguess://oauth" + hash);
+    })();
+  </script>
+</body>
+</html>

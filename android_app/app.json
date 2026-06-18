@@ -34,7 +34,8 @@
       }
     },
     "plugins": [
-      "expo-navigation-bar"
+      "expo-navigation-bar",
+      "expo-web-browser"
     ],
     "owner": "melknoo"
   }

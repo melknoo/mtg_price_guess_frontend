@@ -2,13 +2,34 @@ import React from "react";
 
 function GoogleButton() {
   const handleClick = () => {
+    // Innerhalb der Expo-WebView-App: OAuth darf NICHT im WebView laufen
+    // (Google blockt eingebettete WebViews mit "disallowed_useragent").
+    // Stattdessen baut die native App einen Chrome Custom Tab auf und leitet
+    // über die /native-oauth.html-Bounce-Seite zurück ins App-Scheme.
+    const isNativeApp = typeof window !== "undefined" && window.ReactNativeWebView;
+
+    const redirectUri = isNativeApp
+      ? `${window.location.origin}/native-oauth.html`
+      : window.location.origin;
+
     const params = new URLSearchParams({
       client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-      redirect_uri: window.location.origin,
+      redirect_uri: redirectUri,
       response_type: "token",
       scope: "email profile",
     });
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+
+    if (isNativeApp) {
+      // Native App öffnet den System-Browser (Custom Tab) und gibt das Token
+      // anschließend via window.__handleGoogleAccessToken(...) zurück.
+      window.ReactNativeWebView.postMessage(
+        JSON.stringify({ type: "google-login", url: authUrl })
+      );
+      return;
+    }
+
+    window.location.href = authUrl;
   };
 
   return (
