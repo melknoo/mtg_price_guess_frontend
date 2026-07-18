@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 // XP-Kurve: Level 1→2 = 30 XP (ca. 3 richtige Antworten), dann +25 pro Level
 const getXpToNextLevel = (level) => 30 + (level - 1) * 25;
@@ -9,11 +9,16 @@ export const useLevel = () => {
   const [xpToNextLevel, setXpToNextLevel] = useState(getXpToNextLevel(1));
   // Anzahl ausstehender Level-Up-Modals (je Level-Up +1, je Dismiss -1)
   const [pendingLevelUps, setPendingLevelUps] = useState(0);
+  // Gesamte im Run verdiente XP (Ref für synchronen Zugriff am Run-Ende).
+  // Nicht aus level+xp ableitbar, da Scholar-Synergy die Thresholds verändert.
+  const totalXpEarnedRef = useRef(0);
 
   // Fügt XP hinzu; gibt true zurück wenn Level-Up passiert ist
   // thresholdMultiplier: Scholar-Synergy senkt die Schwelle (z.B. 0.8 = 20% weniger XP nötig)
   const addXP = useCallback((amount, thresholdMultiplier = 1) => {
     if (amount <= 0) return false;
+
+    totalXpEarnedRef.current += amount;
 
     let didLevelUp = false;
 
@@ -61,14 +66,17 @@ export const useLevel = () => {
     setLevel(1);
     setXpToNextLevel(getXpToNextLevel(1));
     setPendingLevelUps(0);
+    totalXpEarnedRef.current = 0;
   }, []);
 
-  const restoreLevel = useCallback((savedLevel, savedXp) => {
+  const restoreLevel = useCallback((savedLevel, savedXp, savedTotalXpEarned) => {
     const lvl = Math.max(1, Math.floor(savedLevel ?? 1));
     setLevel(lvl);
     setXp(savedXp ?? 0);
     setXpToNextLevel(getXpToNextLevel(lvl));
     setPendingLevelUps(0);
+    // Ältere Saves ohne Feld: 0 — Run zählt dann nur ab jetzt (leicht unter-belohnt, akzeptiert)
+    totalXpEarnedRef.current = savedTotalXpEarned ?? 0;
   }, []);
 
   return {
@@ -77,6 +85,7 @@ export const useLevel = () => {
     xpToNextLevel,
     showLevelUp: pendingLevelUps > 0,
     pendingLevelUps,
+    totalXpEarnedRef,
     addXP,
     dismissLevelUp,
     setLevelDirect,

@@ -88,6 +88,7 @@ export default function Game({
   onGameOver = null,
   continueMode = false,
   metaProgression = null,
+  accountProgression = null,
 }) {
   const { user, refreshUser, setUser } = useAuth();
   const achievements = useAchievementContext();
@@ -97,6 +98,8 @@ export default function Game({
   const [maxLivesBonus, setMaxLivesBonus] = useState(0); // Meta: +1 Max Lives Upgrade
   const [shopDiscount, setShopDiscount] = useState(0); // Meta: Shop-Rabatt (0..1)
   const [crystalsEarnedThisRun, setCrystalsEarnedThisRun] = useState(0); // Für Game-Over-Anzeige
+  const [accountRewardThisRun, setAccountRewardThisRun] = useState(null); // { xpGained, levelUps } für Game-Over-Anzeige
+  const accountGrantedRef = useRef(false); // Guard: Account-XP nur einmal pro Run vergeben
   const [gameOver, setGameOver] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [correctIndex, setCorrectIndex] = useState(null);
@@ -153,6 +156,11 @@ export default function Game({
   const streak = useStreak();
   const perkSystem = usePerkSystem();
   const perkCombos = usePerkCombos(perkSystem.activePerks);
+  // Codex-Discovery: aktive Perk-Combos als entdeckt markieren (idempotent)
+  useEffect(() => {
+    if (!accountProgression) return;
+    perkCombos.activeCombos.forEach(c => accountProgression.markComboDiscovered(c.id));
+  }, [perkCombos.activeCombos, accountProgression]);
   const ascension = useAscension();
   const level = useLevel();
   const relicSystem = useRelicSystem();
@@ -223,7 +231,9 @@ export default function Game({
     setSynergyToast(synergy);
     setTimeout(() => setSynergyToast(null), 4000);
     achievements.trackSynergyActivated(1);
-  }, [achievements]);
+    // Codex-Discovery: Synergy als entdeckt markieren
+    accountProgression?.markSynergyDiscovered(synergy.id);
+  }, [achievements, accountProgression]);
 
   // Synergy-Konflikt-Callback — wenn alle 3 Slots belegt sind
   const handleSynergyConflict = useCallback((synergy) => {
@@ -1297,6 +1307,17 @@ export default function Game({
               metaProgression.addCrystals(earned);
               setCrystalsEarnedThisRun(earned);
             }
+            // Account-Progression: XP auch bei Stage-1-Tod, aber nur einmal pro Run
+            if (accountProgression && !accountGrantedRef.current) {
+              accountGrantedRef.current = true;
+              const reward = accountProgression.grantRunRewards({
+                inRunXp: level.totalXpEarnedRef.current,
+                stagesCleared: mapSystem.currentStage - 1,
+                bossWin: false,
+                ascensionLevel: ascension.ascensionLevel,
+              });
+              setAccountRewardThisRun(reward);
+            }
             setGameOver(true);
             level.dismissLevelUp();
             savedRun.clearRun(); // Tod = kein Continue mehr möglich
@@ -1342,7 +1363,7 @@ export default function Game({
         level.addXP(combined, synergyEngine.getSynergyValue('reduced_xp_threshold') ?? 1);
       }
     },
-    [cardLoader.currentPair, timer, streak, lives, user, setUser, refreshUser, perkSystem, perkCombos, achievements, applyGoldEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult, runLogger, saveCurrentRun, gold, mapSystem, metaProgression, ascension] // eslint-disable-line react-hooks/exhaustive-deps
+    [cardLoader.currentPair, timer, streak, lives, user, setUser, refreshUser, perkSystem, perkCombos, achievements, applyGoldEffects, getTimerDuration, onGameOver, currentRound, initialCards, level, relicSystem, synergyEngine, ironWillActive, comboMultiplier, nextRoundDouble, flashRelic, tickRelic, getEffectiveLives, getEffectiveStreak, getEffectiveAnswerTime, masochistMult, runLogger, saveCurrentRun, gold, mapSystem, metaProgression, accountProgression, ascension] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // Update handleChoiceRef when handleChoice changes
@@ -1360,7 +1381,7 @@ export default function Game({
       const saved = savedRun.loadRun();
       if (saved) {
         gold.restore({ gold: saved.gold ?? 0, totalEarnedGold: saved.totalEarnedGold ?? 0 });
-        level.restoreLevel(saved.level, saved.xp);
+        level.restoreLevel(saved.level, saved.xp, saved.totalXpEarned);
         if (saved.lives != null) setLives(saved.lives);
         relicSystem.restoreRelics(saved.relics);
         perkSystem.restorePerks(saved.perks, saved.passiveSlotMax, saved.utilitySlotMax);
@@ -1854,6 +1875,7 @@ export default function Game({
     totalEarnedGold: gold.totalEarnedGoldRef.current,
     level: level.level,
     xp: level.xp,
+    totalXpEarned: level.totalXpEarnedRef.current,
     lives,
     relics: relicSystem.activeRelics,
     perks: perkSystem.activePerks,
@@ -1960,6 +1982,8 @@ export default function Game({
     setMaxLivesBonus(0);
     setShopDiscount(0);
     setCrystalsEarnedThisRun(0);
+    setAccountRewardThisRun(null);
+    accountGrantedRef.current = false;
     setCurrentRound(1);
 
     streak.reset();
@@ -2453,6 +2477,17 @@ export default function Game({
                 // Nächste Ascension-Stufe freischalten
                 ascension.unlockNextLevel();
               }
+              // Account-Progression: Boss-Win-XP, nur einmal pro Run
+              if (accountProgression && !accountGrantedRef.current) {
+                accountGrantedRef.current = true;
+                const reward = accountProgression.grantRunRewards({
+                  inRunXp: level.totalXpEarnedRef.current,
+                  stagesCleared: TOTAL_STAGES,
+                  bossWin: bossDefeated,
+                  ascensionLevel: ascension.ascensionLevel,
+                });
+                setAccountRewardThisRun(reward);
+              }
             }}
             onContinue={() => {
               setRunComplete(false);
@@ -2668,6 +2703,8 @@ export default function Game({
           synergies={synergyEngine.activeSynergies}
           bestComboMultiplier={bestComboMultiplierRef.current}
           crystalsEarned={crystalsEarnedThisRun}
+          accountReward={accountRewardThisRun}
+          accountProgression={accountProgression}
         >
           {user?.guest && showRegister && (
             <RegisterWithScore
@@ -2698,6 +2735,7 @@ export default function Game({
           timer={timer}
           cardLoader={cardLoader}
           onCurseTake={handleCurseTake}
+          accountProgression={accountProgression}
         />
       )}
     </>

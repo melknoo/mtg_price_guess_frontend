@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { RELICS } from '../constants/relicDefinitions';
 import { PERKS } from '../constants/perkDefinitions';
 import { SYNERGIES } from '../constants/synergyDefinitions';
+import { computeLockedKeys, getUnlockHint, isGatedContent } from '../constants/unlockDefinitions';
+import { useAchievementContext } from '../context/AchievementContext';
 import GameIcon from '../../../shared/components/GameIcon';
 import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
 
@@ -56,16 +58,32 @@ function RarityBadge({ rarity }) {
   );
 }
 
+// ─── Lock overlay mit Unlock-Hinweis ────────────────────────────────────────
+function LockOverlay({ hint }) {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-sm bg-gray-900/70 z-10 px-3 text-center">
+      <GameIcon name="lock" size={20} color="gray" />
+      {hint && <span className="text-gray-300 text-[10px] leading-snug">{hint}</span>}
+    </div>
+  );
+}
+
+// ─── "NEW" badge für frisch freigeschaltete Items ───────────────────────────
+function NewBadge() {
+  return (
+    <span className="absolute -top-1.5 -right-1.5 z-20 bg-amber-500 text-gray-900 text-[9px] font-bold px-1.5 py-0.5 rounded-sm shadow-pixel-sm">
+      NEW
+    </span>
+  );
+}
+
 // ─── Relic card ──────────────────────────────────────────────────────────────
-function RelicCard({ relic, locked }) {
+function RelicCard({ relic, locked, hint, isNew }) {
   const r = RARITY_CFG[relic.rarity] ?? RARITY_CFG.common;
   return (
     <div className={`relative bg-gray-800/70 border ${r.border} rounded-sm p-3 flex flex-col gap-1.5 shadow-pixel-sm ${r.glow} ${locked ? 'opacity-40' : ''}`}>
-      {locked && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-sm bg-gray-900/60 z-10">
-          <GameIcon name="lock" size={20} color="gray" />
-        </div>
-      )}
+      {locked && <LockOverlay hint={hint} />}
+      {!locked && isNew && <NewBadge />}
       <div className="flex items-start gap-2">
         <span className="w-8 h-8 flex items-center justify-center shrink-0 mt-0.5">
           {ITEM_ICONS[relic.id]
@@ -92,17 +110,14 @@ function RelicCard({ relic, locked }) {
 // ─── Perk card ───────────────────────────────────────────────────────────────
 const PERK_RARITY_MAP = { common: 'common', rare: 'rare', epic: 'epic' };
 
-function PerkCard({ perk, locked }) {
+function PerkCard({ perk, locked, hint, isNew }) {
   const rarity = PERK_RARITY_MAP[perk.rarity] ?? 'common';
   const r = RARITY_CFG[rarity];
   const durationLabel = perk.duration === -1 ? 'permanent' : perk.duration > 0 ? `${perk.duration} rounds` : null;
   return (
     <div className={`relative bg-gray-800/70 border ${r.border} rounded-sm p-3 flex flex-col gap-1.5 shadow-pixel-sm ${r.glow} ${locked ? 'opacity-40' : ''}`}>
-      {locked && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-sm bg-gray-900/60 z-10">
-          <GameIcon name="lock" size={20} color="gray" />
-        </div>
-      )}
+      {locked && <LockOverlay hint={hint} />}
+      {!locked && isNew && <NewBadge />}
       <div className="flex items-start gap-2">
         <span className="w-8 h-8 flex items-center justify-center shrink-0 mt-0.5">
           {ITEM_ICONS[perk.id]
@@ -131,28 +146,29 @@ function PerkCard({ perk, locked }) {
 }
 
 // ─── Synergy card ────────────────────────────────────────────────────────────
-function SynergyCard({ synergy, locked }) {
+// Synergien sind nie gesperrt (sie feuern automatisch), aber undiscovered bis
+// zur ersten Aktivierung: Name/Beschreibung verborgen, Required-Tags sichtbar.
+function SynergyCard({ synergy, undiscovered }) {
   const rarity = synergyRarity(synergy);
   const r = RARITY_CFG[rarity];
   return (
-    <div className={`relative bg-gray-800/70 border ${r.border} rounded-sm p-3 flex flex-col gap-1.5 shadow-pixel-sm ${r.glow} ${locked ? 'opacity-40' : ''}`}>
-      {locked && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-sm bg-gray-900/60 z-10">
-          <GameIcon name="lock" size={20} color="gray" />
-        </div>
-      )}
+    <div className={`relative bg-gray-800/70 border ${r.border} rounded-sm p-3 flex flex-col gap-1.5 shadow-pixel-sm ${r.glow} ${undiscovered ? 'opacity-70' : ''}`}>
       <div className="flex items-start gap-2">
         <span className="w-8 h-8 flex items-center justify-center shrink-0 mt-0.5">
-          {ITEM_ICONS[synergy.id]
-            ? <GameIcon name={ITEM_ICONS[synergy.id].icon} color={ITEM_ICONS[synergy.id].color} size={28} />
-            : <span className="text-2xl">{synergy.icon}</span>}
+          {undiscovered
+            ? <GameIcon name="lock" size={22} color="gray" />
+            : ITEM_ICONS[synergy.id]
+              ? <GameIcon name={ITEM_ICONS[synergy.id].icon} color={ITEM_ICONS[synergy.id].color} size={28} />
+              : <span className="text-2xl">{synergy.icon}</span>}
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-1">
-            <span className="text-white text-sm font-semibold leading-tight truncate">{synergy.name}</span>
+            <span className="text-white text-sm font-semibold leading-tight truncate">{undiscovered ? '???' : synergy.name}</span>
             <RarityBadge rarity={rarity} />
           </div>
-          <p className="text-gray-400 text-[11px] leading-snug mt-0.5">{synergy.description}</p>
+          <p className="text-gray-400 text-[11px] leading-snug mt-0.5">
+            {undiscovered ? 'Undiscovered — activate this synergy in a run to reveal it.' : synergy.description}
+          </p>
         </div>
       </div>
       {/* Required tags */}
@@ -186,17 +202,62 @@ const TABS = [
   { id: 'synergies', label: 'Synergies', icon: 'thunder', color: 'yellow' },
 ];
 
-export default function CodexPage({ onBack }) {
+export default function CodexPage({ onBack, accountProgression = null }) {
   const [activeTab, setActiveTab] = useState('relics');
   const [search, setSearch] = useState('');
   const [rarityFilter, setRarityFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
+  const achievements = useAchievementContext();
 
   // ── Data preparation ──
   const allRelics = useMemo(() => Object.values(RELICS), []);
   const allPerks = useMemo(() => Object.values(PERKS).filter(p => p.type !== 'filter'), []);
   const allFilterPerks = useMemo(() => Object.values(PERKS).filter(p => p.type === 'filter'), []);
   const allSynergies = useMemo(() => Object.values(SYNERGIES), []);
+
+  // ── Unlock state ──
+  const lockedKeys = useMemo(() => {
+    if (!accountProgression) return new Set();
+    return computeLockedKeys({
+      accountLevel: accountProgression.level,
+      stats: accountProgression.stats,
+      unlockedAchievementIds: new Set(achievements.unlockedAchievements),
+    });
+  }, [accountProgression, achievements.unlockedAchievements]);
+
+  const isLocked = (type, id) => lockedKeys.has(`${type}:${id}`);
+  const discoveredSynergies = accountProgression?.discovered?.synergies ?? null;
+
+  // "NEW"-Badges: beim Mount einfrieren welche gated Items frisch freigeschaltet
+  // (unlocked aber noch nicht gesehen) sind, dann als gesehen markieren —
+  // so bleibt das Badge für diesen Besuch sichtbar und verschwindet beim nächsten.
+  const [newKeysAtMount] = useState(() => {
+    if (!accountProgression) return new Set();
+    const seen = new Set(accountProgression.seenUnlocks ?? []);
+    const fresh = new Set();
+    Object.values(RELICS).forEach(r => {
+      const key = `relic:${r.id}`;
+      if (isGatedContent('relic', r.id) && !seen.has(key)) fresh.add(key);
+    });
+    Object.values(PERKS).forEach(p => {
+      const key = `perk:${p.id}`;
+      if (isGatedContent('perk', p.id) && !seen.has(key)) fresh.add(key);
+    });
+    return fresh;
+  });
+
+  useEffect(() => {
+    if (!accountProgression) return;
+    // Nur tatsächlich freigeschaltete Keys als gesehen markieren
+    const toMark = [...newKeysAtMount].filter(k => !lockedKeys.has(k));
+    if (toMark.length > 0) accountProgression.markUnlocksSeen(toMark);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isNew = (type, id) => {
+    const key = `${type}:${id}`;
+    return newKeysAtMount.has(key) && !lockedKeys.has(key);
+  };
 
   // ── Filter logic ──
   const filterItem = (item, rarityKey) => {
@@ -258,11 +319,16 @@ export default function CodexPage({ onBack }) {
     ].filter(s => s.items.length > 0);
   }, [activeTab, filtered]);
 
-  const counts = useMemo(() => ({
-    relics: allRelics.length,
-    perks: allPerks.length + allFilterPerks.length,
-    synergies: allSynergies.length,
-  }), [allRelics, allPerks, allFilterPerks, allSynergies]);
+  const counts = useMemo(() => {
+    const lockedRelics = allRelics.filter(r => lockedKeys.has(`relic:${r.id}`)).length;
+    const lockedPerks = [...allPerks, ...allFilterPerks].filter(p => lockedKeys.has(`perk:${p.id}`)).length;
+    const totalPerks = allPerks.length + allFilterPerks.length;
+    return {
+      relics: lockedRelics > 0 ? `${allRelics.length - lockedRelics}/${allRelics.length}` : allRelics.length,
+      perks: lockedPerks > 0 ? `${totalPerks - lockedPerks}/${totalPerks}` : totalPerks,
+      synergies: allSynergies.length,
+    };
+  }, [allRelics, allPerks, allFilterPerks, allSynergies, lockedKeys]);
 
   return (
     <div className="flex flex-col w-full max-w-3xl mx-auto h-full min-h-0" style={{ height: '100%' }}>
@@ -390,7 +456,15 @@ export default function CodexPage({ onBack }) {
               <div key={section.id}>
                 <SectionHeader label={section.label} count={section.items.length} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                  {section.items.map(r => <RelicCard key={r.id} relic={r} locked={false} />)}
+                  {section.items.map(r => (
+                    <RelicCard
+                      key={r.id}
+                      relic={r}
+                      locked={isLocked('relic', r.id)}
+                      hint={getUnlockHint('relic', r.id)}
+                      isNew={isNew('relic', r.id)}
+                    />
+                  ))}
                 </div>
               </div>
             ))}
@@ -404,7 +478,15 @@ export default function CodexPage({ onBack }) {
               <div key={section.id}>
                 <SectionHeader label={section.label} count={section.items.length} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                  {section.items.map(p => <PerkCard key={p.id} perk={p} locked={false} />)}
+                  {section.items.map(p => (
+                    <PerkCard
+                      key={p.id}
+                      perk={p}
+                      locked={isLocked('perk', p.id)}
+                      hint={getUnlockHint('perk', p.id)}
+                      isNew={isNew('perk', p.id)}
+                    />
+                  ))}
                 </div>
               </div>
             ))}
@@ -415,7 +497,13 @@ export default function CodexPage({ onBack }) {
         {activeTab === 'synergies' && (
           <div className="pb-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {filtered.map(s => <SynergyCard key={s.id} synergy={s} locked={false} />)}
+              {filtered.map(s => (
+                <SynergyCard
+                  key={s.id}
+                  synergy={s}
+                  undiscovered={discoveredSynergies ? !discoveredSynergies.includes(s.id) : false}
+                />
+              ))}
             </div>
             {filtered.length === 0 && <EmptyState />}
           </div>

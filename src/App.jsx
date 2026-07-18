@@ -20,7 +20,12 @@ import HowToPlayModal from "./features/game/components/HowToPlayModal";
 import MetaProgressionScreen from "./features/game/components/MetaProgressionScreen";
 import { useSavedRun } from "./features/game/hooks/useSavedRun";
 import { useMetaProgression } from "./features/game/hooks/useMetaProgression";
+import { useAccountProgression } from "./features/game/hooks/useAccountProgression";
 import { useAscension } from "./features/game/hooks/useAscension";
+import AccountLevelBadge from "./features/game/components/AccountLevelBadge";
+import DailyLoginToast from "./features/game/components/DailyLoginToast";
+import { computeLockedKeys } from "./features/game/constants/unlockDefinitions";
+import { setLockedSnapshot } from "./features/game/utils/contentAvailability";
 import GameIcon from "./shared/components/GameIcon";
 
 function AppContent() {
@@ -40,7 +45,18 @@ function AppContent() {
   }, []);
   const savedRun = useSavedRun();
   const metaProgression = useMetaProgression();
+  const accountProgression = useAccountProgression({ addCrystals: metaProgression.addCrystals });
   const ascension = useAscension();
+
+  // Content-Gating: gesperrte Keys neu berechnen wenn Level/Stats/Achievements sich ändern.
+  // Die Offer-Sites lesen den Snapshot über contentAvailability.filterAvailable().
+  useEffect(() => {
+    setLockedSnapshot(computeLockedKeys({
+      accountLevel: accountProgression.level,
+      stats: accountProgression.stats,
+      unlockedAchievementIds: new Set(achievements.unlockedAchievements),
+    }));
+  }, [accountProgression.level, accountProgression.stats, achievements.unlockedAchievements]);
   const [continueMode, setContinueMode] = useState(false);
   const [screen, setScreen] = useState("menu");
   const [showRegister, setShowRegister] = useState(false);
@@ -49,6 +65,19 @@ function AppContent() {
   const [resetSuccess, setResetSuccess] = useState("");
   const [showSuggestionModal, setShowSuggestionModal] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [dailyLoginReward, setDailyLoginReward] = useState(null); // { streak, crystals }
+
+  // Daily-Login-Claim beim Betreten des Menüs (Hook-Guard verhindert Doppel-Claim pro Tag)
+  useEffect(() => {
+    if (!user || screen !== "menu") return;
+    const reward = accountProgression.claimDailyLogin();
+    if (reward) {
+      setDailyLoginReward(reward);
+      const t = setTimeout(() => setDailyLoginReward(null), 5000);
+      return () => clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, screen]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -252,6 +281,11 @@ function AppContent() {
                 </p>
               </div>
 
+              {/* Account Level Badge */}
+              <div>
+                <AccountLevelBadge accountProgression={accountProgression} />
+              </div>
+
               {/* Achievement Badge */}
               <div className="inline-flex items-center gap-2 bg-[#111827] border-2 border-[#2d3a5c] rounded-sm px-4 py-1.5 mb-5 shadow-pixel-sm">
                 <GameIcon name="trophy" size={18} color="amber" />
@@ -325,6 +359,18 @@ function AppContent() {
                     <span className="inline-flex items-center justify-center gap-1.5">
                       <GameIcon name="gem" size={18} color="purple" />
                       <span>Meta</span>
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setScreen("daily-challenge")}
+                    className="bg-cyan-800 hover:bg-cyan-700 border-2 border-cyan-500 rounded-sm py-3 text-white text-sm font-medium transition-all shadow-pixel-sm active:scale-95"
+                  >
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <GameIcon name="event" size={18} color="teal" />
+                      <span>Daily</span>
+                      {accountProgression.dailyChallenge.lastRewardDate === new Date().toLocaleDateString('en-CA') && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400" title="Done today" />
+                      )}
                     </span>
                   </button>
                 </div>
@@ -427,7 +473,7 @@ function AppContent() {
         {screen === "codex" && (
           <div className="fixed inset-0 z-40 bg-[#0a0e1a] overflow-hidden flex flex-col pt-safe">
             <div className="w-full flex-1 min-h-0 flex flex-col max-w-3xl mx-auto px-4 pt-2 pb-4" style={{paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)'}}>
-              <CodexPage onBack={() => setScreen("menu")} />
+              <CodexPage onBack={() => setScreen("menu")} accountProgression={accountProgression} />
             </div>
           </div>
         )}
@@ -440,16 +486,18 @@ function AppContent() {
             setShowRegister={setShowRegister}
             continueMode={continueMode}
             metaProgression={metaProgression}
+            accountProgression={accountProgression}
           />
         )}
 
         {screen === "daily-challenge" && (
-          <DailyChallengeGame onBack={() => setScreen("menu")} />
+          <DailyChallengeGame onBack={() => setScreen("menu")} accountProgression={accountProgression} />
         )}
       </div>
 
       {screen !== "game" && screen !== "daily-challenge" && screen !== "stats" && screen !== "codex" && screen !== "meta" && <Footer onNavigate={handleFooterNavigation} />}
       <CookieConsent />
+      <DailyLoginToast reward={dailyLoginReward} onDismiss={() => setDailyLoginReward(null)} />
       {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
       <SuggestionModal
         isOpen={showSuggestionModal}

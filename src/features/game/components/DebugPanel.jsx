@@ -22,6 +22,7 @@ export default function DebugPanel({
   timer,
   cardLoader,
   onCurseTake,
+  accountProgression,
 }) {
   const [open, setOpen] = useState(false);
   const [selectedRelic, setSelectedRelic] = useState(ALL_RELICS[0]?.id ?? '');
@@ -263,6 +264,26 @@ export default function DebugPanel({
               <Btn onClick={handleSetScore}>Set Score</Btn>
             </div>
           </Section>
+
+          {/* ── Account Progression ── */}
+          {accountProgression && (
+            <Section title="Account">
+              <Row label="Level">{accountProgression.level} ({accountProgression.xpIntoLevel}/{accountProgression.xpForLevel} XP)</Row>
+              <Row label="Total XP">{accountProgression.totalXp}</Row>
+              <Row label="Stats">
+                runs {accountProgression.stats.runsPlayed} / boss {accountProgression.stats.bossWins} / stages {accountProgression.stats.totalStagesCleared}
+              </Row>
+              <Row label="Daily">
+                login {accountProgression.dailyLogin.lastClaimDate ?? '—'} (streak {accountProgression.dailyLogin.streak}) / challenge {accountProgression.dailyChallenge.lastRewardDate ?? '—'}
+              </Row>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                <Btn onClick={() => accountProgression.debugAddXp(100)}>+100 Acc XP</Btn>
+                <Btn onClick={() => accountProgression.debugAddXp(1000)}>+1000 Acc XP</Btn>
+                <Btn onClick={() => accountProgression.debugResetDaily()}>Reset Daily</Btn>
+                <Btn onClick={() => { localStorage.removeItem('mtg_account_progression'); window.location.reload(); }} danger>Wipe Account</Btn>
+              </div>
+            </Section>
+          )}
 
           {/* ── Score Breakdown Preview ── */}
           <Section title="Breakdown (base=10)">

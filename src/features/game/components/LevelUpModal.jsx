@@ -6,6 +6,7 @@ import { SYNERGIES } from '../constants/synergyDefinitions';
 import GameIcon from '../../../shared/components/GameIcon';
 import TagIcons from '../../../shared/components/TagIcons';
 import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
+import { filterAvailable } from '../utils/contentAvailability';
 
 // Gewichteter Zufalls-Pick aus einem Array von Objekten mit `rarity`-Property
 function weightedRandomPick(items, weights, excludeIds = new Set()) {
@@ -26,7 +27,7 @@ function generateRelicMilestoneOptions(activeRelics, hasForture = false) {
   const usedIds = new Set();
   const options = [];
 
-  const allRelics = Object.values(RELICS);
+  const allRelics = filterAvailable('relic', Object.values(RELICS));
   const ownedRelicIds = new Set(activeRelics.map(r => r.id));
 
   const pickRelic = () => {
@@ -53,10 +54,10 @@ function generateNormalOptions(activeRelics, activePerks, hasForture = false) {
   const options = [];
 
   const activePerkIds = new Set(activePerks.map(p => p.id));
-  const itemCandidates = Object.values(PERKS).filter(p =>
+  const itemCandidates = filterAvailable('perk', Object.values(PERKS).filter(p =>
     !p.isExtended &&
     (!activePerkIds.has(p.id) || p.stackable)
-  );
+  ));
   const perkWeights = {
     [PERK_RARITY.COMMON]: 50,
     [PERK_RARITY.RARE]: 30,

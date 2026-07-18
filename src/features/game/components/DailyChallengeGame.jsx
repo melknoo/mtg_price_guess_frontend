@@ -5,6 +5,7 @@ import {
   saveDailyChallengeScore,
   fetchDailyChallengeLeaderboard,
 } from "../api/dailyChallengeApi";
+import GameIcon from "../../../shared/components/GameIcon";
 
 function Countdown() {
   const getMsUntilMidnight = () => {
@@ -67,9 +68,10 @@ function DailyLeaderboard({ leaderboard, userRank, userScore }) {
   );
 }
 
-export default function DailyChallengeGame({ onBack }) {
+export default function DailyChallengeGame({ onBack, accountProgression = null }) {
 
   const [status, setStatus] = useState("loading"); // loading | ready | already_played | finished | error
+  const [crystalReward, setCrystalReward] = useState(null); // { crystals } vom Daily-Claim
   const [dailyCards, setDailyCards] = useState(null);
   const [challengeDate, setChallengeDate] = useState("");
   const [finalScore, setFinalScore] = useState(null);
@@ -122,9 +124,11 @@ export default function DailyChallengeGame({ onBack }) {
         // Score konnte nicht gespeichert werden — trotzdem Ergebnis zeigen
       }
       await loadLeaderboard();
+      // Daily-Challenge-Crystals (einmal täglich, Guard im Hook)
+      setCrystalReward(accountProgression?.claimDailyChallengeReward?.() ?? null);
       setStatus("finished");
     },
-    [loadLeaderboard]
+    [loadLeaderboard, accountProgression]
   );
 
   if (status === "loading") {
@@ -164,6 +168,13 @@ export default function DailyChallengeGame({ onBack }) {
             <p className="text-yellow-300 mt-1 font-semibold">Rank #{userRank} today</p>
           )}
         </div>
+
+        {status === "finished" && crystalReward && (
+          <div className="inline-flex items-center gap-2 bg-purple-500/15 border-2 border-purple-400/40 rounded-sm px-3 py-1.5">
+            <GameIcon name="crystal" size={18} color="purple" />
+            <span className="text-purple-200 font-bold">+{crystalReward.crystals} Crystals</span>
+          </div>
+        )}
 
         <DailyLeaderboard leaderboard={leaderboard} userRank={userRank} userScore={finalScore} />
 

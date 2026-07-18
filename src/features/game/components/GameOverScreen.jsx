@@ -1,6 +1,7 @@
 import React from 'react';
 import GameIcon from '../../../shared/components/GameIcon';
 import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
+import AccountRewardSummary from './AccountRewardSummary';
 
 export default function GameOverScreen({
   message,
@@ -17,6 +18,8 @@ export default function GameOverScreen({
   synergies = [],
   bestComboMultiplier = 1,
   crystalsEarned = 0,
+  accountReward = null,
+  accountProgression = null,
 }) {
   return (
     <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-10 p-4">
@@ -42,6 +45,8 @@ export default function GameOverScreen({
             <GameIcon name="signal" size={18} color="orange" /> Best Streak: {bestStreak}
           </p>
         )}
+
+        <AccountRewardSummary accountReward={accountReward} accountProgression={accountProgression} />
 
         {/* Roguelike Run-Summary */}
         <div className="w-full bg-[#111827] border-2 border-[#2d3a5c]/60 rounded-sm p-3 mb-4 text-left">

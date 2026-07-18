@@ -5,6 +5,7 @@ import { RELICS, RELIC_RARITY } from '../constants/relicDefinitions';
 import { PERKS } from '../constants/perkDefinitions';
 import GameIcon from '../../../shared/components/GameIcon';
 import { ITEM_ICONS } from '../../../shared/constants/itemIconMap';
+import { filterAvailable } from '../utils/contentAvailability';
 
 const RARITY_WEIGHTS = { common: 50, rare: 30, epic: 15, legendary: 5 };
 
@@ -19,7 +20,7 @@ function weightedRandom(items) {
 }
 
 function pickRelics(count, ownedIds) {
-  const pool = Object.values(RELICS).filter(r => !ownedIds.has(r.id));
+  const pool = filterAvailable('relic', Object.values(RELICS).filter(r => !ownedIds.has(r.id)));
   const picked = [];
   const used = new Set();
   for (let i = 0; i < count && pool.length > used.size; i++) {
@@ -30,7 +31,7 @@ function pickRelics(count, ownedIds) {
 }
 
 function pickPerks(count, activePerkIds, canOfferPerk = () => true) {
-  const pool = Object.values(PERKS).filter(p => !activePerkIds.has(p.id) && canOfferPerk(p));
+  const pool = filterAvailable('perk', Object.values(PERKS).filter(p => !activePerkIds.has(p.id) && canOfferPerk(p)));
   const picked = [];
   const used = new Set();
   for (let i = 0; i < count && pool.length > used.size; i++) {

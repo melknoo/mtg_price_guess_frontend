@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { PERKS, RARITY_WEIGHTS, PERK_CONFIG, PERK_TYPES, PERK_SLOT_TYPES, getBasePerkId, isExtendedPerk } from '../constants/perkDefinitions';
+import { filterAvailable } from '../utils/contentAvailability';
 
 const applyPerkToList = (list, perk, roundsPlayed, { hasEternalFlame = false, hasUpgradeMaster = false } = {}) => {
   const basePerkId = getBasePerkId(perk.id);
@@ -201,7 +202,7 @@ export const usePerkSystem = () => {
   }, []);
 
   const generateRandomPerks = useCallback((count = PERK_CONFIG.PERKS_TO_CHOOSE) => {
-    const allPerks = Object.values(PERKS).filter(p => !p.isCurse);
+    const allPerks = filterAvailable('perk', Object.values(PERKS).filter(p => !p.isCurse));
     const selectedPerks = [];
     const usedIds = new Set();
 
